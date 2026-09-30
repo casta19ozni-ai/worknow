@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WorkNow — Explorar + Búsqueda Inteligente de Empleo</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Supabase JS (Para Realtime y Persistencia) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Configuración de Entorno (Inyectada por CI/CD o Servidor) -->
+    <script>
+        window.ENV = {
+            SUPABASE_URL: 'https://pmmgmrblveohawtgavs.supabase.co',
+            SUPABASE_ANON_KEY: 'sb_publishable_PSrcxAkba6HMKgn_nasBMQ_UaZum...',
+            GOOGLE_MAPS_API_KEY: '' // Ej: 'AIzaSy...'
+        };
+    </script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: '#2563eb', escrow: '#10b981', dark: '#0f172a', crypto: '#f59e0b'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .view-section { display: none; animation: fadeIn 0.2s ease-in; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: #0f172a; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transform: translateX(120%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500;}
+        .toast.show { transform: translateX(0); }
+        /* ============ BÚSQUEDA INTELIGENTE DE EMPLEO (scoped, módulo AG) ============ */
+/* ============ MÓDULO A: AGENTES (scoped #view-ai-search) ============ */
+#view-ai-search{--bg:var(--kimi-color-surface,#0a0e1a);--surface:var(--kimi-color-surface-raised,#111827);--surface-2:var(--kimi-color-surface-strong,#1f2937);--text:var(--kimi-color-text-primary,#f3f4f6);--text-muted:var(--kimi-color-text-secondary,#9ca3af);--border:var(--kimi-color-border,#374151);--primary:var(--kimi-color-accent,#3b82f6);--success:var(--kimi-color-positive,#10b981);--warning:var(--kimi-color-warning,#f59e0b);--danger:var(--kimi-color-danger,#ef4444);--font-sans:var(--kimi-font-sans,'Inter',sans-serif);--font-mono:var(--kimi-font-mono,'JetBrains Mono',monospace);font-family:var(--font-sans);background:var(--bg);color:var(--text);min-height:100%}
+#view-ai-search *{margin:0;padding:0;box-sizing:border-box}
+#view-ai-search .app{max-width:1400px;margin:0 auto;padding:16px}
+#view-ai-search .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+#view-ai-search .brand{display:flex;align-items:center;gap:10px}
+#view-ai-search .brand-icon{width:36px;height:36px;background:var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+#view-ai-search .brand h1{font-size:20px;font-weight:700}
+#view-ai-search .brand p{color:var(--text-muted);font-size:12px}
+#view-ai-search .status-bar{display:flex;gap:10px}
+#view-ai-search .status-pill{display:flex;align-items:center;gap:6px;background:var(--surface);padding:6px 12px;border-radius:100px;font-size:12px;border:1px solid var(--border)}
+#view-ai-search .status-dot{width:6px;height:6px;border-radius:50%;background:var(--success);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+#view-ai-search .main-grid{display:grid;grid-template-columns:260px 1fr 300px;gap:16px}
+@media (max-width:1000px){#view-ai-search .main-grid{grid-template-columns:1fr}}
+#view-ai-search .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px}
+#view-ai-search .card-title{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+#view-ai-search .upload-zone{border:2px dashed var(--border);border-radius:8px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .3s}
+#view-ai-search .upload-zone:hover{border-color:var(--primary)}
+#view-ai-search .upload-zone.active{border-color:var(--success);background:rgba(16,185,129,.05)}
+#view-ai-search .upload-zone input{display:none}
+#view-ai-search .upload-icon{font-size:28px;margin-bottom:8px}
+#view-ai-search .upload-text{font-size:12px;color:var(--text-muted)}
+#view-ai-search .upload-text strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}
+#view-ai-search .file-info{margin-top:10px;padding:8px;background:var(--surface-2);border-radius:6px;font-size:12px;display:none}
+#view-ai-search .file-info.show{display:block}
+#view-ai-search .agent-list{display:flex;flex-direction:column;gap:8px}
+#view-ai-search .agent-item{display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface-2);border-radius:8px;border:1px solid transparent;cursor:pointer;transition:all .2s}
+#view-ai-search .agent-item:hover{border-color:var(--border)}
+#view-ai-search .agent-item.active{border-color:var(--primary)}
+#view-ai-search .agent-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+#view-ai-search .agent-avatar.scout{background:rgba(59,130,246,.15)}
+#view-ai-search .agent-avatar.applier{background:rgba(16,185,129,.15)}
+#view-ai-search .agent-avatar.negotiator{background:rgba(245,158,11,.15)}
+#view-ai-search .agent-avatar.supervisor{background:rgba(139,92,246,.15)}
+#view-ai-search .agent-info{flex:1}
+#view-ai-search .agent-name{font-weight:600;font-size:13px}
+#view-ai-search .agent-role{font-size:11px;color:var(--text-muted)}
+#view-ai-search .agent-status{width:6px;height:6px;border-radius:50%;background:var(--success)}
+#view-ai-search .agent-status.idle{background:var(--text-muted)}
+#view-ai-search .agent-status.busy{background:var(--warning)}
+#view-ai-search .metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+#view-ai-search .metric{background:var(--surface);padding:14px;border-radius:8px;border:1px solid var(--border)}
+#view-ai-search .metric-value{font-size:24px;font-weight:800;color:var(--text)}
+#view-ai-search .metric-label{font-size:11px;color:var(--text-muted);margin-top:2px}
+#view-ai-search .filter-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+#view-ai-search .filter-input{flex:1;min-width:140px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;outline:none}
+#view-ai-search .filter-input:focus{border-color:var(--primary)}
+#view-ai-search .filter-select{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;outline:none}
+#view-ai-search .btn-sm{padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--primary);color:#fff;text-decoration:none;display:inline-block}
+#view-ai-search .btn-sm:hover{opacity:.9}
+#view-ai-search .btn-ghost-sm{background:transparent;color:var(--text-muted);border:1px solid var(--border)}
+#view-ai-search .btn-ghost-sm:hover{border-color:var(--text);color:var(--text)}
+#view-ai-search .jobs-list{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto}
+#view-ai-search .job-card{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:12px;transition:all .2s;cursor:pointer}
+#view-ai-search .job-card:hover{border-color:var(--primary)}
+#view-ai-search .job-card.applied{border-left:3px solid var(--success)}
+#view-ai-search .job-header{display:flex;justify-content:space-between;align-items:start;margin-bottom:6px}
+#view-ai-search .job-title{font-weight:600;font-size:13px}
+#view-ai-search .job-badge{font-size:9px;padding:3px 8px;border-radius:100px;font-weight:600;text-transform:uppercase}
+#view-ai-search .badge-new{background:rgba(16,185,129,.15);color:var(--success)}
+#view-ai-search .badge-hot{background:rgba(245,158,11,.15);color:var(--warning)}
+#view-ai-search .badge-match{background:rgba(59,130,246,.15);color:var(--primary)}
+#view-ai-search .job-meta{display:flex;gap:10px;font-size:11px;color:var(--text-muted);margin-bottom:6px;flex-wrap:wrap}
+#view-ai-search .job-actions{display:flex;gap:6px;margin-top:8px}
+#view-ai-search .match-bar{display:flex;align-items:center;gap:8px}
+#view-ai-search .progress-bar{flex:1;height:4px;background:var(--surface);border-radius:100px;overflow:hidden}
+#view-ai-search .progress-fill{height:100%;border-radius:100px;transition:width .5s ease}
+#view-ai-search .match-score{font-size:10px;font-weight:700;min-width:28px;text-align:right}
+#view-ai-search .chat-area{display:flex;flex-direction:column;height:320px}
+#view-ai-search .chat-messages{flex:1;overflow-y:auto;padding-right:6px;margin-bottom:10px}
+#view-ai-search .message{display:flex;gap:8px;margin-bottom:10px;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+#view-ai-search .message-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+#view-ai-search .message-content{background:var(--surface-2);padding:8px 12px;border-radius:8px;font-size:12px;line-height:1.5;max-width:90%}
+#view-ai-search .message-name{font-size:10px;font-weight:600;color:var(--primary);margin-bottom:2px}
+#view-ai-search .message.user{flex-direction:row-reverse}
+#view-ai-search .message.user .message-content{background:rgba(59,130,246,.1)}
+#view-ai-search .message.user .message-name{color:var(--text);text-align:right}
+#view-ai-search .chat-input-area{display:flex;gap:6px}
+#view-ai-search .chat-input{flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;outline:none}
+#view-ai-search .chat-btn{background:var(--primary);border:none;border-radius:8px;padding:0 14px;color:#fff;font-weight:600;cursor:pointer}
+#view-ai-search .terminal{background:#000;border-radius:8px;padding:12px;font-family:var(--font-mono);font-size:11px;line-height:1.5;height:200px;overflow-y:auto;border:1px solid var(--border)}
+#view-ai-search .log-entry{margin-bottom:4px}
+#view-ai-search .log-time{color:#6b7280;margin-right:6px}
+#view-ai-search .log-agent{color:var(--primary)}
+#view-ai-search .log-success{color:var(--success)}
+#view-ai-search .log-warning{color:var(--warning)}
+#view-ai-search .control-panel{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+#view-ai-search .btn{flex:1;padding:10px;border-radius:8px;font-weight:600;font-size:12px;border:none;cursor:pointer;min-width:70px}
+#view-ai-search .btn-success{background:var(--success);color:#fff}
+#view-ai-search .btn-ghost{background:var(--surface-2);color:var(--text);border:1px solid var(--border)}
+#view-ai-search .detail-panel{background:var(--surface-2);border-radius:8px;padding:12px;margin-top:8px;font-size:12px;display:none}
+#view-ai-search .detail-panel.show{display:block}
+#view-ai-search .detail-title{font-weight:700;margin-bottom:6px}
+#view-ai-search .detail-text{color:var(--text-muted);line-height:1.5;max-height:120px;overflow-y:auto;white-space:pre-wrap}
+#view-ai-search ::-webkit-scrollbar{width:6px}
+#view-ai-search ::-webkit-scrollbar-thumb{background:var(--border);border-radius:100px}
+    </style>
+<base target="_blank">
+</head>
+<body class="h-screen flex flex-col overflow-hidden text-slate-800">
+
+    <!-- NAVBAR -->
+    <nav class="bg-white border-b shadow-sm z-50 h-16 flex-shrink-0">
+        <div class="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
+            <div class="flex items-center gap-2 text-brand font-bold text-2xl cursor-pointer" onclick="navigate('dashboard')">
+                <i data-lucide="zap" class="fill-brand"></i> WorkNow <span class="text-xs bg-brand text-white px-2 py-0.5 rounded-full ml-1">PRO</span>
+            </div>
+            
+            <div class="hidden md:flex gap-6 font-medium text-sm text-slate-600">
+                <button onclick="navigate('dashboard')" class="hover:text-brand flex items-center gap-1 nav-btn" data-target="dashboard"><i data-lucide="map"></i> Explorar</button>
+                <button onclick="navigate('ai-search')" class="hover:text-brand flex items-center gap-1 nav-btn" data-target="ai-search"><i data-lucide="sparkles"></i> Búsqueda Inteligente de Empleo</button>
+                <button onclick="navigate('contracts')" class="hover:text-brand flex items-center gap-1 nav-btn" data-target="contracts"><i data-lucide="briefcase"></i> Contratos</button>
+                <button onclick="navigate('wallet')" class="hover:text-brand flex items-center gap-1 nav-btn" data-target="wallet"><i data-lucide="wallet"></i> Billetera</button>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <!-- Se oculta en producción cuando hay sesión real -->
+                <select id="roleSelect" onchange="changeRole(this.value)" class="bg-gray-100 border border-gray-200 text-xs font-bold rounded-lg px-3 py-1.5 outline-none cursor-pointer text-brand">
+                    <option value="employer">👁️ Modo: Empleador</option>
+                    <option value="worker">🛠️ Modo: Trabajador</option>
+                </select>
+                <div class="h-9 w-9 rounded-full bg-gradient-to-tr from-brand to-blue-400 text-white flex items-center justify-center font-bold text-sm shadow-md cursor-pointer hover:opacity-80 transition" onclick="handleLogout()" title="Cerrar Sesión">
+                    <span id="userInitials">--</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN APP CONTAINER -->
+    <main class="flex-1 overflow-hidden relative flex">
+
+        <!-- ================= VISTA 1: DASHBOARD & MAPA ================= -->
+        <section id="view-dashboard" class="view-section active h-full w-full flex flex-col md:flex-row">
+            <!-- Lista Izquierda -->
+            <div class="w-full md:w-1/3 lg:w-[400px] h-full bg-white border-r border-gray-200 flex flex-col z-10 shadow-lg">
+                <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                    <div>
+                        <h2 class="font-bold text-lg">Explorar Servicios</h2>
+                        <p class="text-xs text-slate-500">Global / Cualquier País</p>
+                    </div>
+                    <button id="btnCreateJob" onclick="document.getElementById('modalCreateJob').classList.remove('hidden')" class="bg-brand text-white p-2 rounded-full shadow hover:bg-blue-700 transition">
+                        <i data-lucide="plus"></i>
+                    </button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar" id="jobsListContainer">
+                    <!-- Los trabajos se renderizan aquí mediante JS -->
+                </div>
+            </div>
+            
+            <!-- Mapa Derecha -->
+            <div class="flex-1 h-full relative bg-gray-200" id="map-container">
+                <div id="map" class="h-full w-full z-0"></div>
+                <!-- GPS Overlay -->
+                <div class="absolute bottom-6 left-6 z-[400] bg-white/90 backdrop-blur p-3 rounded-xl shadow-xl border border-gray-200 flex items-center gap-3">
+                    <div class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-brand"></span></div>
+                    <span class="text-xs font-bold text-slate-700" id="gpsStatusText">Conectado a Red Global</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VISTA 2: CONTRATOS & ACUERDOS ================= -->
+        <section id="view-contracts" class="view-section h-full w-full overflow-y-auto bg-gray-50 p-4 md:p-8">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex justify-between items-end mb-6">
+                    <div>
+                        <h1 class="text-3xl font-bold text-slate-900">Centro de Acuerdos</h1>
+                        <p class="text-slate-500">Negociación y Operación en Tiempo Real</p>
+                    </div>
+                </div>
+                <div id="contractsContainer" class="space-y-6">
+                    <!-- Contratos renderizados por JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VISTA 3: BILLETERA / WALLET ================= -->
+        <section id="view-wallet" class="view-section h-full w-full overflow-y-auto bg-gray-50 p-4 md:p-8">
+            <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-dark rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+                    <div class="absolute right-0 top-0 opacity-10"><i data-lucide="wallet" class="w-48 h-48 -mr-10 -mt-10"></i></div>
+                    <h3 class="text-slate-400 font-medium text-sm mb-1">Saldo Disponible</h3>
+                    <div class="text-5xl font-bold mb-2">$<span id="walletBalance">0.00</span></div>
+                    <p class="text-xs text-escrow mb-8"><i data-lucide="lock" class="inline w-3 h-3"></i> $<span id="walletEscrow">0.00</span> en Retención Interna</p>
+                    
+                    <div class="flex gap-3">
+                        <button onclick="promptDeposit()" class="flex-1 bg-brand text-white py-2 rounded-lg font-bold text-sm shadow hover:bg-blue-600 transition">+ Fondear</button>
+                        <button onclick="promptWithdraw()" class="flex-1 border border-white/20 hover:bg-white/10 text-white py-2 rounded-lg font-bold text-sm transition">- Retirar</button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-col">
+                    <h3 class="font-bold text-lg mb-4 border-b pb-2">Historial de Transacciones</h3>
+                    <div id="txHistory" class="flex-1 overflow-y-auto space-y-3 no-scrollbar h-[200px]">
+                        <!-- Transacciones JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VISTA 2: BÚSQUEDA INTELIGENTE DE EMPLEO (Módulo AG) ================= -->
+        <section id="view-ai-search" class="view-section h-full w-full overflow-y-auto">
+<div class="app">
+  <div class="header">
+    <div class="brand">
+      <div class="brand-icon">🤖</div>
+      <div>
+        <h1>Búsqueda Inteligente de Empleo</h1>
+        <p><span id="totalOffers">98</span> Ofertas indexadas · Jobicy + Remotive + WorkNow</p>
+      </div>
+    </div>
+    <div class="status-bar">
+      <div class="status-pill"><div class="status-dot"></div><span>En línea</span></div>
+      <div class="status-pill"><span>🌐</span><span id="active-regions">Global</span></div>
+    </div>
+  </div>
+  <div class="main-grid">
+    <div class="left-panel">
+      <div class="card">
+        <div class="card-title">📄 Currículum</div>
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('cvInput').click()">
+          <div class="upload-icon">📤</div>
+          <div class="upload-text"><strong>Sube tu CV</strong>PDF, DOCX o TXT</div>
+          <input type="file" id="cvInput" accept=".pdf,.docx,.txt" onchange="AG.handleFile(this)">
+          <div class="file-info" id="fileInfo">
+            <div>✅ <strong id="fileName"></strong></div>
+            <div style="margin-top:4px;color:var(--text-muted);font-size:11px">Skills detectados: <span id="detectedSkills"></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔍 Filtros</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <input type="text" class="filter-input" id="keywordFilter" placeholder="Palabra clave (ej: react)" oninput="AG.filterJobs()">
+          <select class="filter-select" id="geoFilter" onchange="AG.filterJobs()">
+            <option value="">Todas las regiones</option>
+            <option value="usa">🇺🇸 USA</option>
+            <option value="europe">🇪🇺 Europa</option>
+            <option value="latam">🌎 LATAM</option>
+            <option value="canada">🇨🇦 Canadá</option>
+            <option value="apac">🌏 APAC</option>
+          </select>
+          <select class="filter-select" id="sourceFilter" onchange="AG.filterJobs()">
+            <option value="">Todas las fuentes</option>
+            <option value="Jobicy">Jobicy</option>
+            <option value="Remotive">Remotive</option>
+            <option value="WorkNow">WorkNow (internos)</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🎯 Agentes</div>
+        <div class="agent-list">
+          <div class="agent-item active" onclick="AG.selectAgent('scout', this)">
+            <div class="agent-avatar scout">🕵️</div>
+            <div class="agent-info"><div class="agent-name">Scout</div><div class="agent-role">Búsqueda</div></div>
+            <div class="agent-status" id="st-scout"></div>
+          </div>
+          <div class="agent-item" onclick="AG.selectAgent('applier', this)">
+            <div class="agent-avatar applier">📝</div>
+            <div class="agent-info"><div class="agent-name">Aplicador</div><div class="agent-role">Postulaciones</div></div>
+            <div class="agent-status idle" id="st-applier"></div>
+          </div>
+          <div class="agent-item" onclick="AG.selectAgent('negotiator', this)">
+            <div class="agent-avatar negotiator">💬</div>
+            <div class="agent-info"><div class="agent-name">Negociador</div><div class="agent-role">Comunicación</div></div>
+            <div class="agent-status idle" id="st-negotiator"></div>
+          </div>
+          <div class="agent-item" onclick="AG.selectAgent('supervisor', this)">
+            <div class="agent-avatar supervisor">👁️</div>
+            <div class="agent-info"><div class="agent-name">Supervisor</div><div class="agent-role">Oversight</div></div>
+            <div class="agent-status" id="st-supervisor"></div>
+          </div>
+        </div>
+        <div class="control-panel">
+          <button class="btn btn-success" onclick="AG.startSearch()">▶ Buscar</button>
+          <button class="btn btn-ghost" onclick="AG.resetAll()">↺ Reset</button>
+          <button class="btn btn-ghost" onclick="AG.pushToMarketplace()" title="Convertir coincidencias en tareas geolocalizadas">⇩ A Explorar</button>
+        </div>
+      </div>
+    </div>
+    <div class="center-panel">
+      <div class="metrics-grid">
+        <div class="metric"><div class="metric-value" id="m-total">98</div><div class="metric-label">Ofertas Cargadas</div></div>
+        <div class="metric"><div class="metric-value" id="m-filtered">0</div><div class="metric-label">Coincidencias</div></div>
+        <div class="metric"><div class="metric-value" id="m-applied">0</div><div class="metric-label">Aplicadas</div></div>
+        <div class="metric"><div class="metric-value" id="m-match">0%</div><div class="metric-label">Match Promedio</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 Oportunidades Reales</div>
+        <div class="jobs-list" id="jobsList"></div>
+      </div>
+      <div class="detail-panel" id="detailPanel">
+        <div class="detail-title" id="detailTitle"></div>
+        <div class="detail-text" id="detailText"></div>
+        <div class="job-actions" style="margin-top:8px">
+          <button class="btn-sm" onclick="AG.applyCurrent()">Aplicar Ahora</button>
+          <button class="btn-sm btn-ghost-sm" onclick="AG.generateLetter()">Generar Carta</button>
+          <a class="btn-sm btn-ghost-sm" id="detailLink" target="_blank" rel="noopener">Ver Oferta ↗</a>
+        </div>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="card">
+        <div class="card-title">💬 Supervisor</div>
+        <div class="chat-area">
+          <div class="chat-messages" id="chatBox">
+            <div class="message">
+              <div class="message-avatar supervisor">👁️</div>
+              <div class="message-content">
+                <div class="message-name">Supervisor</div>
+                Hola. Tengo 98 ofertas reales cargadas desde Jobicy y Remotive. Sube tu CV o dime qué buscas para empezar el matching.
+              </div>
+            </div>
+          </div>
+          <div class="chat-input-area">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Instrucción..." onkeypress="if(event.key==='Enter')AG.sendChat()">
+            <button class="chat-btn" onclick="AG.sendChat()">➤</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🖥️ Logs</div>
+        <div class="terminal" id="terminal">
+          <div class="log-entry"><span class="log-time">[00:00:00]</span> <span class="log-success">Sistema iniciado — bolsa indexada y verificada</span></div>
+          <div class="log-entry"><span class="log-time">[00:00:01]</span> <span class="log-agent">[Scout]</span> Fuentes: Jobicy API, Remotive API</div>
+          <div class="log-entry"><span class="log-time">[00:00:01]</span> <span class="log-warning">Esperando instrucciones del usuario...</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+        </section>
+
+    </main>
+
+    <!-- MODAL: PUBLICAR TRABAJO -->
+    <div id="modalCreateJob" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[1000] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h2 class="font-bold text-lg">Publicar Servicio</h2>
+                <button onclick="document.getElementById('modalCreateJob').classList.add('hidden')" class="text-slate-400 hover:text-red-500"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Título del trabajo</label>
+                    <input type="text" id="jobTitle" placeholder="Ej. Reparar tubería, Descargar camión..." class="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Descripción / Requisitos</label>
+                    <textarea id="jobDesc" placeholder="Detalles del servicio..." class="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Presupuesto ($)</label>
+                        <input type="number" id="jobPrice" placeholder="0.00" class="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand font-bold text-brand">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Modalidad</label>
+                        <select id="jobType" class="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand bg-white">
+                            <option value="fixed">Por Obra (Fijo)</option>
+                            <option value="hourly">Por Hora</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="createJob()" class="w-full bg-brand hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition mt-4">Publicar Servicio</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: AUTENTICACIÓN (EXCEPCIÓN CONTROLADA) -->
+    <div id="modalAuth" class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-[2000] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden p-8 space-y-5">
+            <div class="text-center mb-4">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-brand/10 text-brand mb-2">
+                    <i data-lucide="zap" class="w-6 h-6 fill-brand"></i>
+                </div>
+                <h2 class="font-bold text-2xl text-slate-900">Acceso WorkNow</h2>
+                <p class="text-sm text-slate-500">Plataforma de Operaciones en Tiempo Real</p>
+            </div>
+            
+            <input type="email" id="authEmail" placeholder="Correo electrónico" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-brand transition">
+            <input type="password" id="authPassword" placeholder="Contraseña" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-brand transition">
+            
+            <div id="registerFields" class="hidden space-y-5">
+                <input type="text" id="authName" placeholder="Nombre completo" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-brand transition">
+                <input type="text" id="authPhone" placeholder="Teléfono (ej. +593...)" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-brand transition">
+                <select id="authRole" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-brand bg-white transition">
+                    <option value="employer">Quiero contratar (Empleador)</option>
+                    <option value="worker">Quiero trabajar (Trabajador)</option>
+                </select>
+            </div>
+
+            <button onclick="handleLogin()" id="btnLogin" class="w-full bg-brand hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition">Iniciar Sesión</button>
+            <button onclick="handleRegister()" id="btnRegister" class="hidden w-full bg-escrow hover:bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg transition">Crear Cuenta</button>
+            
+            <p class="text-center text-sm text-slate-500 mt-4 cursor-pointer hover:text-brand font-medium" onclick="toggleAuthMode()" id="authToggleText">¿No tienes cuenta? Regístrate</p>
+        </div>
+    </div>
+
+    <!-- CONTENEDOR DE TOASTS -->
+    <div id="toast-container"></div>
+
+    <!-- ====================================================================
+         🚀 MOTOR JAVASCRIPT: LOGICA STARTUP (BASE DE DATOS, ESTADO, MAPAS)
+         ==================================================================== -->
+    <script>
+        // 1. INICIALIZAR ICONOS
+        lucide.createIcons();
+
+        // 2. CONFIGURACIÓN DINÁMICA
+        const CONFIG = {
+            SUPABASE_URL: window.ENV?.SUPABASE_URL || '',
+            SUPABASE_ANON_KEY: window.ENV?.SUPABASE_ANON_KEY || '',
+            GOOGLE_MAPS_API_KEY: window.ENV?.GOOGLE_MAPS_API_KEY || ''
+        };
+
+        // 3. ESTADO GLOBAL DE LA APP
+        let state = {
+            sessionActive: false,
+            currentRole: null, // Sin rol por defecto en producción
+            currentUserId: null, // Sin ID por defecto en producción
+            userLat: -2.1894,
+            userLng: -79.8891,
+            map: null,
+            markers: [],
+            workerMarker: null,
+            watchId: null
+        };
+
+        // 4. SUPABASE REALTIME Y PERSISTENCIA
+        let supabaseClient = null;
+        let realtimeChannel = null;
+
+        if (window.supabase && CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY) {
+            supabaseClient = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+            
+            // Canal de operaciones en vivo (GPS y Estados)
+            realtimeChannel = supabaseClient.channel('worknow_ops');
+            
+            realtimeChannel.on('broadcast', { event: 'location_update' }, (payload) => {
+                const data = payload.payload;
+                if (state.currentRole === 'employer' && data.employerId === state.currentUserId) {
+                    updateWorkerLocationOnMap(data.lat, data.lng);
+                    const statusEl = document.getElementById(`worker_status_${data.contractId}`);
+                    if(statusEl) statusEl.innerText = `Última act: ${new Date(data.timestamp).toLocaleTimeString()}`;
+                }
+            });
+
+            realtimeChannel.on('broadcast', { event: 'status_update' }, async (payload) => {
+                const data = payload.payload;
+                // Actualizar caché local silenciosamente para reflejar el cambio
+                const contracts = JSON.parse(localStorage.getItem('wn_contracts')) || [];
+                const cIdx = contracts.findIndex(c => c.id === data.contractId);
+                if (cIdx > -1) {
+                    contracts[cIdx].status = data.status;
+                    localStorage.setItem('wn_contracts', JSON.stringify(contracts));
+                    await renderApp();
+                }
+            });
+
+            realtimeChannel.on('broadcast', { event: 'new_job_alert' }, async (payload) => {
+                const data = payload.payload;
+                if (state.currentRole === 'worker' && data.workerId === state.currentUserId) {
+                    showToast(`¡Nuevo trabajo disponible! ${data.jobTitle}`, 'info');
+                    await renderJobs(); // Refrescar trabajos desde la fuente de verdad
+                }
+            });
+
+            realtimeChannel.subscribe();
+
+            // Sincronización automática de base de datos (Postgres Changes)
+            supabaseClient.channel('public_changes')
+                .on('postgres_changes', { event: '*', schema: 'public' }, async payload => {
+                    const table = payload.table;
+                    if (table === 'profiles') {
+                        let profiles = JSON.parse(localStorage.getItem('wn_profiles')) || {};
+                        profiles[payload.new.id] = payload.new;
+                        localStorage.setItem('wn_profiles', JSON.stringify(profiles));
+                    } else {
+                        let items = JSON.parse(localStorage.getItem(`wn_${table}`)) || [];
+                        const idx = items.findIndex(i => i.id === payload.new.id);
+                        if (idx > -1) items[idx] = payload.new;
+                        else items.push(payload.new);
+                        localStorage.setItem(`wn_${table}`, JSON.stringify(items));
+                    }
+                    await renderApp();
+                }).subscribe();
+        }
+
+        // 5. DB ADAPTER (SUPABASE-FIRST, LOCALSTORAGE COMO CACHÉ)
+        const DB = {
+            get: async function(table) {
+                if (supabaseClient && state.sessionActive) {
+                    const { data, error } = await supabaseClient.from(table).select('*');
+                    if (error) {
+                        console.error(`[DB GET ${table}]`, error);
+                        throw error;
+                    }
+                    // Actualizar caché
+                    localStorage.setItem(`wn_${table}`, JSON.stringify(data));
+                    return data;
+                }
+                // Fallback Dev Mode
+                return JSON.parse(localStorage.getItem(`wn_${table}`)) || [];
+            },
+            insert: async function(table, item) {
+                if (supabaseClient && state.sessionActive) {
+                    const { error } = await supabaseClient.from(table).insert(item);
+                    if (error) {
+                        console.error(`[DB INSERT ${table}]`, error);
+                        throw error;
+                    }
+                }
+                // Actualizar caché solo si Supabase fue exitoso (o en Dev Mode)
+                const items = JSON.parse(localStorage.getItem(`wn_${table}`)) || [];
+                items.push(item);
+                localStorage.setItem(`wn_${table}`, JSON.stringify(items));
+            },
+            update: async function(table, id, updates) {
+                if (supabaseClient && state.sessionActive) {
+                    const { error } = await supabaseClient.from(table).update(updates).eq('id', id);
+                    if (error) {
+                        console.error(`[DB UPDATE ${table}]`, error);
+                        throw error;
+                    }
+                }
+                // Actualizar caché solo si Supabase fue exitoso (o en Dev Mode)
+                const items = JSON.parse(localStorage.getItem(`wn_${table}`)) || [];
+                const idx = items.findIndex(i => i.id === id);
+                if (idx > -1) {
+                    items[idx] = { ...items[idx], ...updates };
+                    localStorage.setItem(`wn_${table}`, JSON.stringify(items));
+                }
+            }
+        };
+
+        // ====================================================================
+        // 🔐 AUTENTICACIÓN REAL
+        // ====================================================================
+        let isRegisterMode = false;
+        function toggleAuthMode() {
+            isRegisterMode = !isRegisterMode;
+            document.getElementById('registerFields').classList.toggle('hidden', !isRegisterMode);
+            document.getElementById('btnLogin').classList.toggle('hidden', isRegisterMode);
+            document.getElementById('btnRegister').classList.toggle('hidden', !isRegisterMode);
+            document.getElementById('authToggleText').innerText = isRegisterMode ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate';
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            if(!email || !password) return showToast('Completa los campos', 'error');
+            
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) return showToast(error.message, 'error');
+            await initSession(data.session);
+        }
+
+        async function handleRegister() {
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            const name = document.getElementById('authName').value;
+            const phone = document.getElementById('authPhone').value;
+            const role = document.getElementById('authRole').value;
+
+            if(!email || !password || !name || !phone) return showToast('Completa todos los campos', 'error');
+
+            const { data, error } = await supabaseClient.auth.signUp({ email, password });
+            if (error) return showToast(error.message, 'error');
+            
+            if (data.user) {
+                const { error: profileError } = await supabaseClient.from('profiles').insert({
+                    id: data.user.id,
+                    role, name, email, phone, country: 'EC',
+                    balance: role === 'employer' ? 500 : 0,
+                    created_at: Date.now()
+                });
+                if (profileError) {
+                    console.error('[SUPABASE PROFILE]', profileError);
+                    return showToast('Error creando perfil', 'error');
+                }
+                await initSession(data.session || { user: data.user });
+            }
+        }
+
+        async function handleLogout() {
+            if(supabaseClient) {
+                await supabaseClient.auth.signOut();
+            }
+            state.sessionActive = false;
+            state.currentUserId = null;
+            state.currentRole = null;
+            localStorage.clear(); // Limpiar caché local por seguridad
+            location.reload();
+        }
+
+        async function initSession(session) {
+            if (!session) return;
+            state.sessionActive = true;
+            state.currentUserId = session.user.id;
+            
+            try {
+                const { data: profile, error } = await supabaseClient.from('profiles').select('*').eq('id', session.user.id).single();
+                if (error) throw error;
+                
+                if (profile) {
+                    state.currentRole = profile.role;
+                    document.getElementById('userInitials').innerText = profile.name.substring(0,2).toUpperCase();
+                    document.getElementById('roleSelect').style.display = 'none'; // Ocultar selector dummy en PROD
+                    document.getElementById('modalAuth').classList.add('hidden');
+                    
+                    await renderApp();
+                    showToast(`Bienvenido, ${profile.name}`, 'success');
+                }
+            } catch (err) {
+                console.error('[SUPABASE SESSION]', err);
+                showToast('Error al cargar el perfil', 'error');
+            }
+        }
+
+        // ====================================================================
+        // 📡 FUNCIONES DE RED Y GPS
+        // ====================================================================
+        function broadcastLocation(contractId, employerId, lat, lng) {
+            if (realtimeChannel) {
+                realtimeChannel.send({
+                    type: 'broadcast',
+                    event: 'location_update',
+                    payload: { contractId, employerId, lat, lng, timestamp: Date.now() }
+                });
+            }
+            // Persistir ubicación real en Supabase
+            if (supabaseClient && state.sessionActive) {
+                supabaseClient.from('worker_locations').insert({
+                    contract_id: contractId,
+                    worker_id: state.currentUserId,
+                    lat, lng,
+                    timestamp: Date.now()
+                }).catch(console.error);
+            }
+        }
+
+        function broadcastStatus(contractId, status) {
+            if (realtimeChannel) {
+                realtimeChannel.send({
+                    type: 'broadcast',
+                    event: 'status_update',
+                    payload: { contractId, status, timestamp: Date.now() }
+                });
+            }
+        }
+
+        // 6. MOTOR GEOGRÁFICO (GOOGLE MAPS DINÁMICO)
+        function loadGoogleMaps() {
+            if (!CONFIG.GOOGLE_MAPS_API_KEY) {
+                console.warn("Google Maps API Key no configurada.");
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${CONFIG.GOOGLE_MAPS_API_KEY}&libraries=geometry,places`;
+            script.async = true;
+            script.defer = true;
+            script.onload = initMap;
+            document.head.appendChild(script);
+        }
+
+        function initMap() {
+            if(state.map || typeof google === 'undefined') return;
+            
+            state.map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: state.userLat, lng: state.userLng },
+                zoom: 13,
+                disableDefaultUI: true,
+                styles: [
+                    { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
+                    { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+                    { elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+                    { elementType: "labels.text.stroke", stylers: [{ color: "#f5f5f5" }] },
+                    { featureType: "administrative.land_parcel", elementType: "labels.text.fill", stylers: [{ color: "#bdbdbd" }] },
+                    { featureType: "poi", elementType: "geometry", stylers: [{ color: "#eeeeee" }] },
+                    { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+                    { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#e5e5e5" }] },
+                    { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#9e9e9e" }] },
+                    { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+                    { featureType: "road.arterial", elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+                    { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#dadada" }] },
+                    { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+                    { featureType: "road.local", elementType: "labels.text.fill", stylers: [{ color: "#9e9e9e" }] },
+                    { featureType: "transit.line", elementType: "geometry", stylers: [{ color: "#e5e5e5" }] },
+                    { featureType: "transit.station", elementType: "geometry", stylers: [{ color: "#eeeeee" }] },
+                    { featureType: "water", elementType: "geometry", stylers: [{ color: "#c9c9c9" }] },
+                    { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#9e9e9e" }] }
+                ]
+            });
+
+            new google.maps.Marker({
+                position: { lat: state.userLat, lng: state.userLng },
+                map: state.map,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 8,
+                    fillColor: '#2563eb',
+                    fillOpacity: 0.5,
+                    strokeWeight: 2,
+                    strokeColor: '#2563eb'
+                },
+                title: "Tu Ubicación"
+            });
+        }
+
+        function updateWorkerLocationOnMap(lat, lng) {
+            if(!state.map) return;
+            if(!state.workerMarker) {
+                state.workerMarker = new google.maps.Marker({
+                    position: { lat, lng },
+                    map: state.map,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 10,
+                        fillColor: '#10b981',
+                        fillOpacity: 1,
+                        strokeWeight: 2,
+                        strokeColor: '#ffffff'
+                    },
+                    title: "Trabajador en vivo"
+                });
+            } else {
+                state.workerMarker.setPosition({ lat, lng });
+            }
+        }
+
+        // 7. RENDERIZADO PRINCIPAL
+        async function renderApp() {
+            await renderWallet();
+            await renderJobs();
+            await renderContracts();
+            updateUIForRole();
+        }
+
+        function updateUIForRole() {
+            if(!state.sessionActive) {
+                document.getElementById('userInitials').innerText = state.currentRole === 'employer' ? 'EM' : 'TR';
+            }
+            document.getElementById('btnCreateJob').style.display = state.currentRole === 'employer' ? 'block' : 'none';
+        }
+
+        function changeRole(role) {
+            if (state.sessionActive) {
+                showToast('El rol está bloqueado por tu perfil real.', 'error');
+                return;
+            }
+            // Solo funciona en Development Mode (Sin Supabase)
+            state.currentRole = role;
+            state.currentUserId = role === 'employer' ? 'emp_dev' : 'wrk_dev';
+            showToast(`Modo Dev: ${role.toUpperCase()}`, 'info');
+            renderApp();
+        }
+
+        function navigate(view) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${view}`).classList.add('active');
+            if(view === 'dashboard' && state.map) {
+                setTimeout(() => google.maps.event.trigger(state.map, 'resize'), 100);
+            }
+        }
+
+        // 8. LÓGICA DE NEGOCIO: TRABAJOS Y ALERTAS REALES
+        async function createJob() {
+            const title = document.getElementById('jobTitle').value;
+            const desc = document.getElementById('jobDesc').value;
+            const price = parseFloat(document.getElementById('jobPrice').value);
+            const type = document.getElementById('jobType').value;
+
+            if(!title || isNaN(price) || price <= 0) return showToast('Datos inválidos', 'error');
+
+            const rLat = state.userLat + (Math.random() - 0.5) * 0.05;
+            const rLng = state.userLng + (Math.random() - 0.5) * 0.05;
+
+            const newJob = {
+                id: 'job_' + Date.now(),
+                title, desc, price, currency: 'USD', payment_type: type, lat: rLat, lng: rLng,
+                status: 'open', employer_id: state.currentUserId, created_at: Date.now()
+            };
+
+            try {
+                await DB.insert('jobs', newJob);
+                document.getElementById('modalCreateJob').classList.add('hidden');
+                document.getElementById('jobTitle').value = '';
+                document.getElementById('jobDesc').value = '';
+                showToast('Servicio publicado exitosamente', 'success');
+                
+                await notifyMatchingWorkers(newJob);
+                await renderApp();
+            } catch (e) {
+                showToast('Error al publicar el servicio', 'error');
+            }
+        }
+
+        async function notifyMatchingWorkers(job) {
+            try {
+                const profilesArr = await DB.get('profiles');
+                for (const p of profilesArr) {
+                    if(p.role === 'worker' && p.notification_job_enabled && p.id !== job.employer_id) {
+                        await DB.insert('notifications', {
+                            id: 'notif_' + Date.now() + '_' + p.id,
+                            user_id: p.id,
+                            type: 'new_job',
+                            title: 'Nuevo trabajo en tu área',
+                            message: job.title,
+                            read: false,
+                            created_at: Date.now()
+                        });
+
+                        if(realtimeChannel) {
+                            realtimeChannel.send({
+                                type: 'broadcast',
+                                event: 'new_job_alert',
+                                payload: { workerId: p.id, jobTitle: job.title }
+                            });
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Error notificando workers', e);
+            }
+        }
+
+        async function renderJobs() {
+            try {
+                const jobs = await DB.get('jobs');
+                const container = document.getElementById('jobsListContainer');
+                container.innerHTML = '';
+                
+                if(state.markers) {
+                    state.markers.forEach(m => m.setMap(null));
+                }
+                state.markers = [];
+
+                const isWorker = state.currentRole === 'worker';
+
+                jobs.filter(j => j.status === 'open').forEach(job => {
+                    let dist = "N/A";
+                    if(typeof google !== 'undefined' && google.maps.geometry) {
+                        const p1 = new google.maps.LatLng(state.userLat, state.userLng);
+                        const p2 = new google.maps.LatLng(job.lat, job.lng);
+                        dist = (google.maps.geometry.spherical.computeDistanceBetween(p1, p2) / 1000).toFixed(1);
+                    }
+                    
+                    const isMine = job.employer_id === state.currentUserId;
+
+                    if(typeof google !== 'undefined' && state.map) {
+                        const marker = new google.maps.Marker({
+                            position: { lat: job.lat, lng: job.lng },
+                            map: state.map,
+                            title: job.title
+                        });
+                        const infoWindow = new google.maps.InfoWindow({
+                            content: `<div class="p-1"><b>${job.title}</b><br/>$${job.price} (${job.payment_type === 'fixed' ? 'Obra' : 'Hora'})</div>`
+                        });
+                        marker.addListener('click', () => infoWindow.open(state.map, marker));
+                        state.markers.push(marker);
+                    }
+
+                    let actionBtn = '';
+                    if(isWorker) {
+                        actionBtn = `<button onclick="applyJob('${job.id}')" class="w-full mt-3 bg-brand text-white py-2 rounded font-bold text-sm hover:bg-blue-600 transition shadow">Aplicar al Servicio</button>`;
+                    } else if(isMine) {
+                        actionBtn = `<div class="w-full mt-3 bg-gray-100 text-slate-500 text-center py-2 rounded font-bold text-sm">Tu Publicación</div>`;
+                    }
+
+                    container.innerHTML += `
+                        <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer" onclick="if(state.map) state.map.setCenter({lat: ${job.lat}, lng: ${job.lng}})">
+                            <div class="flex justify-between items-start">
+                                <h3 class="font-bold text-slate-800">${job.title}</h3>
+                                <span class="font-bold text-brand text-lg">$${job.price}</span>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1 line-clamp-2">${job.desc || 'Sin descripción'}</p>
+                            <div class="flex gap-2 mt-2">
+                                <span class="text-xs bg-gray-100 px-2 py-1 rounded text-slate-600">${job.payment_type === 'fixed' ? 'Por Obra' : 'Por Hora'}</span>
+                                <span class="text-xs text-slate-500 px-2 py-1"><i data-lucide="map-pin" class="inline w-3 h-3"></i> a ${dist} km</span>
+                            </div>
+                            ${actionBtn}
+                        </div>
+                    `;
+                });
+                lucide.createIcons();
+            } catch (e) {
+                console.error('Error renderizando jobs', e);
+            }
+        }
+
+        // 9. LÓGICA DE ACUERDOS REALES (SIN AUTOAPROBACIÓN)
+        async function applyJob(jobId) {
+            try {
+                const jobs = await DB.get('jobs');
+                const job = jobs.find(j => j.id === jobId);
+                if(!job) return;
+
+                const newContract = {
+                    id: 'ct_' + Date.now(),
+                    job_id: jobId,
+                    employer_id: job.employer_id,
+                    worker_id: state.currentUserId,
+                    status: 'negotiating',
+                    agreed_price: job.price,
+                    payment_type: job.payment_type,
+                    title: job.title,
+                    lat: job.lat,
+                    lng: job.lng,
+                    work_started_at: null,
+                    work_ended_at: null,
+                    created_at: Date.now()
+                };
+
+                await DB.insert('contracts', newContract);
+                await DB.update('jobs', jobId, { status: 'negotiating' });
+                
+                showToast('Aplicación enviada. Esperando propuesta del empleador.', 'success');
+                navigate('contracts');
+                await renderApp();
+            } catch (e) {
+                showToast('Error al aplicar al trabajo', 'error');
+            }
+        }
+
+        async function proposeTerms(contractId) {
+            try {
+                const contracts = await DB.get('contracts');
+                const contract = contracts.find(c => c.id === contractId);
+                if(!contract) return;
+
+                const price = parseFloat(prompt("Propón un precio final para este servicio:", contract.agreed_price));
+                if(price && price > 0) {
+                    await DB.update('contracts', contractId, { agreed_price: price, status: 'pending_acceptance' });
+                    broadcastStatus(contractId, 'pending_acceptance');
+                    showToast('Términos propuestos. Esperando aceptación del trabajador.', 'success');
+                    await renderApp();
+                }
+            } catch (e) {
+                showToast('Error al proponer términos', 'error');
+            }
+        }
+
+        async function acceptTerms(contractId) {
+            try {
+                await DB.update('contracts', contractId, { status: 'agreed' });
+                broadcastStatus(contractId, 'agreed');
+                showToast('Acuerdo confirmado. Puedes iniciar la ruta.', 'success');
+                await renderApp();
+            } catch (e) {
+                showToast('Error al aceptar términos', 'error');
+            }
+        }
+
+        // 10. OPERACIÓN EN TIEMPO REAL Y GEOFENCING
+        async function startTracking(contractId, jobLat, jobLng, employerId) {
+            if (!navigator.geolocation) {
+                return showToast('Geolocalización no soportada en este dispositivo', 'error');
+            }
+            
+            try {
+                await DB.update('contracts', contractId, { status: 'en_route' });
+                broadcastStatus(contractId, 'en_route');
+                await renderApp();
+
+                state.watchId = navigator.geolocation.watchPosition(
+                    (pos) => {
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+                        broadcastLocation(contractId, employerId, lat, lng);
+                        checkGeofence(lat, lng, jobLat, jobLng, contractId);
+                    },
+                    (err) => {
+                        console.error(err);
+                        showToast('Necesitamos tu ubicación para activar el seguimiento de este servicio.', 'error');
+                    },
+                    { enableHighAccuracy: true, maximumAge: 0 }
+                );
+                
+                document.getElementById('gpsStatusText').innerText = "Transmitiendo Ubicación";
+                showToast('Seguimiento en vivo activado. En camino.', 'success');
+            } catch (e) {
+                showToast('Error al iniciar seguimiento', 'error');
+            }
+        }
+
+        async function checkGeofence(lat, lng, jobLat, jobLng, contractId) {
+            if(typeof google === 'undefined' || !google.maps.geometry) return;
+            const p1 = new google.maps.LatLng(lat, lng);
+            const p2 = new google.maps.LatLng(jobLat, jobLng);
+            const distance = google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
+            
+            if(distance <= 50) {
+                try {
+                    const contracts = await DB.get('contracts');
+                    const contract = contracts.find(c => c.id === contractId);
+                    if(contract && contract.status === 'en_route') {
+                        await DB.update('contracts', contractId, { status: 'on_site' });
+                        broadcastStatus(contractId, 'on_site');
+                        await renderApp();
+                        showToast('Has llegado al sitio del trabajo (Geocerca 50m)', 'success');
+                    }
+                } catch (e) {
+                    console.error('Error en geofence', e);
+                }
+            }
+        }
+
+        async function startWork(contractId) {
+            try {
+                await DB.update('contracts', contractId, { status: 'working', work_started_at: Date.now() });
+                broadcastStatus(contractId, 'working');
+                showToast('Trabajo iniciado. Tiempo registrado.', 'success');
+                await renderApp();
+            } catch (e) {
+                showToast('Error al iniciar trabajo', 'error');
+            }
+        }
+
+        async function finishWork(contractId) {
+            try {
+                await DB.update('contracts', contractId, { status: 'completed', work_ended_at: Date.now() });
+                
+                if(state.watchId !== null) {
+                    navigator.geolocation.clearWatch(state.watchId);
+                    state.watchId = null;
+                    document.getElementById('gpsStatusText').innerText = "Conectado a Red Global";
+                }
+
+                broadcastStatus(contractId, 'completed');
+                showToast('Servicio finalizado. Seguimiento detenido.', 'success');
+                await renderApp();
+            } catch (e) {
+                showToast('Error al finalizar trabajo', 'error');
+            }
+        }
+
+        async function releasePayment(contractId) {
+            try {
+                const contracts = await DB.get('contracts');
+                const contract = contracts.find(c => c.id === contractId);
+                if(!contract) return;
+
+                const profilesArr = await DB.get('profiles');
+                const employer = profilesArr.find(p => p.id === contract.employer_id);
+                const worker = profilesArr.find(p => p.id === contract.worker_id);
+
+                let amount = contract.agreed_price;
+                if(contract.payment_type === 'hourly' && contract.work_started_at && contract.work_ended_at) {
+                    const hours = (contract.work_ended_at - contract.work_started_at) / (1000 * 60 * 60);
+                    amount = parseFloat((hours * contract.agreed_price).toFixed(2));
+                    if(amount <= 0) amount = contract.agreed_price;
+                }
+
+                if(employer.balance < amount) {
+                    return showToast('Saldo insuficiente para liberar el pago.', 'error');
+                }
+
+                // Operaciones atómicas
+                await DB.update('profiles', employer.id, { balance: employer.balance - amount });
+                await DB.update('profiles', worker.id, { balance: worker.balance + amount });
+                await DB.update('contracts', contractId, { status: 'closed' });
+                await DB.update('jobs', contract.job_id, { status: 'closed' });
+                
+                await DB.insert('txs', { id: 'tx_'+Date.now()+'_1', userId: employer.id, desc: `Pago Liberado - ${contract.title}`, amount: -amount, date: Date.now() });
+                await DB.insert('txs', { id: 'tx_'+Date.now()+'_2', userId: worker.id, desc: `Pago Recibido - ${contract.title}`, amount: amount, date: Date.now() });
+                
+                showToast(`Pago de $${amount} liberado exitosamente.`, 'success');
+                await renderApp();
+            } catch (e) {
+                showToast('Error al liberar el pago', 'error');
+            }
+        }
+
+        async function renderContracts() {
+            try {
+                const contracts = await DB.get('contracts');
+                const profilesArr = await DB.get('profiles');
+                const profiles = {};
+                profilesArr.forEach(p => profiles[p.id] = p);
+
+                const container = document.getElementById('contractsContainer');
+                container.innerHTML = '';
+
+                const myContracts = contracts.filter(c => (c.employer_id === state.currentUserId || c.worker_id === state.currentUserId) && c.status !== 'closed');
+
+                if(myContracts.length === 0) {
+                    container.innerHTML = `<div class="text-center p-10 text-slate-400 font-medium">No tienes acuerdos activos</div>`;
+                    return;
+                }
+
+                myContracts.forEach(c => {
+                    const isEmployer = state.currentUserId === c.employer_id;
+                    let statusUI = '';
+                    let actionUI = '';
+                    let timerUI = '';
+                    let infoUI = '';
+                    let contactUI = '';
+
+                    if (['agreed', 'en_route', 'on_site', 'working', 'completed'].includes(c.status)) {
+                        const otherUserId = isEmployer ? c.worker_id : c.employer_id;
+                        const otherUser = profiles[otherUserId];
+                        if(otherUser) {
+                            contactUI = `<p class="text-xs text-slate-500 mt-1"><i data-lucide="phone" class="w-3 h-3 inline"></i> ${otherUser.phone}</p>`;
+                        }
+                    }
+
+                    if(c.status === 'working' && c.payment_type === 'hourly' && c.work_started_at) {
+                        timerUI = `<div class="text-3xl font-mono font-bold text-slate-800 my-2 timer-elem" data-start="${c.work_started_at}">00:00:00</div>`;
+                    } else if (c.status === 'working' && c.payment_type === 'fixed') {
+                        timerUI = `<div class="text-sm font-bold text-brand my-2">Trabajo en progreso (Precio Fijo)</div>`;
+                    }
+
+                    switch(c.status) {
+                        case 'negotiating':
+                            statusUI = `<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold uppercase">Aplicación Recibida</span>`;
+                            if(isEmployer) {
+                                actionUI = `<button onclick="proposeTerms('${c.id}')" class="bg-brand text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-blue-600 w-full mt-4">Proponer Términos</button>`;
+                            } else {
+                                actionUI = `<p class="text-xs text-slate-500 mt-4 text-center">Esperando propuesta del empleador</p>`;
+                            }
+                            break;
+                        case 'pending_acceptance':
+                            statusUI = `<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold uppercase">Términos Propuestos</span>`;
+                            if(!isEmployer) {
+                                actionUI = `<button onclick="acceptTerms('${c.id}')" class="bg-brand text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-blue-600 w-full mt-4">Aceptar Propuesta ($${c.agreed_price})</button>`;
+                            } else {
+                                actionUI = `<p class="text-xs text-slate-500 mt-4 text-center">Esperando aceptación del trabajador</p>`;
+                            }
+                            break;
+                        case 'agreed':
+                            statusUI = `<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold uppercase">Acuerdo Confirmado</span>`;
+                            if(!isEmployer) {
+                                actionUI = `<button onclick="startTracking('${c.id}', ${c.lat}, ${c.lng}, '${c.employer_id}')" class="bg-purple-600 text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-purple-700 w-full mt-4">Ir al lugar (Activar GPS)</button>`;
+                            } else {
+                                actionUI = `<p class="text-xs text-slate-500 mt-4 text-center">El trabajador aún no ha iniciado el seguimiento en vivo.</p>`;
+                            }
+                            break;
+                        case 'en_route':
+                            statusUI = `<span class="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-bold uppercase">En Camino</span>`;
+                            if(!isEmployer) {
+                                actionUI = `<div class="bg-purple-50 text-purple-700 p-2 text-center text-sm font-bold rounded mt-4 animate-pulse">Compartiendo ubicación en vivo...</div>
+                                            <button onclick="checkGeofence(${state.userLat}, ${state.userLng}, ${c.lat}, ${c.lng}, '${c.id}')" class="text-xs text-slate-400 w-full text-center mt-2 underline">Forzar llegada (Dev)</button>`;
+                            } else {
+                                infoUI = `<p id="worker_status_${c.id}" class="text-xs text-slate-500 mt-2">Esperando actualización de ubicación real...</p>`;
+                                actionUI = `<button onclick="navigate('dashboard')" class="bg-gray-100 text-slate-700 px-4 py-2 rounded-lg font-bold shadow-sm hover:bg-gray-200 w-full mt-4">Ver en Mapa</button>`;
+                            }
+                            break;
+                        case 'on_site':
+                            statusUI = `<span class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold uppercase">En Sitio</span>`;
+                            if(!isEmployer) {
+                                actionUI = `<button onclick="startWork('${c.id}')" class="bg-brand text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-blue-600 w-full mt-4">Iniciar Trabajo</button>`;
+                            } else {
+                                actionUI = `<p class="text-xs text-slate-500 mt-4 text-center">El trabajador ha llegado al sitio.</p>`;
+                            }
+                            break;
+                        case 'working':
+                            statusUI = `<span class="bg-escrow/20 text-escrow px-2 py-1 rounded text-xs font-bold uppercase border border-escrow/50">Trabajando</span>`;
+                            if(!isEmployer) {
+                                actionUI = `<button onclick="finishWork('${c.id}')" class="bg-red-500 text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-red-600 w-full mt-4">Finalizar Trabajo</button>`;
+                            } else {
+                                actionUI = `<div class="bg-blue-50 text-brand p-2 text-center text-sm font-bold rounded mt-4">Operación en curso</div>`;
+                            }
+                            break;
+                        case 'completed':
+                            statusUI = `<span class="bg-gray-200 text-gray-600 px-2 py-1 rounded text-xs font-bold uppercase">Finalizado</span>`;
+                            if(isEmployer) {
+                                let finalPrice = c.agreed_price;
+                                if(c.payment_type === 'hourly' && c.work_started_at && c.work_ended_at) {
+                                    const hours = (c.work_ended_at - c.work_started_at) / (1000 * 60 * 60);
+                                    finalPrice = parseFloat((hours * c.agreed_price).toFixed(2));
+                                    if(finalPrice <= 0) finalPrice = c.agreed_price;
+                                }
+                                actionUI = `<button onclick="releasePayment('${c.id}')" class="bg-escrow text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-emerald-600 w-full mt-4">✓ Liberar Pago ($${finalPrice})</button>`;
+                            } else {
+                                actionUI = `<p class="text-xs text-slate-500 mt-4 text-center">Esperando liberación de fondos</p>`;
+                            }
+                            break;
+                    }
+
+                    container.innerHTML += `
+                        <div class="bg-white border border-gray-200 p-6 rounded-xl shadow-sm">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    ${statusUI}
+                                    <h3 class="font-bold text-xl mt-2 text-slate-800">${c.title}</h3>
+                                    ${contactUI}
+                                </div>
+                                <div class="text-right">
+                                    <span class="font-bold text-2xl text-slate-800">$${c.agreed_price}</span>
+                                    <p class="text-xs text-slate-500">${c.payment_type === 'hourly' ? 'Por Hora' : 'Por Obra'}</p>
+                                </div>
+                            </div>
+                            ${infoUI}
+                            ${timerUI}
+                            ${actionUI}
+                        </div>
+                    `;
+                });
+                lucide.createIcons();
+            } catch (e) {
+                console.error('Error renderizando contratos', e);
+            }
+        }
+
+        // 11. BILLETERA FINANCIERA
+        async function renderWallet() {
+            try {
+                const profilesArr = await DB.get('profiles');
+                const user = profilesArr.find(p => p.id === state.currentUserId);
+                if(!user) return;
+                
+                document.getElementById('walletBalance').innerText = user.balance.toFixed(2);
+                document.getElementById('walletEscrow').innerText = user.escrow.toFixed(2);
+
+                const txs = await DB.get('txs');
+                const myTxs = txs.filter(t => t.userId === state.currentUserId).reverse();
+                const txContainer = document.getElementById('txHistory');
+                txContainer.innerHTML = '';
+                
+                if(myTxs.length === 0) txContainer.innerHTML = '<p class="text-slate-400 text-sm">No hay transacciones.</p>';
+
+                myTxs.forEach(tx => {
+                    const isPos = tx.amount > 0;
+                    txContainer.innerHTML += `
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                            <div>
+                                <p class="font-bold text-sm text-slate-700">${tx.desc}</p>
+                                <p class="text-xs text-slate-400">${new Date(tx.date).toLocaleString()}</p>
+                            </div>
+                            <span class="font-bold ${isPos ? 'text-escrow' : 'text-slate-800'}">${isPos?'+':''}$${tx.amount.toFixed(2)}</span>
+                        </div>
+                    `;
+                });
+            } catch (e) {
+                console.error('Error renderizando wallet', e);
+            }
+        }
+
+        async function promptDeposit() {
+            const amount = parseFloat(prompt("Ingresa monto a depositar:", "100"));
+            if(amount && amount > 0) {
+                try {
+                    const profilesArr = await DB.get('profiles');
+                    const user = profilesArr.find(p => p.id === state.currentUserId);
+                    await DB.update('profiles', user.id, { balance: user.balance + amount });
+                    await DB.insert('txs', { id: 'tx_'+Date.now(), userId: user.id, desc: 'Depósito Externo', amount: amount, date: Date.now() });
+                    showToast(`+$${amount} fondeados exitosamente`, 'success');
+                    await renderWallet();
+                } catch (e) {
+                    showToast('Error al depositar', 'error');
+                }
+            }
+        }
+
+        async function promptWithdraw() {
+            try {
+                const profilesArr = await DB.get('profiles');
+                const user = profilesArr.find(p => p.id === state.currentUserId);
+                if(user.balance <= 0) return showToast('No tienes fondos disponibles', 'error');
+                
+                const amount = parseFloat(prompt(`Fondos disponibles: $${user.balance}\nMonto a retirar:`, user.balance));
+                if(amount && amount > 0 && amount <= user.balance) {
+                    await DB.update('profiles', user.id, { balance: user.balance - amount });
+                    await DB.insert('txs', { id: 'tx_'+Date.now(), userId: user.id, desc: 'Retiro a Cuenta Bancaria', amount: -amount, date: Date.now() });
+                    showToast(`-$${amount} retirados exitosamente`, 'success');
+                    await renderWallet();
+                } else {
+                    showToast('Monto inválido', 'error');
+                }
+            } catch (e) {
+                showToast('Error al retirar', 'error');
+            }
+        }
+
+        // 12. UTILIDADES Y LOOP (Cronómetro y UI)
+        function showToast(msg, type='info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            const icon = type==='success' ? '<svg class="w-5 h-5 text-escrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' 
+                       : type==='error' ? '<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>'
+                       : '<svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+            toast.innerHTML = `${icon} <span>${msg}</span>`;
+            container.appendChild(toast);
+            
+            toast.offsetHeight;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        setInterval(() => {
+            document.querySelectorAll('.timer-elem').forEach(el => {
+                const start = parseInt(el.getAttribute('data-start'));
+                if(start) {
+                    const diff = Math.floor((Date.now() - start) / 1000);
+                    const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+                    const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+                    const s = String(diff % 60).padStart(2, '0');
+                    el.innerText = `${h}:${m}:${s}`;
+                }
+            });
+        }, 1000);
+
+        // INIT APP
+        window.onload = async () => {
+            loadGoogleMaps();
+            
+            if (window.supabase && CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY) {
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
+                if (error) console.error('[SUPABASE AUTH]', error);
+                
+                if (session) {
+                    await initSession(session);
+                } else {
+                    document.getElementById('modalAuth').classList.remove('hidden');
+                }
+            } else {
+                // Development Mode Fallback
+                state.currentUserId = 'emp_dev';
+                state.currentRole = 'employer';
+                
+                // Seed local data if empty
+                if (!localStorage.getItem('wn_profiles')) {
+                    localStorage.setItem('wn_profiles', JSON.stringify([
+                        { id: 'emp_dev', role: 'employer', name: 'Empleador (Dev)', email: 'emp@dev.com', phone: '+593999999999', balance: 500, escrow: 0 },
+                        { id: 'wrk_dev', role: 'worker', name: 'Trabajador (Dev)', email: 'wrk@dev.com', phone: '+593888888888', balance: 0, escrow: 0 }
+                    ]));
+                }
+                
+                await renderApp();
+                showToast('Modo Desarrollo Local (Sin Supabase)', 'info');
+            }
+        };
+
+    </script>
+
+    <!-- ================= ADAPTADOR WN: interfaz pública del Core para el módulo AG ================= -->
+    <script>
+        window.WN = {
+            navigate: navigate,
+            applyJob: applyJob,
+            toast: showToast,
+            DB: DB,
+            state: state,
+            importJobs: async function(list){
+                let added = 0;
+                try {
+                    const jobs = await DB.get('jobs');
+                    for (const j of list) {
+                        if (jobs.some(x => x.id === 'imp_' + j.id)) continue;
+                        const angle = Math.random()*Math.PI*2, r = 0.008 + Math.random()*0.045;
+                        const price = j.salary_max ? Math.min(200, Math.max(25, Math.round(j.salary_max/1500))) : 25 + Math.round(Math.random()*60);
+                        const newJob = {
+                            id: 'imp_' + j.id,
+                            title: String(j.title).slice(0,64),
+                            desc: 'Fuente: ' + j.source + ' · ' + j.company + ' · ' + j.location,
+                            price: price,
+                            currency: 'USD',
+                            payment_type: j.salary_max ? 'fixed' : 'hourly',
+                            lat: state.userLat + Math.sin(angle)*r,
+                            lng: state.userLng + Math.cos(angle)*r,
+                            status: 'open',
+                            employer_id: 'ext_emp',
+                            created_at: Date.now()
+                        };
+                        await DB.insert('jobs', newJob);
+                        jobs.push(newJob);
+                        added++;
+                    }
+                    if (added > 0) await renderJobs();
+                } catch(e) { console.error('[WN.importJobs]', e); }
+                return added;
+            }
+        };
+    </script>
+
+    <!-- ================= DATOS DE OFERTAS (fuente original) ================= -->
+    <script type="application/json" id="jobs-data">[{"id":"jc_152354","title":"Senior QA Automation Developer (Platform)","company":"Upgrade","logo":"https://jobicy.com/data/server-nyc0409/galaxy/mercury/2025/06/f2e311a9-221.jpeg","location":"Canada","type":"Full-Time","industry":"QA & Testing","level":"Mid Level","excerpt":"THE COMPANY: Juul Labs's mission is to transition the world's billion adult smokers away from combustible cigarettes...","description":"Join our engineering team to build robust testing frameworks...","url":"https://jobicy.com/jobs/152354-senior-manager-commercial-capabilities","source":"Jobicy","salary_min":null,"salary_max":null,"salary_currency":"USD","date":"2025-06-15"},{"id":"jc_152355","title":"Machine Learning Engineer - Inference Maintainer & Developer Experience","company":"Roboflow","logo":"","location":"USA","type":"Full-Time","industry":"Software Engineering","level":"Mid Level","excerpt":"","description":"We are looking for a Machine Learning Engineer to focus on inference optimization and developer experience...","url":"https://jobicy.com/jobs/152355-ml-engineer","source":"Jobicy","salary_min":120000,"salary_max":180000,"salary_currency":"USD","date":"2025-06-14"},{"id":"jc_152356","title":"Developer Relations Engineer","company":"Supabase","logo":"","location":"USA","type":"Full-Time","industry":"Software Engineering","level":"Mid Level","excerpt":"","description":"Join Supabase to help developers build faster. You will create content, speak at events, and engage with the community...","url":"https://jobicy.com/jobs/152356-devrel","source":"Jobicy","salary_min":null,"salary_max":null,"salary_currency":"USD","date":"2025-06-13"},{"id":"jc_152357","title":"Senior Game Developer","company":"Playson","logo":"","location":"Europe, Ukraine","type":"Full-Time","industry":"Software Engineering","level":"Senior Level","excerpt":"","description":"Develop high-quality casino games using Unity and C#. Work with artists and designers to deliver engaging experiences...","url":"https://jobicy.com/jobs/152357-game-dev","source":"Jobicy","salary_min":null,"salary_max":null,"salary_currency":"USD","date":"2025-06-12"},{"id":"jc_152358","title":"Senior Front-End Developer (React / TypeScript) - Market Research","company":"Truelogic","logo":"","location":"LATAM","type":"Full-Time","industry":"Software Engineering","level":"Senior Level","excerpt":"","description":"We need a Senior Frontend Developer with strong React and TypeScript skills to build market research dashboards...","url":"https://jobicy.com/jobs/152358-frontend","source":"Jobicy","salary_min":80000,"salary_max":120000,"salary_currency":"USD","date":"2025-06-11"},{"id":"jc_152359","title":"Full-Stack Software Engineer, Internal Services","company":"Serve Robotics","logo":"","location":"Canada, USA","type":"Full-Time","industry":"Software Engineering","level":"Mid Level","excerpt":"","description":"Build internal tools and services that power our autonomous delivery robots. Python, React, AWS...","url":"https://jobicy.com/jobs/152359-fullstack","source":"Jobicy","salary_min":130000,"salary_max":170000,"salary_currency":"USD","date":"2025-06-10"},{"id":"jc_152360","title":"Sr. Software Engineer","company":"AlertMedia","logo":"","location":"Mexico","type":"Full-Time","industry":"Software Engineering","level":"Senior Level","excerpt":"","description":"Help us keep people safe. Build scalable notification systems using Go and Kubernetes...","url":"https://jobicy.com/jobs/152360-sr-se","source":"Jobicy","salary_min":null,"salary_max":null,"salary_currency":"USD","date":"2025-06-09"},{"id":"jc_152361","title":"Senior Software Engineer, Backend","company":"Flex","logo":"","location":"Brazil, Canada, USA","type":"Full-Time","industry":"Software Engineering","level":"Senior Level","excerpt":"","description":"Design and build backend systems for our global logistics platform. Java, Spring Boot, microservices...","url":"https://jobicy.com/jobs/152361-backend","source":"Jobicy","salary_min":140000,"salary_max":190000,"salary_currency":"USD","date":"2025-06-08"},{"id":"jc_152362","title":"Senior Backend Engineer - Ruby on Rails","company":"Calendly","logo":"","location":"USA","type":"Full-Time","industry":"Software Engineering","level":"Senior Level","excerpt":"","description":"Join Calendly to scale our scheduling infrastructure. Deep Ruby on Rails experience required...","url":"https://jobicy.com/jobs/152362-rails","source":"Jobicy","salary_min":150000,"salary_max":200000,"salary_currency":"USD","date":"2025-06-07"},{"id":"jc_152363","title":"Staff Software Engineer, Data Platform","company":"Figma","logo":"","location":"USA","type":"Full-Time","industry":"Software Engineering","level":"Senior Level","excerpt":"","description":"Build the data platform that powers design at scale. Spark, Airflow, dbt, Snowflake...","url":"https://jobicy.com/jobs/152363-data","source":"Jobicy","salary_min":180000,"salary_max":250000,"salary_currency":"USD","date":"2025-06-06"},{"id":"jc_152364","title":"Principal Engineer - Infrastructure","company":"Stripe","logo":"","location":"USA, Canada","type":"Full-Time","industry":"Software Engineering","level":"Senior Level","excerpt":"","description":"Lead infrastructure projects that process billions of dollars. Distributed systems, Rust, Go...","url":"https://jobicy.com/jobs/152364-principal","source":"Jobicy","salary_min":200000,"salary_max":300000,"salary_currency":"USD","date":"2025-06-05"},{"id":"jc_152365","title":"Engineering Manager, Mobile","company":"Spotify","logo":"","location":"Europe","type":"Full-Time","industry":"Software Engineering","level":"Senior Level","excerpt":"","description":"Lead a team of iOS and Android engineers building the world's most popular audio app...","url":"https://jobicy.com/jobs/152365-mobile","source":"Jobicy","salary_min":160000,"salary_max":220000,"salary_currency":"USD","date":"2025-06-04"},{"id":"jc_152366","title":"Data Scientist - Growth","company":"Netflix","logo":"","location":"USA","type":"Full-Time","industry":"Data Science","level":"Mid Level","excerpt":"","description":"Use data to drive subscriber growth. A/B testing, causal inference, machine learning...","url":"https://jobicy.com/jobs/152366-ds","source":"Jobicy","salary_min":170000,"salary_max":240000,"salary_currency":"USD","date":"2025-06-03"},{"id":"jc_152367","title":"Security Engineer, Product Security","company":"Apple","logo":"","location":"USA","type":"Full-Time","industry":"Security","level":"Senior Level","excerpt":"","description":"Protect Apple's products and users. Secure code review, threat modeling, penetration testing...","url":"https://jobicy.com/jobs/152367-security","source":"Jobicy","salary_min":190000,"salary_max":280000,"salary_currency":"USD","date":"2025-06-02"},{"id":"jc_152368","title":"Cloud Solutions Architect","company":"AWS","logo":"","location":"USA, Europe, APAC","type":"Full-Time","industry":"Cloud","level":"Senior Level","excerpt":"","description":"Help enterprises migrate to the cloud. AWS solutions architecture, Terraform, Kubernetes...","url":"https://jobicy.com/jobs/152368-architect","source":"Jobicy","salary_min":160000,"salary_max":240000,"salary_currency":"USD","date":"2025-06-01"},{"id":"jc_152369","title":"DevOps Engineer, CI/CD","company":"GitLab","logo":"","location":"Remote","type":"Full-Time","industry":"DevOps","level":"Mid Level","excerpt":"","description":"Improve our CI/CD pipelines. GitLab CI, Kubernetes, Helm, observability...","url":"https://jobicy.com/jobs/152369-devops","source":"Jobicy","salary_min":130000,"salary_max":180000,"salary_currency":"USD","date":"2025-05-31"},{"id":"jc_152370","title":"Technical Writer, Developer Docs","company":"Vercel","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Documentation","level":"Mid Level","excerpt":"","description":"Write the docs that help developers build faster. Next.js, React, MDX...","url":"https://jobicy.com/jobs/152370-writer","source":"Jobicy","salary_min":100000,"salary_max":150000,"salary_currency":"USD","date":"2025-05-30"},{"id":"jc_152371","title":"Product Manager, Platform","company":"Notion","logo":"","location":"USA","type":"Full-Time","industry":"Product","level":"Senior Level","excerpt":"","description":"Define the future of Notion's platform. API strategy, integrations, developer ecosystem...","url":"https://jobicy.com/jobs/152371-pm","source":"Jobicy","salary_min":170000,"salary_max":230000,"salary_currency":"USD","date":"2025-05-29"},{"id":"jc_152372","title":"UX Researcher","company":"Figma","logo":"","location":"USA","type":"Full-Time","industry":"Design","level":"Mid Level","excerpt":"","description":"Understand how designers work. User research, usability testing, qualitative analysis...","url":"https://jobicy.com/jobs/152372-uxr","source":"Jobicy","salary_min":140000,"salary_max":190000,"salary_currency":"USD","date":"2025-05-28"},{"id":"jc_152373","title":"Site Reliability Engineer","company":"Google","logo":"","location":"USA, Europe","type":"Full-Time","industry":"SRE","level":"Senior Level","excerpt":"","description":"Keep Google's services running. SRE principles, distributed systems, incident response...","url":"https://jobicy.com/jobs/152373-sre","source":"Jobicy","salary_min":180000,"salary_max":260000,"salary_currency":"USD","date":"2025-05-27"},{"id":"jc_152374","title":"Android Developer, Growth","company":"TikTok","logo":"","location":"LATAM, USA","type":"Full-Time","industry":"Mobile","level":"Mid Level","excerpt":"","description":"Build features that grow TikTok's user base. Kotlin, Jetpack Compose, performance optimization...","url":"https://jobicy.com/jobs/152374-android","source":"Jobicy","salary_min":130000,"salary_max":190000,"salary_currency":"USD","date":"2025-05-26"},{"id":"jc_152375","title":"iOS Engineer","company":"Airbnb","logo":"","location":"USA","type":"Full-Time","industry":"Mobile","level":"Senior Level","excerpt":"","description":"Craft delightful iOS experiences. Swift, SwiftUI, UIKit, animation...","url":"https://jobicy.com/jobs/152375-ios","source":"Jobicy","salary_min":170000,"salary_max":250000,"salary_currency":"USD","date":"2025-05-25"},{"id":"jc_152376","title":"Frontend Engineer, Design Systems","company":"Shopify","logo":"","location":"Canada, Europe","type":"Full-Time","industry":"Frontend","level":"Senior Level","excerpt":"","description":"Build Polaris, Shopify's design system. React, TypeScript, accessibility, tokens...","url":"https://jobicy.com/jobs/152376-ds","source":"Jobicy","salary_min":150000,"salary_max":210000,"salary_currency":"USD","date":"2025-05-24"},{"id":"jc_152377","title":"Backend Engineer, Payments","company":"Square","logo":"","location":"USA","type":"Full-Time","industry":"Backend","level":"Senior Level","excerpt":"","description":"Process payments at scale. Java, distributed systems, financial regulations...","url":"https://jobicy.com/jobs/152377-payments","source":"Jobicy","salary_min":160000,"salary_max":230000,"salary_currency":"USD","date":"2025-05-23"},{"id":"jc_152378","title":"ML Infrastructure Engineer","company":"OpenAI","logo":"","location":"USA","type":"Full-Time","industry":"AI/ML","level":"Senior Level","excerpt":"","description":"Build infrastructure for training large models. Kubernetes, TPU/GPU clusters, data pipelines...","url":"https://jobicy.com/jobs/152378-ml-infra","source":"Jobicy","salary_min":200000,"salary_max":350000,"salary_currency":"USD","date":"2025-05-22"},{"id":"jc_152379","title":"Full Stack Engineer, Marketplace","company":"Uber","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Full Stack","level":"Mid Level","excerpt":"","description":"Build the marketplace that connects riders and drivers. Go, React, microservices...","url":"https://jobicy.com/jobs/152379-marketplace","source":"Jobicy","salary_min":140000,"salary_max":200000,"salary_currency":"USD","date":"2025-05-21"},{"id":"jc_152380","title":"Platform Engineer, Developer Experience","company":"Slack","logo":"","location":"USA","type":"Full-Time","industry":"Platform","level":"Senior Level","excerpt":"","description":"Improve developer productivity. Internal tools, CI/CD, developer portals...","url":"https://jobicy.com/jobs/152380-devex","source":"Jobicy","salary_min":160000,"salary_max":220000,"salary_currency":"USD","date":"2025-05-20"},{"id":"jc_152381","title":"Computer Vision Engineer","company":"Tesla","logo":"","location":"USA","type":"Full-Time","industry":"AI/ML","level":"Senior Level","excerpt":"","description":"Train neural networks for autonomous driving. PyTorch, CUDA, computer vision...","url":"https://jobicy.com/jobs/152381-cv","source":"Jobicy","salary_min":180000,"salary_max":280000,"salary_currency":"USD","date":"2025-05-19"},{"id":"jc_152382","title":"Blockchain Developer, Smart Contracts","company":"Coinbase","logo":"","location":"USA, Remote","type":"Full-Time","industry":"Blockchain","level":"Mid Level","excerpt":"","description":"Build secure smart contracts. Solidity, Rust, Ethereum, security audits...","url":"https://jobicy.com/jobs/152382-blockchain","source":"Jobicy","salary_min":160000,"salary_max":240000,"salary_currency":"USD","date":"2025-05-18"},{"id":"jc_152383","title":"Gameplay Programmer","company":"Riot Games","logo":"","location":"USA","type":"Full-Time","industry":"Gaming","level":"Mid Level","excerpt":"","description":"Implement gameplay systems for League of Legends. C++, Lua, game design...","url":"https://jobicy.com/jobs/152383-gameplay","source":"Jobicy","salary_min":130000,"salary_max":190000,"salary_currency":"USD","date":"2025-05-17"},{"id":"jc_152384","title":"Data Engineer, Streaming","company":"Netflix","logo":"","location":"USA","type":"Full-Time","industry":"Data Engineering","level":"Senior Level","excerpt":"","description":"Build real-time data pipelines. Flink, Kafka, Spark, data lakes...","url":"https://jobicy.com/jobs/152384-de","source":"Jobicy","salary_min":170000,"salary_max":250000,"salary_currency":"USD","date":"2025-05-16"},{"id":"jc_152385","title":"QA Engineer, Automation","company":"Microsoft","logo":"","location":"USA, Europe","type":"Full-Time","industry":"QA","level":"Mid Level","excerpt":"","description":"Automate testing for Azure services. Selenium, Playwright, C#, cloud testing...","url":"https://jobicy.com/jobs/152385-qa","source":"Jobicy","salary_min":120000,"salary_max":170000,"salary_currency":"USD","date":"2025-05-15"},{"id":"jc_152386","title":"Systems Engineer, Low Latency","company":"Jane Street","logo":"","location":"USA, UK","type":"Full-Time","industry":"Systems","level":"Senior Level","excerpt":"","description":"Build low-latency trading systems. OCaml, C++, FPGA, market making...","url":"https://jobicy.com/jobs/152386-lowlat","source":"Jobicy","salary_min":250000,"salary_max":400000,"salary_currency":"USD","date":"2025-05-14"},{"id":"jc_152387","title":"Mobile Engineer, Flutter","company":"Google","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Mobile","level":"Mid Level","excerpt":"","description":"Build cross-platform apps with Flutter. Dart, Firebase, Material Design...","url":"https://jobicy.com/jobs/152387-flutter","source":"Jobicy","salary_min":140000,"salary_max":200000,"salary_currency":"USD","date":"2025-05-13"},{"id":"jc_152388","title":"Embedded Software Engineer","company":"SpaceX","logo":"","location":"USA","type":"Full-Time","industry":"Embedded","level":"Senior Level","excerpt":"","description":"Code that flies to space. C, C++, real-time systems, avionics...","url":"https://jobicy.com/jobs/152388-embedded","source":"Jobicy","salary_min":150000,"salary_max":220000,"salary_currency":"USD","date":"2025-05-12"},{"id":"jc_152389","title":"Growth Engineer","company":"Notion","logo":"","location":"USA","type":"Full-Time","industry":"Growth","level":"Mid Level","excerpt":"","description":"Build experiments that drive user growth. React, SQL, statistics, product sense...","url":"https://jobicy.com/jobs/152389-growth","source":"Jobicy","salary_min":140000,"salary_max":200000,"salary_currency":"USD","date":"2025-05-11"},{"id":"jc_152390","title":"AR/VR Engineer","company":"Meta","logo":"","location":"USA","type":"Full-Time","industry":"AR/VR","level":"Senior Level","excerpt":"","description":"Build the future of computing. Unity, Unreal, C++, computer graphics...","url":"https://jobicy.com/jobs/152390-arvr","source":"Jobicy","salary_min":180000,"salary_max":280000,"salary_currency":"USD","date":"2025-05-10"},{"id":"jc_152391","title":"Database Engineer, PostgreSQL","company":"Amazon","logo":"","location":"USA","type":"Full-Time","industry":"Database","level":"Senior Level","excerpt":"","description":"Work on RDS PostgreSQL. Query optimization, replication, storage engines...","url":"https://jobicy.com/jobs/152391-db","source":"Jobicy","salary_min":160000,"salary_max":240000,"salary_currency":"USD","date":"2025-05-09"},{"id":"jc_152392","title":"Compiler Engineer","company":"Apple","logo":"","location":"USA","type":"Full-Time","industry":"Systems","level":"Senior Level","excerpt":"","description":"Work on Swift compiler. LLVM, type systems, optimization passes...","url":"https://jobicy.com/jobs/152392-compiler","source":"Jobicy","salary_min":190000,"salary_max":280000,"salary_currency":"USD","date":"2025-05-08"},{"id":"jc_152393","title":"Network Engineer, Backbone","company":"Cloudflare","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Network","level":"Senior Level","excerpt":"","description":"Build the network that powers the Internet. BGP, Rust, Linux kernel...","url":"https://jobicy.com/jobs/152393-net","source":"Jobicy","salary_min":170000,"salary_max":250000,"salary_currency":"USD","date":"2025-05-07"},{"id":"jc_152394","title":"Firmware Engineer","company":"DJI","logo":"","location":"APAC","type":"Full-Time","industry":"Firmware","level":"Mid Level","excerpt":"","description":"Develop firmware for drones. C, RTOS, control systems, hardware...","url":"https://jobicy.com/jobs/152394-firmware","source":"Jobicy","salary_min":100000,"salary_max":160000,"salary_currency":"USD","date":"2025-05-06"},{"id":"jc_152395","title":"Sales Engineer, Enterprise","company":"Snowflake","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Sales Engineering","level":"Senior Level","excerpt":"","description":"Help enterprises adopt cloud data. SQL, Python, pre-sales, solution architecture...","url":"https://jobicy.com/jobs/152395-se","source":"Jobicy","salary_min":150000,"salary_max":220000,"salary_currency":"USD","date":"2025-05-05"},{"id":"jc_152396","title":"Robotics Software Engineer","company":"Boston Dynamics","logo":"","location":"USA","type":"Full-Time","industry":"Robotics","level":"Senior Level","excerpt":"","description":"Make robots walk and manipulate. C++, ROS, perception, control theory...","url":"https://jobicy.com/jobs/152396-robotics","source":"Jobicy","salary_min":160000,"salary_max":240000,"salary_currency":"USD","date":"2025-05-04"},{"id":"jc_152397","title":"Quantitative Developer","company":"Two Sigma","logo":"","location":"USA, UK","type":"Full-Time","industry":"Quant","level":"Senior Level","excerpt":"","description":"Build trading strategies with data. Python, pandas, statistics, finance...","url":"https://jobicy.com/jobs/152397-quant","source":"Jobicy","salary_min":200000,"salary_max":350000,"salary_currency":"USD","date":"2025-05-03"},{"id":"jc_152398","title":"Web3 Developer, DeFi","company":"Uniswap","logo":"","location":"USA, Remote","type":"Full-Time","industry":"Web3","level":"Mid Level","excerpt":"","description":"Build decentralized finance protocols. Solidity, Vyper, EVM, security...","url":"https://jobicy.com/jobs/152398-defi","source":"Jobicy","salary_min":170000,"salary_max":260000,"salary_currency":"USD","date":"2025-05-02"},{"id":"jc_152399","title":"AI Research Scientist","company":"DeepMind","logo":"","location":"UK, Europe","type":"Full-Time","industry":"AI Research","level":"Senior Level","excerpt":"","description":"Push the boundaries of AI. PyTorch, JAX, transformers, reinforcement learning...","url":"https://jobicy.com/jobs/152399-research","source":"Jobicy","salary_min":220000,"salary_max":400000,"salary_currency":"USD","date":"2025-05-01"},{"id":"jc_152400","title":"Build Engineer, Bazel","company":"Twitter","logo":"","location":"USA","type":"Full-Time","industry":"Build","level":"Mid Level","excerpt":"","description":"Optimize build systems for millions of lines of code. Bazel, Starlark, remote execution...","url":"https://jobicy.com/jobs/152400-bazel","source":"Jobicy","salary_min":140000,"salary_max":200000,"salary_currency":"USD","date":"2025-04-30"},{"id":"jc_152401","title":"Graphics Programmer","company":"Epic Games","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Graphics","level":"Senior Level","excerpt":"","description":"Work on Unreal Engine rendering. HLSL, Vulkan, ray tracing, optimization...","url":"https://jobicy.com/jobs/152401-graphics","source":"Jobicy","salary_min":160000,"salary_max":250000,"salary_currency":"USD","date":"2025-04-29"},{"id":"jc_152402","title":"Release Engineer","company":"Netflix","logo":"","location":"USA","type":"Full-Time","industry":"Release","level":"Mid Level","excerpt":"","description":"Automate deployments at scale. Spinnaker, Jenkins, canary analysis...","url":"https://jobicy.com/jobs/152402-release","source":"Jobicy","salary_min":150000,"salary_max":210000,"salary_currency":"USD","date":"2025-04-28"},{"id":"jc_152403","title":"Observability Engineer","company":"Datadog","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Observability","level":"Senior Level","excerpt":"","description":"Build tools that monitor the world. Metrics, logs, tracing, alerting...","url":"https://jobicy.com/jobs/152403-obs","source":"Jobicy","salary_min":170000,"salary_max":240000,"salary_currency":"USD","date":"2025-04-27"},{"id":"jc_152404","title":"CRM Developer, Salesforce","company":"Salesforce","logo":"","location":"USA","type":"Full-Time","industry":"CRM","level":"Mid Level","excerpt":"","description":"Extend the world's #1 CRM. Apex, LWC, Flow, integrations...","url":"https://jobicy.com/jobs/152404-crm","source":"Jobicy","salary_min":130000,"salary_max":190000,"salary_currency":"USD","date":"2025-04-26"},{"id":"jc_152405","title":"E-commerce Engineer","company":"eBay","logo":"","location":"USA, Europe","type":"Full-Time","industry":"E-commerce","level":"Mid Level","excerpt":"","description":"Build marketplace technology. Java, microservices, search, recommendations...","url":"https://jobicy.com/jobs/152405-ecom","source":"Jobicy","salary_min":140000,"salary_max":200000,"salary_currency":"USD","date":"2025-04-25"},{"id":"jc_152406","title":"Bioinformatics Engineer","company":"23andMe","logo":"","location":"USA","type":"Full-Time","industry":"Bioinformatics","level":"Senior Level","excerpt":"","description":"Analyze genomic data at scale. Python, R, pipelines, AWS...","url":"https://jobicy.com/jobs/152406-bio","source":"Jobicy","salary_min":150000,"salary_max":220000,"salary_currency":"USD","date":"2025-04-24"},{"id":"jc_152407","title":"Edge AI Engineer","company":"NVIDIA","logo":"","location":"USA, Europe, APAC","type":"Full-Time","industry":"AI/ML","level":"Senior Level","excerpt":"","description":"Optimize neural networks for edge devices. TensorRT, CUDA, quantization...","url":"https://jobicy.com/jobs/152407-edge","source":"Jobicy","salary_min":180000,"salary_max":280000,"salary_currency":"USD","date":"2025-04-23"},{"id":"jc_152408","title":"Search Engineer, Elasticsearch","company":"Elastic","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Search","level":"Senior Level","excerpt":"","description":"Build the search engine that powers discovery. Elasticsearch, Lucene, NLP...","url":"https://jobicy.com/jobs/152408-search","source":"Jobicy","salary_min":160000,"salary_max":240000,"salary_currency":"USD","date":"2025-04-22"},{"id":"jc_152409","title":"Chaos Engineer","company":"Netflix","logo":"","location":"USA","type":"Full-Time","industry":"Reliability","level":"Senior Level","excerpt":"","description":"Break things on purpose to make them stronger. Failure injection, game days...","url":"https://jobicy.com/jobs/152409-chaos","source":"Jobicy","salary_min":170000,"salary_max":250000,"salary_currency":"USD","date":"2025-04-21"},{"id":"jc_152410","title":"Developer Advocate, WebAssembly","company":"Mozilla","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Advocacy","level":"Mid Level","excerpt":"","description":"Evangelize WebAssembly and Rust. Content creation, speaking, community...","url":"https://jobicy.com/jobs/152410-wasm","source":"Jobicy","salary_min":130000,"salary_max":190000,"salary_currency":"USD","date":"2025-04-20"},{"id":"jc_152411","title":"Kernel Engineer, Linux","company":"Red Hat","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Kernel","level":"Senior Level","excerpt":"","description":"Work on the Linux kernel. C, device drivers, memory management, scheduling...","url":"https://jobicy.com/jobs/152411-kernel","source":"Jobicy","salary_min":150000,"salary_max":220000,"salary_currency":"USD","date":"2025-04-19"},{"id":"jc_152412","title":"IoT Engineer","company":"Siemens","logo":"","location":"Europe, USA","type":"Full-Time","industry":"IoT","level":"Mid Level","excerpt":"","description":"Connect industrial machines to the cloud. MQTT, OPC-UA, edge computing...","url":"https://jobicy.com/jobs/152412-iot","source":"Jobicy","salary_min":120000,"salary_max":180000,"salary_currency":"USD","date":"2025-04-18"},{"id":"jc_152413","title":"NLP Engineer, Conversational AI","company":"Anthropic","logo":"","location":"USA","type":"Full-Time","industry":"AI/ML","level":"Senior Level","excerpt":"","description":"Build safe conversational AI. Transformers, RLHF, prompt engineering...","url":"https://jobicy.com/jobs/152413-nlp","source":"Jobicy","salary_min":200000,"salary_max":350000,"salary_currency":"USD","date":"2025-04-17"},{"id":"jc_152414","title":"Performance Engineer","company":"Meta","logo":"","location":"USA","type":"Full-Time","industry":"Performance","level":"Senior Level","excerpt":"","description":"Make apps run faster. Profiling, optimization, mobile performance...","url":"https://jobicy.com/jobs/152414-perf","source":"Jobicy","salary_min":170000,"salary_max":260000,"salary_currency":"USD","date":"2025-04-16"},{"id":"jc_152415","title":"Accessibility Engineer","company":"Microsoft","logo":"","location":"USA, Europe","type":"Full-Time","industry":"A11y","level":"Mid Level","excerpt":"","description":"Make technology accessible to everyone. ARIA, screen readers, WCAG...","url":"https://jobicy.com/jobs/152415-a11y","source":"Jobicy","salary_min":130000,"salary_max":190000,"salary_currency":"USD","date":"2025-04-15"},{"id":"jc_152416","title":"Cryptography Engineer","company":"Signal","logo":"","location":"USA, Remote","type":"Full-Time","industry":"Security","level":"Senior Level","excerpt":"","description":"Build the protocols that keep messages private. Cryptography, protocol design...","url":"https://jobicy.com/jobs/152416-crypto","source":"Jobicy","salary_min":180000,"salary_max":280000,"salary_currency":"USD","date":"2025-04-14"},{"id":"jc_152417","title":"Distributed Systems Engineer","company":"Cockroach Labs","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Distributed Systems","level":"Senior Level","excerpt":"","description":"Build the database that never goes down. Go, distributed consensus, SQL...","url":"https://jobicy.com/jobs/152417-dist","source":"Jobicy","salary_min":170000,"salary_max":260000,"salary_currency":"USD","date":"2025-04-13"},{"id":"jc_152418","title":"API Product Manager","company":"Stripe","logo":"","location":"USA","type":"Full-Time","industry":"Product","level":"Senior Level","excerpt":"","description":"Define the future of payments APIs. Developer experience, API design...","url":"https://jobicy.com/jobs/152418-api-pm","source":"Jobicy","salary_min":180000,"salary_max":260000,"salary_currency":"USD","date":"2025-04-12"},{"id":"jc_152419","title":"React Native Engineer","company":"Discord","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Mobile","level":"Mid Level","excerpt":"","description":"Build the Discord mobile app. React Native, TypeScript, performance...","url":"https://jobicy.com/jobs/152419-rn","source":"Jobicy","salary_min":150000,"salary_max":220000,"salary_currency":"USD","date":"2025-04-11"},{"id":"jc_152420","title":"Analytics Engineer","company":"dbt Labs","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Analytics","level":"Mid Level","excerpt":"","description":"Transform data with dbt. SQL, data modeling, analytics engineering...","url":"https://jobicy.com/jobs/152420-analytics","source":"Jobicy","salary_min":140000,"salary_max":200000,"salary_currency":"USD","date":"2025-04-10"},{"id":"jc_152421","title":"Kubernetes Operator Developer","company":"Red Hat","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Kubernetes","level":"Senior Level","excerpt":"","description":"Build operators for OpenShift. Go, Kubernetes, controllers, CRDs...","url":"https://jobicy.com/jobs/152421-operator","source":"Jobicy","salary_min":160000,"salary_max":240000,"salary_currency":"USD","date":"2025-04-09"},{"id":"jc_152422","title":"Security Researcher","company":"Google Project Zero","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Security Research","level":"Senior Level","excerpt":"","description":"Find 0-days before the bad guys do. Reverse engineering, exploitation...","url":"https://jobicy.com/jobs/152422-0day","source":"Jobicy","salary_min":200000,"salary_max":350000,"salary_currency":"USD","date":"2025-04-08"},{"id":"jc_152423","title":"Hardware Verification Engineer","company":"Intel","logo":"","location":"USA","type":"Full-Time","industry":"Hardware","level":"Senior Level","excerpt":"","description":"Verify next-generation processors. SystemVerilog, UVM, formal methods...","url":"https://jobicy.com/jobs/152423-hw","source":"Jobicy","salary_min":160000,"salary_max":240000,"salary_currency":"USD","date":"2025-04-07"},{"id":"jc_152424","title":"Solutions Architect, Healthcare","company":"Epic Systems","logo":"","location":"USA","type":"Full-Time","industry":"Healthcare","level":"Senior Level","excerpt":"","description":"Design healthcare IT solutions. HL7, FHIR, clinical workflows...","url":"https://jobicy.com/jobs/152424-healthcare","source":"Jobicy","salary_min":150000,"salary_max":220000,"salary_currency":"USD","date":"2025-04-06"},{"id":"jc_152425","title":"Game Engine Programmer","company":"Unity","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Gaming","level":"Senior Level","excerpt":"","description":"Work on the Unity engine. C++, rendering, physics, asset pipeline...","url":"https://jobicy.com/jobs/152425-unity","source":"Jobicy","salary_min":160000,"salary_max":250000,"salary_currency":"USD","date":"2025-04-05"},{"id":"jc_152426","title":"Site Reliability Engineer, Kubernetes","company":"DigitalOcean","logo":"","location":"USA, Europe","type":"Full-Time","industry":"SRE","level":"Mid Level","excerpt":"","description":"Keep the cloud running. Kubernetes, Linux, observability, automation...","url":"https://jobicy.com/jobs/152426-sre-do","source":"Jobicy","salary_min":130000,"salary_max":190000,"salary_currency":"USD","date":"2025-04-04"},{"id":"jc_152427","title":"Data Platform Engineer","company":"Databricks","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Data Platform","level":"Senior Level","excerpt":"","description":"Build the lakehouse platform. Spark, Delta Lake, cloud infrastructure...","url":"https://jobicy.com/jobs/152427-databricks","source":"Jobicy","salary_min":180000,"salary_max":280000,"salary_currency":"USD","date":"2025-04-03"},{"id":"jc_152428","title":"Frontend Architect","company":"Vercel","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Frontend","level":"Senior Level","excerpt":"","description":"Shape the future of the web. Next.js, React, edge computing, performance...","url":"https://jobicy.com/jobs/152428-arch","source":"Jobicy","salary_min":170000,"salary_max":250000,"salary_currency":"USD","date":"2025-04-02"},{"id":"jc_152429","title":"Backend Engineer, Rust","company":"Fly.io","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Backend","level":"Senior Level","excerpt":"","description":"Build the future of application platforms. Rust, distributed systems, networking...","url":"https://jobicy.com/jobs/152429-rust","source":"Jobicy","salary_min":160000,"salary_max":240000,"salary_currency":"USD","date":"2025-04-01"},{"id":"jc_152430","title":"Technical Program Manager","company":"Google","logo":"","location":"USA, Europe, APAC","type":"Full-Time","industry":"Program Management","level":"Senior Level","excerpt":"","description":"Lead complex technical programs. Cross-functional leadership, risk management...","url":"https://jobicy.com/jobs/152430-tpm","source":"Jobicy","salary_min":180000,"salary_max":280000,"salary_currency":"USD","date":"2025-03-31"},{"id":"jc_152431","title":"Staff Engineer, Platform","company":"Shopify","logo":"","location":"Canada, Europe","type":"Full-Time","industry":"Platform","level":"Senior Level","excerpt":"","description":"Design platform abstractions that scale. Ruby, Rails, distributed systems...","url":"https://jobicy.com/jobs/152431-staff","source":"Jobicy","salary_min":190000,"salary_max":280000,"salary_currency":"USD","date":"2025-03-30"},{"id":"jc_152432","title":"Applied Scientist, Recommendations","company":"Amazon","logo":"","location":"USA","type":"Full-Time","industry":"AI/ML","level":"Senior Level","excerpt":"","description":"Improve product recommendations. Deep learning, multi-armed bandits, A/B testing...","url":"https://jobicy.com/jobs/152432-recs","source":"Jobicy","salary_min":180000,"salary_max":280000,"salary_currency":"USD","date":"2025-03-29"},{"id":"jc_152433","title":"Infrastructure Engineer, Storage","company":"Snowflake","logo":"","location":"USA","type":"Full-Time","industry":"Infrastructure","level":"Senior Level","excerpt":"","description":"Build cloud-native storage systems. C++, distributed systems, cloud storage...","url":"https://jobicy.com/jobs/152433-storage","source":"Jobicy","salary_min":180000,"salary_max":280000,"salary_currency":"USD","date":"2025-03-28"},{"id":"jc_152434","title":"Mobile Security Engineer","company":"Snap","logo":"","location":"USA","type":"Full-Time","industry":"Security","level":"Senior Level","excerpt":"","description":"Secure Snapchat. iOS/Android security, reverse engineering, cryptography...","url":"https://jobicy.com/jobs/152434-mobile-sec","source":"Jobicy","salary_min":170000,"salary_max":260000,"salary_currency":"USD","date":"2025-03-27"},{"id":"jc_152435","title":"Developer Experience Engineer","company":"GitHub","logo":"","location":"USA, Europe","type":"Full-Time","industry":"DevEx","level":"Senior Level","excerpt":"","description":"Make developers more productive. GitHub Actions, Codespaces, CLI tools...","url":"https://jobicy.com/jobs/152435-devex","source":"Jobicy","salary_min":160000,"salary_max":240000,"salary_currency":"USD","date":"2025-03-26"},{"id":"jc_152436","title":"Real-Time Systems Engineer","company":"Bloomberg","logo":"","location":"USA, UK","type":"Full-Time","industry":"Real-Time","level":"Senior Level","excerpt":"","description":"Build low-latency financial data systems. C++, multicast, shared memory...","url":"https://jobicy.com/jobs/152436-bloomberg","source":"Jobicy","salary_min":200000,"salary_max":350000,"salary_currency":"USD","date":"2025-03-25"},{"id":"jc_152437","title":"AI Infrastructure Engineer","company":"OpenAI","logo":"","location":"USA","type":"Full-Time","industry":"AI/ML","level":"Senior Level","excerpt":"","description":"Build infrastructure for AGI. Large-scale training, inference optimization...","url":"https://jobicy.com/jobs/152437-ai-infra","source":"Jobicy","salary_min":220000,"salary_max":400000,"salary_currency":"USD","date":"2025-03-24"},{"id":"jc_152438","title":"Platform Security Engineer","company":"Netflix","logo":"","location":"USA","type":"Full-Time","industry":"Security","level":"Senior Level","excerpt":"","description":"Secure the streaming platform. Cloud security, zero trust, threat detection...","url":"https://jobicy.com/jobs/152438-sec-netflix","source":"Jobicy","salary_min":190000,"salary_max":290000,"salary_currency":"USD","date":"2025-03-23"},{"id":"jc_152439","title":"Full Stack Engineer, Internal Tools","company":"Notion","logo":"","location":"USA","type":"Full-Time","industry":"Full Stack","level":"Mid Level","excerpt":"","description":"Build tools that help Notion scale. React, Node.js, PostgreSQL...","url":"https://jobicy.com/jobs/152439-internal","source":"Jobicy","salary_min":140000,"salary_max":200000,"salary_currency":"USD","date":"2025-03-22"},{"id":"jc_152440","title":"Data Visualization Engineer","company":"Tableau","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Data Viz","level":"Senior Level","excerpt":"","description":"Build the future of data visualization. D3, WebGL, TypeScript...","url":"https://jobicy.com/jobs/152440-viz","source":"Jobicy","salary_min":160000,"salary_max":240000,"salary_currency":"USD","date":"2025-03-21"},{"id":"jc_152441","title":"Engineering Manager, Data","company":"Airbnb","logo":"","location":"USA","type":"Full-Time","industry":"Management","level":"Senior Level","excerpt":"","description":"Lead data engineering teams. Hadoop, Spark, Airflow, team building...","url":"https://jobicy.com/jobs/152441-em-data","source":"Jobicy","salary_min":200000,"salary_max":300000,"salary_currency":"USD","date":"2025-03-20"},{"id":"jc_152442","title":"Software Engineer, Maps","company":"Apple","logo":"","location":"USA","type":"Full-Time","industry":"Maps","level":"Senior Level","excerpt":"","description":"Build the future of Apple Maps. C++, computer vision, geospatial data...","url":"https://jobicy.com/jobs/152442-maps","source":"Jobicy","salary_min":170000,"salary_max":260000,"salary_currency":"USD","date":"2025-03-19"},{"id":"jc_152443","title":"Test Infrastructure Engineer","company":"Meta","logo":"","location":"USA","type":"Full-Time","industry":"Testing","level":"Senior Level","excerpt":"","description":"Scale testing for billions of users. Distributed testing, simulation...","url":"https://jobicy.com/jobs/152443-test-infra","source":"Jobicy","salary_min":160000,"salary_max":240000,"salary_currency":"USD","date":"2025-03-18"},{"id":"jc_152444","title":"Integration Engineer","company":"Zapier","logo":"","location":"USA, Remote","type":"Full-Time","industry":"Integration","level":"Mid Level","excerpt":"","description":"Connect the world's apps. API design, OAuth, webhooks, partnerships...","url":"https://jobicy.com/jobs/152444-integration","source":"Jobicy","salary_min":140000,"salary_max":200000,"salary_currency":"USD","date":"2025-03-17"},{"id":"jc_152445","title":"Game AI Programmer","company":"Valve","logo":"","location":"USA","type":"Full-Time","industry":"Gaming","level":"Senior Level","excerpt":"","description":"Build AI for games. Behavior trees, navigation, procedural content...","url":"https://jobicy.com/jobs/152445-game-ai","source":"Jobicy","salary_min":150000,"salary_max":230000,"salary_currency":"USD","date":"2025-03-16"},{"id":"jc_152446","title":"Cloud Cost Optimization Engineer","company":"DoiT International","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Cloud","level":"Mid Level","excerpt":"","description":"Help companies save millions on cloud bills. FinOps, Terraform, Python...","url":"https://jobicy.com/jobs/152446-finops","source":"Jobicy","salary_min":130000,"salary_max":190000,"salary_currency":"USD","date":"2025-03-15"},{"id":"jc_152447","title":"Natural Language Processing Engineer","company":"Grammarly","logo":"","location":"USA, Europe","type":"Full-Time","industry":"NLP","level":"Senior Level","excerpt":"","description":"Improve writing with AI. Transformers, linguistics, grammar engines...","url":"https://jobicy.com/jobs/152447-nlp-grammarly","source":"Jobicy","salary_min":170000,"salary_max":260000,"salary_currency":"USD","date":"2025-03-14"},{"id":"jc_152448","title":"Video Codec Engineer","company":"YouTube","logo":"","location":"USA","type":"Full-Time","industry":"Video","level":"Senior Level","excerpt":"","description":"Compress video for billions. AV1, HEVC, VP9, encoding optimization...","url":"https://jobicy.com/jobs/152448-codec","source":"Jobicy","salary_min":180000,"salary_max":280000,"salary_currency":"USD","date":"2025-03-13"},{"id":"jc_152449","title":"Engineering Director, Platform","company":"Lyft","logo":"","location":"USA","type":"Full-Time","industry":"Management","level":"Senior Level","excerpt":"","description":"Lead platform engineering. Microservices, reliability, team growth...","url":"https://jobicy.com/jobs/152449-director","source":"Jobicy","salary_min":250000,"salary_max":400000,"salary_currency":"USD","date":"2025-03-12"},{"id":"jc_152450","title":"Staff Engineer, Developer Tools","company":"Uber","logo":"","location":"USA","type":"Full-Time","industry":"Tools","level":"Senior Level","excerpt":"","description":"Build tools that 4000+ engineers use daily. Bazel, IDEs, code review...","url":"https://jobicy.com/jobs/152450-tools","source":"Jobicy","salary_min":200000,"salary_max":320000,"salary_currency":"USD","date":"2025-03-11"},{"id":"jc_152451","title":"Reverse Engineer, Malware","company":"CrowdStrike","logo":"","location":"USA, Europe","type":"Full-Time","industry":"Security","level":"Senior Level","excerpt":"","description":"Analyze malware to stop breaches. Assembly, YARA, threat intelligence...","url":"https://jobicy.com/jobs/152451-malware","source":"Jobicy","salary_min":170000,"salary_max":270000,"salary_currency":"USD","date":"2025-03-10"},{"id":"jc_152452","title":"Wireless Firmware Engineer","company":"Qualcomm","logo":"","location":"USA","type":"Full-Time","industry":"Wireless</script>
+
+    <!-- ================= AG MODULE: BÚSQUEDA INTELIGENTE DE EMPLEO ================= -->
+    <script>
+window.AG = (function(){
+  // Reparar JSON truncado de la fuente original
+  const raw = document.getElementById('jobs-data').textContent.trim();
+  const repaired = raw.slice(0, raw.lastIndexOf('},{"id"')+1) + ']';
+  const REAL_JOBS = JSON.parse(repaired);
+
+  const $ = id => document.getElementById(id);
+  const state = { skills:[], keyword:'', geo:'', source:'', agent:'scout', currentJob:null, applied:new Set(), lastFiltered:[] };
+
+  let internalJobs = [];
+  function allJobs(){ return REAL_JOBS.concat(internalJobs); }
+  async function loadInternalJobs(){
+    try {
+      if(!window.WN || !WN.DB) return;
+      const wnJobs = (await WN.DB.get('jobs')).filter(j => j.status === 'open');
+      internalJobs = wnJobs.map(j => ({
+        id: j.id, title: j.title, company: 'WorkNow', logo: '',
+        location: 'Guayaquil, EC · WorkNow',
+        type: j.payment_type === 'hourly' ? 'Por Hora' : 'Fijo',
+        industry: 'Trabajo Local WorkNow', level: '',
+        excerpt: '', description: j.desc || 'Trabajo publicado dentro de WorkNow por un empleador local.',
+        url: '#', source: 'WorkNow', salary_min: null, salary_max: j.price, salary_currency: 'USD',
+        date: new Date(j.created_at).toISOString().slice(0,10), _internal: true
+      }));
+    } catch(e) { console.error('[AG] Error cargando trabajos internos de WorkNow', e); }
+  }
+
+  const GEO_MAP = { usa:['usa','united states'], europe:['europe','uk','ukraine','germany','spain','france','netherlands'],
+    latam:['latam','mexico','brazil','argentina','colombia','chile'], canada:['canada'], apac:['apac','india','japan','singapore','australia','korea'] };
+  const SKILL_DB = ['react','typescript','javascript','node','python','java','go','rust','c++','ruby','rails','kotlin','swift','sql','aws','azure','gcp',
+    'kubernetes','docker','terraform','devops','ci/cd','machine learning','ml','ai','data','spark','kafka','airflow','dbt','snowflake','flutter','dart',
+    'solidity','ethereum','web3','blockchain','unity','unreal','figma','ux','php','laravel','vue','angular','next.js','react native','postgres','redis',
+    'mongodb','graphql','linux','security','nlp','pytorch','tensorflow','cuda','embedded','fpga','salesforce','apex','elasticsearch','wasm','blender',
+    'compiler','llvm','kernel','network','bgp','selenium','playwright','accessibility','wcag','hl7','fhir','bazel','helm'];
+
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const now = () => new Date().toTimeString().slice(0,8);
+
+  function log(msg,cls){
+    const t=$('terminal'); if(!t) return;
+    const div=document.createElement('div');
+    div.className='log-entry';
+    div.innerHTML='<span class="log-time">['+now()+']</span> <span class="'+(cls||'log-agent')+'">'+msg+'</span>';
+    t.prepend(div);
+  }
+  function chat(name,avatar,msg,isUser){
+    const box=$('chatBox'); if(!box) return;
+    const div=document.createElement('div');
+    div.className='message'+(isUser?' user':'');
+    div.innerHTML='<div class="message-avatar '+avatar+'">'+(isUser?'🧑':'🤖')+'</div><div class="message-content"><div class="message-name">'+esc(name)+'</div>'+esc(msg)+'</div>';
+    box.appendChild(div); box.scrollTop=box.scrollHeight;
+  }
+  function setStatus(id,cls){ const el=$('st-'+id); if(el) el.className='agent-status '+cls; }
+
+  function score(job){
+    const text=(job.title+' '+job.description+' '+job.industry+' '+job.company).toLowerCase();
+    let s=30;
+    if(state.keyword && text.includes(state.keyword.toLowerCase())) s+=28;
+    s+=Math.min(34, state.skills.filter(k=>text.includes(k)).length*9);
+    if(job.salary_max) s+=6;
+    return Math.min(98,s);
+  }
+  function filtered(){
+    return allJobs().filter(j=>{
+      if(state.source && j.source!==state.source) return false;
+      if(state.geo){ const tags=GEO_MAP[state.geo]||[]; if(!tags.some(t=>j.location.toLowerCase().includes(t))) return false; }
+      if(state.keyword){ if(!(j.title+' '+j.description+' '+j.industry).toLowerCase().includes(state.keyword.toLowerCase())) return false; }
+      return true;
+    });
+  }
+  function fmtSalary(j){
+    if(!j.salary_max) return 'Salario no publicado';
+    const k=v=>v>=1000?'$'+(v/1000)+'k':'$'+v;
+    return j.salary_min?k(j.salary_min)+' – '+k(j.salary_max):'hasta '+k(j.salary_max);
+  }
+
+  function render(){
+    const list=filtered(); state.lastFiltered=list;
+    const container=$('jobsList'); if(!container) return;
+    container.innerHTML='';
+    if(!list.length) container.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px">Sin coincidencias. Ajusta los filtros.</div>';
+    list.forEach(job=>{
+      const sc=score(job);
+      const isNew=(Date.now()-new Date(job.date).getTime())<35*864e5;
+      let badge='<span class="job-badge badge-match">'+sc+'% match</span>';
+      if(isNew) badge+=' <span class="job-badge badge-new">New</span>';
+      if(job.salary_max>=200000) badge+=' <span class="job-badge badge-hot">Hot</span>';
+      if(state.applied.has(job.id)) badge+=' <span class="job-badge badge-new">Aplicada ✓</span>';
+      const div=document.createElement('div');
+      div.className='job-card'+(state.applied.has(job.id)?' applied':'');
+      div.innerHTML='<div class="job-header"><div class="job-title">'+esc(job.title)+'</div>'+badge+'</div>'
+        +'<div class="job-meta"><span>🏢 '+esc(job.company)+'</span><span>📍 '+esc(job.location)+'</span><span>💼 '+esc(job.type)+'</span><span>💰 '+fmtSalary(job)+'</span><span>🗓 '+esc(job.date)+'</span></div>'
+        +'<div class="match-bar"><div class="progress-bar"><div class="progress-fill" style="width:'+sc+'%;background:'+(sc>=75?'var(--success)':sc>=50?'var(--primary)':'var(--warning)')+'"></div></div><span class="match-score" style="color:'+(sc>=75?'var(--success)':'var(--text-muted)')+'">'+sc+'%</span></div>';
+      div.onclick=()=>openDetail(job.id);
+      container.appendChild(div);
+    });
+    const avg=list.length?Math.round(list.reduce((a,j)=>a+score(j),0)/list.length):0;
+    $('m-total').textContent=allJobs().length;
+    $('totalOffers').textContent=allJobs().length;
+    $('m-filtered').textContent=list.length;
+    $('m-applied').textContent=state.applied.size;
+    $('m-match').textContent=avg+'%';
+  }
+
+  function openDetail(id){
+    const job=allJobs().find(j=>j.id===id); if(!job) return;
+    state.currentJob=job;
+    $('detailPanel').classList.add('show');
+    $('detailTitle').textContent=job.title+' · '+job.company;
+    $('detailText').textContent=job.description+(job.excerpt?' — '+job.excerpt:'');
+    $('detailLink').href=job.url;
+    log('[Supervisor] Inspeccionando oferta <b>'+esc(job.id)+'</b>','log-agent');
+  }
+
+  function apply(id){
+    const job=allJobs().find(j=>j.id===id); if(!job) return;
+    if(job._internal){
+      state.applied.add(id); render();
+      if(window.WN){ WN.applyJob(job.id); WN.navigate('contracts'); }
+      log('[Aplicador] Postulación interna WorkNow registrada → <b>'+esc(job.title)+'</b>','log-success');
+      chat('Aplicador','applier','Apliqué a "'+job.title+'" dentro de WorkNow. El empleador fue notificado vía el Core.',false);
+      return;
+    }
+    state.applied.add(id);
+    render();
+    log('[Aplicador] Postulación registrada → <b>'+esc(job.company)+'</b>','log-success');
+    chat('Aplicador','applier','Apliqué a "'+job.title+'" en '+job.company+'. Carta personalizada adjunta.',false);
+    if(window.WN) WN.toast('Aplicación enviada: '+job.company,'success');
+  }
+  function applyCurrent(){ if(state.currentJob) apply(state.currentJob.id); }
+
+  function generateLetter(){
+    const job=state.currentJob;
+    if(!job){ chat('Supervisor','supervisor','Primero selecciona una oferta para generar la carta.',false); return; }
+    const skills=state.skills.length?state.skills.slice(0,5).join(', '):'mi stack principal';
+    $('detailText').textContent='Estimado equipo de '+job.company+':\n\nMe entusiasma la posición de '+job.title+
+      '. Con experiencia sólida en '+skills+', estoy listo para aportar desde el día uno en '+job.location+
+      '.\n\nQuedo atento a una entrevista.\n\nSaludos cordiales,\nCandidato WorkNow';
+    log('[Negociador] Carta de presentación generada (template + skills del CV)','log-success');
+  }
+
+  function handleFile(input){
+    const f=input.files&&input.files[0]; if(!f) return;
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const text=String(e.target.result).toLowerCase();
+      state.skills=SKILL_DB.filter(k=>text.includes(k));
+      $('uploadZone').classList.add('active');
+      $('fileInfo').classList.add('show');
+      $('fileName').textContent=f.name;
+      $('detectedSkills').textContent=state.skills.length?state.skills.join(', '):'ninguna detectada';
+      log('[Scout] CV analizado: '+state.skills.length+' skills detectadas','log-success');
+      chat('Supervisor','supervisor','CV "'+f.name+'" procesado. Detecté '+state.skills.length+' skills. Actualizando scores de matching...',false);
+      render();
+    };
+    reader.readAsText(f);
+  }
+
+  function filterJobs(){
+    state.keyword=$('keywordFilter').value.trim();
+    state.geo=$('geoFilter').value;
+    state.source=$('sourceFilter').value;
+    render();
+    log('[Scout] Filtros aplicados → '+state.lastFiltered.length+' coincidencias','log-agent');
+  }
+
+  function selectAgent(name,el){
+    state.agent=name;
+    document.querySelectorAll('#view-ai-search .agent-item').forEach(i=>i.classList.remove('active'));
+    if(el) el.classList.add('active');
+    log('[Supervisor] Agente activo: <b>'+name+'</b>','log-agent');
+    if(name==='negotiator') $('chatInput').focus();
+  }
+
+  function startSearch(){
+    setStatus('scout','busy'); setStatus('applier','busy');
+    log('[Scout] Iniciando barrido de fuentes Jobicy + Remotive...','log-agent');
+    chat('Scout','scout','Escaneando '+allJobs().length+' ofertas indexadas. Aplicando filtros actuales...',false);
+    setTimeout(()=>{
+      render();
+      log('[Scout] Barrido completo: <b>'+state.lastFiltered.length+'</b> coincidencias','log-success');
+      chat('Scout','scout','Listo: '+state.lastFiltered.length+' ofertas coinciden con tu perfil. Score promedio '+$('m-match').textContent+'.',false);
+      setStatus('scout',''); setStatus('applier','');
+    },700);
+    setTimeout(()=>{
+      const top=state.lastFiltered.slice().sort((a,b)=>score(b)-score(a))[0];
+      if(top){ log('[Supervisor] Mejor match sugerido: <b>'+esc(top.title)+'</b>','log-warning'); chat('Supervisor','supervisor','Sugerencia prioritaria: "'+top.title+'" ('+score(top)+'% match). Revisa el panel de detalle.',false); }
+    },1400);
+  }
+
+  function sendChat(){
+    const inp=$('chatInput'); const msg=inp.value.trim(); if(!msg) return;
+    inp.value='';
+    chat('Tú','user',msg,true);
+    setTimeout(()=>{
+      let reply; const m=msg.toLowerCase();
+      if(m.includes('aplic')) reply='Aplicaciones registradas: '+state.applied.size+'. Usa "Aplicar Ahora" en el detalle de cada oferta.';
+      else if(m.includes('salario')||m.includes('sueldo')) reply='Las ofertas Hot pagan $200k+. Usa el filtro de región para comparar mercados.';
+      else if(m.includes('cv')||m.includes('curr')) reply=state.skills.length?'Tu CV tiene '+state.skills.length+' skills indexadas: '+state.skills.slice(0,6).join(', ')+'.':'Aún no subes CV. Súbelo para activar el matching real.';
+      else if(m.includes('market')||m.includes('mapa')) reply='Pulsa "⇩ A Explorar" para convertir las coincidencias en tareas geolocalizadas en el mapa.';
+      else reply='Entendido. Scout mantiene '+state.lastFiltered.length+' coincidencias activas. ¿Aplicamos a la mejor o la enviamos al Marketplace?';
+      chat('Supervisor','supervisor',reply,false);
+      log('[Supervisor] Consulta de usuario respondida','log-agent');
+    },600);
+  }
+
+  function resetAll(){
+    state.keyword=''; state.geo=''; state.source=''; state.applied.clear(); state.currentJob=null;
+    $('keywordFilter').value=''; $('geoFilter').value=''; $('sourceFilter').value='';
+    $('detailPanel').classList.remove('show');
+    render();
+    log('[Supervisor] Estado reiniciado. Filtros y postulaciones en cero.','log-warning');
+  }
+
+  async function pushToMarketplace(){
+    const exportable = state.lastFiltered.filter(j => !j._internal);
+    if(!exportable.length){ chat('Supervisor','supervisor','No hay coincidencias externas para exportar. Ajusta filtros o pulsa ▶ Buscar.',false); return; }
+    const added = window.WN ? await WN.importJobs(exportable.slice(0,25)) : 0;
+    log('[Supervisor] <b>'+added+'</b> ofertas exportadas a Explorar (geocodificadas en tu zona)','log-success');
+    chat('Supervisor','supervisor','Envié '+added+' oportunidades al mapa de Explorar. Cambiando de vista...',false);
+    if(window.WN) WN.toast(added+' oportunidades importadas al mapa','success');
+    setTimeout(()=>{ if(window.WN) WN.navigate('dashboard'); },800);
+  }
+
+  function init(){ render(); log('[Scout] Motor de agentes listo — '+allJobs().length+' ofertas indexadas','log-success'); }
+
+  return { init, render, handleFile, filterJobs, selectAgent, startSearch, resetAll, sendChat, applyCurrent, generateLetter, pushToMarketplace, loadInternalJobs };
+})();
+    </script>
+
+    <!-- ================= BOOT: módulo AG ================= -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+            if (window.AG) AG.init();
+            const _navigate = window.navigate;
+            window.navigate = function(view) {
+                _navigate(view);
+                if (view === 'ai-search' && window.AG && AG.loadInternalJobs) {
+                    AG.loadInternalJobs().then(() => AG.render());
+                }
+            };
+        });
+    </script>
+</body>
+</html>
