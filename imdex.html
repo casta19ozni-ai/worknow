@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -12,6 +13,10 @@
     
     <!-- Supabase JS (Para Realtime y Persistencia) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Leaflet CSS & JS (Fallback para mapas) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <!-- Configuración de Entorno (Inyectada por CI/CD o Servidor) -->
     <script>
@@ -154,24 +159,27 @@
 
     <!-- NAVBAR -->
     <nav class="bg-white border-b shadow-sm z-50 h-16 flex-shrink-0">
-        <div class="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
-            <div class="flex items-center gap-2 text-brand font-bold text-2xl cursor-pointer" onclick="navigate('dashboard')">
-                <i data-lucide="zap" class="fill-brand"></i> WorkNow <span class="text-xs bg-brand text-white px-2 py-0.5 rounded-full ml-1">PRO</span>
+        <div class="max-w-7xl mx-auto px-4 h-full flex items-center justify-between gap-4">
+            <div class="flex items-center gap-2 text-brand font-bold text-xl md:text-2xl cursor-pointer flex-shrink-0" onclick="navigate('dashboard')">
+                <i data-lucide="zap" class="fill-brand"></i> <span class="hidden sm:inline">WorkNow</span> <span class="text-xs bg-brand text-white px-2 py-0.5 rounded-full ml-1">PRO</span>
             </div>
             
-            <div class="hidden md:flex gap-6 font-medium text-sm text-slate-600">
-                <button onclick="navigate('dashboard')" class="hover:text-brand flex items-center gap-1 nav-btn" data-target="dashboard"><i data-lucide="map"></i> Explorar</button>
-                <button onclick="navigate('ai-search')" class="hover:text-brand flex items-center gap-1 nav-btn" data-target="ai-search"><i data-lucide="sparkles"></i> Búsqueda Inteligente de Empleo</button>
-                <button onclick="navigate('contracts')" class="hover:text-brand flex items-center gap-1 nav-btn" data-target="contracts"><i data-lucide="briefcase"></i> Contratos</button>
-                <button onclick="navigate('wallet')" class="hover:text-brand flex items-center gap-1 nav-btn" data-target="wallet"><i data-lucide="wallet"></i> Billetera</button>
+            <div class="flex overflow-x-auto no-scrollbar gap-4 md:gap-6 font-medium text-sm text-slate-600 flex-1">
+                <button onclick="navigate('dashboard')" class="hover:text-brand flex items-center gap-1 nav-btn whitespace-nowrap" data-target="dashboard"><i data-lucide="map"></i> Explorar</button>
+                <button onclick="navigate('ai-search')" class="hover:text-brand flex items-center gap-1 nav-btn whitespace-nowrap" data-target="ai-search"><i data-lucide="sparkles"></i> Búsqueda Inteligente de Empleo</button>
+                <button onclick="navigate('contracts')" class="hover:text-brand flex items-center gap-1 nav-btn whitespace-nowrap" data-target="contracts"><i data-lucide="briefcase"></i> Contratos</button>
+                <button onclick="navigate('wallet')" class="hover:text-brand flex items-center gap-1 nav-btn whitespace-nowrap" data-target="wallet"><i data-lucide="wallet"></i> Billetera</button>
             </div>
 
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 flex-shrink-0">
                 <!-- Se oculta en producción cuando hay sesión real -->
                 <select id="roleSelect" onchange="changeRole(this.value)" class="bg-gray-100 border border-gray-200 text-xs font-bold rounded-lg px-3 py-1.5 outline-none cursor-pointer text-brand">
                     <option value="employer">👁️ Modo: Empleador</option>
                     <option value="worker">🛠️ Modo: Trabajador</option>
                 </select>
+                <button onclick="handleLogout()" class="flex items-center gap-1 bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm" title="Cerrar Sesión">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> <span class="whitespace-nowrap">Cerrar Sesión</span>
+                </button>
                 <div class="h-9 w-9 rounded-full bg-gradient-to-tr from-brand to-blue-400 text-white flex items-center justify-center font-bold text-sm shadow-md cursor-pointer hover:opacity-80 transition" onclick="handleLogout()" title="Cerrar Sesión">
                     <span id="userInitials">--</span>
                 </div>
@@ -185,7 +193,7 @@
         <!-- ================= VISTA 1: DASHBOARD & MAPA ================= -->
         <section id="view-dashboard" class="view-section active h-full w-full flex flex-col md:flex-row">
             <!-- Lista Izquierda -->
-            <div class="w-full md:w-1/3 lg:w-[400px] h-full bg-white border-r border-gray-200 flex flex-col z-10 shadow-lg">
+            <div class="w-full md:w-1/3 lg:w-[400px] h-1/2 md:h-full bg-white border-r border-gray-200 flex flex-col z-10 shadow-lg">
                 <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                     <div>
                         <h2 class="font-bold text-lg">Explorar Servicios</h2>
@@ -201,7 +209,7 @@
             </div>
             
             <!-- Mapa Derecha -->
-            <div class="flex-1 h-full relative bg-gray-200" id="map-container">
+            <div class="flex-1 h-1/2 md:h-full relative bg-gray-200" id="map-container">
                 <div id="map" class="h-full w-full z-0"></div>
                 <!-- GPS Overlay -->
                 <div class="absolute bottom-6 left-6 z-[400] bg-white/90 backdrop-blur p-3 rounded-xl shadow-xl border border-gray-200 flex items-center gap-3">
@@ -477,6 +485,7 @@
             map: null,
             markers: [],
             workerMarker: null,
+            userMarker: null,
             watchId: null
         };
 
@@ -703,18 +712,19 @@
             }
         }
 
-        // 6. MOTOR GEOGRÁFICO (GOOGLE MAPS DINÁMICO)
+        // 6. MOTOR GEOGRÁFICO (GOOGLE MAPS DINÁMICO O LEAFLET)
         function loadGoogleMaps() {
-            if (!CONFIG.GOOGLE_MAPS_API_KEY) {
-                console.warn("Google Maps API Key no configurada.");
-                return;
+            if (CONFIG.GOOGLE_MAPS_API_KEY) {
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${CONFIG.GOOGLE_MAPS_API_KEY}&libraries=geometry,places`;
+                script.async = true;
+                script.defer = true;
+                script.onload = initMap;
+                document.head.appendChild(script);
+            } else {
+                console.warn("Google Maps API Key no configurada. Usando Leaflet como alternativa.");
+                initLeafletMap();
             }
-            const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${CONFIG.GOOGLE_MAPS_API_KEY}&libraries=geometry,places`;
-            script.async = true;
-            script.defer = true;
-            script.onload = initMap;
-            document.head.appendChild(script);
         }
 
         function initMap() {
@@ -746,7 +756,7 @@
                 ]
             });
 
-            new google.maps.Marker({
+            state.userMarker = new google.maps.Marker({
                 position: { lat: state.userLat, lng: state.userLng },
                 map: state.map,
                 icon: {
@@ -761,25 +771,72 @@
             });
         }
 
+        function initLeafletMap() {
+            if(state.map || typeof L === 'undefined') return;
+            
+            state.map = L.map('map', { zoomControl: false }).setView([state.userLat, state.userLng], 13);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+            }).addTo(state.map);
+
+            state.userMarker = L.circleMarker([state.userLat, state.userLng], {
+                radius: 8,
+                fillColor: '#2563eb',
+                color: '#2563eb',
+                weight: 2,
+                opacity: 0.5,
+                fillOpacity: 0.5
+            }).addTo(state.map).bindPopup("Tu Ubicación");
+        }
+
         function updateWorkerLocationOnMap(lat, lng) {
             if(!state.map) return;
-            if(!state.workerMarker) {
-                state.workerMarker = new google.maps.Marker({
-                    position: { lat, lng },
-                    map: state.map,
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        scale: 10,
+            if (CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') {
+                if(!state.workerMarker) {
+                    state.workerMarker = new google.maps.Marker({
+                        position: { lat, lng },
+                        map: state.map,
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 10,
+                            fillColor: '#10b981',
+                            fillOpacity: 1,
+                            strokeWeight: 2,
+                            strokeColor: '#ffffff'
+                        },
+                        title: "Trabajador en vivo"
+                    });
+                } else {
+                    state.workerMarker.setPosition({ lat, lng });
+                }
+            } else if (typeof L !== 'undefined') {
+                if(!state.workerMarker) {
+                    state.workerMarker = L.circleMarker([lat, lng], {
+                        radius: 10,
                         fillColor: '#10b981',
-                        fillOpacity: 1,
-                        strokeWeight: 2,
-                        strokeColor: '#ffffff'
-                    },
-                    title: "Trabajador en vivo"
-                });
-            } else {
-                state.workerMarker.setPosition({ lat, lng });
+                        color: '#ffffff',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 1
+                    }).addTo(state.map).bindPopup("Trabajador en vivo");
+                } else {
+                    state.workerMarker.setLatLng([lat, lng]);
+                }
             }
+        }
+
+        // Función Haversine para cálculo de distancia alternativo
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; // metros
+            const φ1 = lat1 * Math.PI/180;
+            const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180;
+            const Δλ = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
         }
 
         // 7. RENDERIZADO PRINCIPAL
@@ -813,7 +870,11 @@
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById(`view-${view}`).classList.add('active');
             if(view === 'dashboard' && state.map) {
-                setTimeout(() => google.maps.event.trigger(state.map, 'resize'), 100);
+                if (CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') {
+                    setTimeout(() => google.maps.event.trigger(state.map, 'resize'), 100);
+                } else if (typeof L !== 'undefined') {
+                    setTimeout(() => state.map.invalidateSize(), 100);
+                }
             }
         }
 
@@ -885,7 +946,11 @@
                 container.innerHTML = '';
                 
                 if(state.markers) {
-                    state.markers.forEach(m => m.setMap(null));
+                    if (CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') {
+                        state.markers.forEach(m => m.setMap(null));
+                    } else if (typeof L !== 'undefined') {
+                        state.markers.forEach(m => state.map.removeLayer(m));
+                    }
                 }
                 state.markers = [];
 
@@ -893,15 +958,17 @@
 
                 jobs.filter(j => j.status === 'open').forEach(job => {
                     let dist = "N/A";
-                    if(typeof google !== 'undefined' && google.maps.geometry) {
+                    if(CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined' && google.maps.geometry) {
                         const p1 = new google.maps.LatLng(state.userLat, state.userLng);
                         const p2 = new google.maps.LatLng(job.lat, job.lng);
                         dist = (google.maps.geometry.spherical.computeDistanceBetween(p1, p2) / 1000).toFixed(1);
+                    } else {
+                        dist = (getDistance(state.userLat, state.userLng, job.lat, job.lng) / 1000).toFixed(1);
                     }
                     
                     const isMine = job.employer_id === state.currentUserId;
 
-                    if(typeof google !== 'undefined' && state.map) {
+                    if(CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined' && state.map) {
                         const marker = new google.maps.Marker({
                             position: { lat: job.lat, lng: job.lng },
                             map: state.map,
@@ -911,6 +978,17 @@
                             content: `<div class="p-1"><b>${job.title}</b><br/>$${job.price} (${job.payment_type === 'fixed' ? 'Obra' : 'Hora'})</div>`
                         });
                         marker.addListener('click', () => infoWindow.open(state.map, marker));
+                        state.markers.push(marker);
+                    } else if (typeof L !== 'undefined' && state.map) {
+                        const marker = L.circleMarker([job.lat, job.lng], {
+                            radius: 8,
+                            fillColor: '#f59e0b',
+                            color: '#ffffff',
+                            weight: 2,
+                            opacity: 1,
+                            fillOpacity: 0.9
+                        }).addTo(state.map);
+                        marker.bindPopup(`<div class="p-1"><b>${job.title}</b><br/>$${job.price} (${job.payment_type === 'fixed' ? 'Obra' : 'Hora'})</div>`);
                         state.markers.push(marker);
                     }
 
@@ -922,7 +1000,7 @@
                     }
 
                     container.innerHTML += `
-                        <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer" onclick="if(state.map) state.map.setCenter({lat: ${job.lat}, lng: ${job.lng}})">
+                        <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer" onclick="if(state.map) { if(CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') state.map.setCenter({lat: ${job.lat}, lng: ${job.lng}}); else if(typeof L !== 'undefined') state.map.setView([${job.lat}, ${job.lng}]); }">
                             <div class="flex justify-between items-start">
                                 <h3 class="font-bold text-slate-800">${job.title}</h3>
                                 <span class="font-bold text-brand text-lg">$${job.price}</span>
@@ -1020,8 +1098,18 @@
                     (pos) => {
                         const lat = pos.coords.latitude;
                         const lng = pos.coords.longitude;
+                        state.userLat = lat;
+                        state.userLng = lng;
                         broadcastLocation(contractId, employerId, lat, lng);
                         checkGeofence(lat, lng, jobLat, jobLng, contractId);
+                        
+                        if (state.userMarker) {
+                            if (CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') {
+                                state.userMarker.setPosition({ lat, lng });
+                            } else if (typeof L !== 'undefined') {
+                                state.userMarker.setLatLng([lat, lng]);
+                            }
+                        }
                     },
                     (err) => {
                         console.error(err);
@@ -1038,10 +1126,14 @@
         }
 
         async function checkGeofence(lat, lng, jobLat, jobLng, contractId) {
-            if(typeof google === 'undefined' || !google.maps.geometry) return;
-            const p1 = new google.maps.LatLng(lat, lng);
-            const p2 = new google.maps.LatLng(jobLat, jobLng);
-            const distance = google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
+            let distance = 0;
+            if(CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined' && google.maps.geometry) {
+                const p1 = new google.maps.LatLng(lat, lng);
+                const p2 = new google.maps.LatLng(jobLat, jobLng);
+                distance = google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
+            } else {
+                distance = getDistance(lat, lng, jobLat, jobLng);
+            }
             
             if(distance <= 50) {
                 try {
@@ -1361,6 +1453,27 @@
 
         // INIT APP
         window.onload = async () => {
+            // 1. Obtener ubicación real del usuario
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        state.userLat = pos.coords.latitude;
+                        state.userLng = pos.coords.longitude;
+                        if (state.map) {
+                            if (CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') {
+                                state.map.setCenter({ lat: state.userLat, lng: state.userLng });
+                                if (state.userMarker) state.userMarker.setPosition({ lat: state.userLat, lng: state.userLng });
+                            } else if (typeof L !== 'undefined') {
+                                state.map.setView([state.userLat, state.userLng], 13);
+                                if (state.userMarker) state.userMarker.setLatLng([state.userLat, state.userLng]);
+                            }
+                        }
+                    },
+                    (err) => console.warn("Geolocation error:", err),
+                    { enableHighAccuracy: true }
+                );
+            }
+
             loadGoogleMaps();
             
             if (window.supabase && CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY) {
