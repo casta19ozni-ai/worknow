@@ -169,6 +169,7 @@
                 <button onclick="navigate('ai-search')" class="hover:text-brand flex items-center gap-1 nav-btn whitespace-nowrap" data-target="ai-search"><i data-lucide="sparkles"></i> Búsqueda Inteligente de Empleo</button>
                 <button onclick="navigate('contracts')" class="hover:text-brand flex items-center gap-1 nav-btn whitespace-nowrap" data-target="contracts"><i data-lucide="briefcase"></i> Contratos</button>
                 <button onclick="navigate('wallet')" class="hover:text-brand flex items-center gap-1 nav-btn whitespace-nowrap" data-target="wallet"><i data-lucide="wallet"></i> Billetera</button>
+                <button id="nav-crm-btn" onclick="navigate('crm')" class="hover:text-brand flex items-center gap-1 nav-btn whitespace-nowrap hidden" data-target="crm"><i data-lucide="bar-chart"></i> CRM</button>
             </div>
 
             <div class="flex items-center gap-3 flex-shrink-0">
@@ -176,6 +177,7 @@
                 <select id="roleSelect" onchange="changeRole(this.value)" class="bg-gray-100 border border-gray-200 text-xs font-bold rounded-lg px-3 py-1.5 outline-none cursor-pointer text-brand">
                     <option value="employer">👁️ Modo: Empleador</option>
                     <option value="worker">🛠️ Modo: Trabajador</option>
+                    <option value="admin">👑 Modo: Administrador</option>
                 </select>
                 <button onclick="handleLogout()" class="flex items-center gap-1 bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm" title="Cerrar Sesión">
                     <i data-lucide="log-out" class="w-4 h-4"></i> <span class="whitespace-nowrap">Cerrar Sesión</span>
@@ -258,7 +260,94 @@
             </div>
         </section>
 
-        <!-- ================= VISTA 2: BÚSQUEDA INTELIGENTE DE EMPLEO (Módulo AG) ================= -->
+        <!-- ================= VISTA 4: CRM ADMINISTRATIVO ================= -->
+        <section id="view-crm" class="view-section h-full w-full overflow-y-auto bg-gray-50 p-4 md:p-8">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex justify-between items-end mb-6">
+                    <div>
+                        <h1 class="text-3xl font-bold text-slate-900">CRM Administrativo</h1>
+                        <p class="text-slate-500">Métricas y Estadísticas en Tiempo Real</p>
+                    </div>
+                    <button onclick="renderCRM()" class="bg-brand text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-blue-600 transition flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Actualizar
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <!-- Usuarios -->
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                        <h3 class="text-sm font-bold text-slate-500 mb-1">Usuarios Totales</h3>
+                        <div class="text-3xl font-bold text-slate-800" id="crm-users-total">0</div>
+                        <div class="text-xs text-slate-500 mt-2 flex justify-between">
+                            <span>Trabajadores: <b id="crm-users-workers">0</b></span>
+                            <span>Empleadores: <b id="crm-users-employers">0</b></span>
+                        </div>
+                    </div>
+                    <!-- Trabajos -->
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                        <h3 class="text-sm font-bold text-slate-500 mb-1">Trabajos Publicados</h3>
+                        <div class="text-3xl font-bold text-slate-800" id="crm-jobs-total">0</div>
+                        <div class="text-xs text-slate-500 mt-2 flex justify-between">
+                            <span>Activos: <b id="crm-jobs-active">0</b></span>
+                            <span>Completados: <b id="crm-jobs-completed">0</b></span>
+                        </div>
+                    </div>
+                    <!-- Postulaciones -->
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                        <h3 class="text-sm font-bold text-slate-500 mb-1">Postulaciones</h3>
+                        <div class="text-3xl font-bold text-slate-800" id="crm-apps-total">0</div>
+                        <div class="text-xs text-slate-500 mt-2 flex justify-between">
+                            <span>Activas: <b id="crm-apps-active">0</b></span>
+                            <span>CVs: <b id="crm-cvs-total">0</b></span>
+                        </div>
+                    </div>
+                    <!-- Finanzas -->
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                        <h3 class="text-sm font-bold text-slate-500 mb-1">Volumen Transaccional</h3>
+                        <div class="text-3xl font-bold text-escrow" id="crm-tx-volume">$0.00</div>
+                        <div class="text-xs text-slate-500 mt-2 flex justify-between">
+                            <span>Depósitos: <b id="crm-tx-deposits">$0.00</b></span>
+                            <span>Retiros: <b id="crm-tx-withdrawals">$0.00</b></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Contratos -->
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                        <h3 class="font-bold text-lg mb-4 border-b pb-2">Estado de Contratos</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-slate-600">Total de Contratos</span>
+                                <span class="font-bold" id="crm-contracts-total">0</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-slate-600">En Negociación</span>
+                                <span class="font-bold text-yellow-600" id="crm-contracts-negotiating">0</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-slate-600">Activos / En Curso</span>
+                                <span class="font-bold text-brand" id="crm-contracts-active">0</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-slate-600">Completados / Cerrados</span>
+                                <span class="font-bold text-escrow" id="crm-contracts-completed">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Actividad Reciente -->
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col">
+                        <h3 class="font-bold text-lg mb-4 border-b pb-2">Actividad Reciente</h3>
+                        <div id="crm-recent-activity" class="flex-1 overflow-y-auto space-y-3 no-scrollbar h-[200px]">
+                            <!-- JS render -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VISTA 5: BÚSQUEDA INTELIGENTE DE EMPLEO (Módulo AG) ================= -->
         <section id="view-ai-search" class="view-section h-full w-full overflow-y-auto">
 <div class="app">
   <div class="header">
@@ -448,6 +537,7 @@
                 <select id="authRole" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-brand bg-white transition">
                     <option value="employer">Quiero contratar (Empleador)</option>
                     <option value="worker">Quiero trabajar (Trabajador)</option>
+                    <option value="admin">Administrador (CRM)</option>
                 </select>
             </div>
 
@@ -844,14 +934,26 @@
             await renderWallet();
             await renderJobs();
             await renderContracts();
+            if (state.currentRole === 'admin') {
+                await renderCRM();
+            }
             updateUIForRole();
         }
 
         function updateUIForRole() {
             if(!state.sessionActive) {
-                document.getElementById('userInitials').innerText = state.currentRole === 'employer' ? 'EM' : 'TR';
+                document.getElementById('userInitials').innerText = state.currentRole === 'employer' ? 'EM' : state.currentRole === 'admin' ? 'AD' : 'TR';
             }
             document.getElementById('btnCreateJob').style.display = state.currentRole === 'employer' ? 'block' : 'none';
+            
+            const crmBtn = document.getElementById('nav-crm-btn');
+            if (crmBtn) {
+                if (state.currentRole === 'admin') {
+                    crmBtn.classList.remove('hidden');
+                } else {
+                    crmBtn.classList.add('hidden');
+                }
+            }
         }
 
         function changeRole(role) {
@@ -861,7 +963,7 @@
             }
             // Solo funciona en Development Mode (Sin Supabase)
             state.currentRole = role;
-            state.currentUserId = role === 'employer' ? 'emp_dev' : 'wrk_dev';
+            state.currentUserId = role === 'employer' ? 'emp_dev' : role === 'admin' ? 'admin_dev' : 'wrk_dev';
             showToast(`Modo Dev: ${role.toUpperCase()}`, 'info');
             renderApp();
         }
@@ -1418,7 +1520,106 @@
             }
         }
 
-        // 12. UTILIDADES Y LOOP (Cronómetro y UI)
+        // 12. CRM ADMINISTRATIVO
+        async function renderCRM() {
+            if (state.currentRole !== 'admin') return;
+            
+            try {
+                const profiles = await DB.get('profiles');
+                const jobs = await DB.get('jobs');
+                const applications = await DB.get('applications');
+                const contracts = await DB.get('contracts');
+                const cvs = await DB.get('candidate_cvs');
+                const txs = await DB.get('txs');
+                
+                const profilesArr = Array.isArray(profiles) ? profiles : Object.values(profiles);
+                const jobsArr = Array.isArray(jobs) ? jobs : Object.values(jobs);
+                const appsArr = Array.isArray(applications) ? applications : Object.values(applications);
+                const contractsArr = Array.isArray(contracts) ? contracts : Object.values(contracts);
+                const cvsArr = Array.isArray(cvs) ? cvs : Object.values(cvs);
+                const txsArr = Array.isArray(txs) ? txs : Object.values(txs);
+                
+                // Users
+                const workers = profilesArr.filter(p => p.role === 'worker').length;
+                const employers = profilesArr.filter(p => p.role === 'employer').length;
+                document.getElementById('crm-users-total').innerText = profilesArr.length;
+                document.getElementById('crm-users-workers').innerText = workers;
+                document.getElementById('crm-users-employers').innerText = employers;
+                
+                // Jobs
+                const activeJobs = jobsArr.filter(j => j.status === 'open' || j.status === 'negotiating').length;
+                const completedJobs = jobsArr.filter(j => j.status === 'closed').length;
+                document.getElementById('crm-jobs-total').innerText = jobsArr.length;
+                document.getElementById('crm-jobs-active').innerText = activeJobs;
+                document.getElementById('crm-jobs-completed').innerText = completedJobs;
+                
+                // Applications
+                const activeApps = appsArr.filter(a => a.status === 'active').length;
+                document.getElementById('crm-apps-total').innerText = appsArr.length;
+                document.getElementById('crm-apps-active').innerText = activeApps;
+                document.getElementById('crm-cvs-total').innerText = cvsArr.length;
+                
+                // Finances
+                let deposits = 0;
+                let withdrawals = 0;
+                let volume = 0;
+                txsArr.forEach(tx => {
+                    if (tx.amount > 0 && tx.desc.includes('Depósito')) deposits += tx.amount;
+                    if (tx.amount < 0 && tx.desc.includes('Retiro')) withdrawals += Math.abs(tx.amount);
+                    volume += Math.abs(tx.amount);
+                });
+                document.getElementById('crm-tx-volume').innerText = '$' + volume.toFixed(2);
+                document.getElementById('crm-tx-deposits').innerText = '$' + deposits.toFixed(2);
+                document.getElementById('crm-tx-withdrawals').innerText = '$' + withdrawals.toFixed(2);
+                
+                // Contracts
+                const negotiating = contractsArr.filter(c => c.status === 'negotiating' || c.status === 'pending_acceptance').length;
+                const activeContracts = contractsArr.filter(c => ['agreed', 'en_route', 'on_site', 'working'].includes(c.status)).length;
+                const completedContracts = contractsArr.filter(c => c.status === 'completed' || c.status === 'closed').length;
+                document.getElementById('crm-contracts-total').innerText = contractsArr.length;
+                document.getElementById('crm-contracts-negotiating').innerText = negotiating;
+                document.getElementById('crm-contracts-active').innerText = activeContracts;
+                document.getElementById('crm-contracts-completed').innerText = completedContracts;
+                
+                // Recent Activity
+                const activityContainer = document.getElementById('crm-recent-activity');
+                activityContainer.innerHTML = '';
+                
+                let activities = [];
+                profilesArr.forEach(p => activities.push({ type: 'user', text: `Nuevo usuario: ${p.name} (${p.role})`, date: p.created_at || 0 }));
+                jobsArr.forEach(j => activities.push({ type: 'job', text: `Nuevo trabajo: ${j.title}`, date: j.created_at || 0 }));
+                appsArr.forEach(a => activities.push({ type: 'app', text: `Nueva postulación al trabajo ${a.job_id}`, date: a.created_at || 0 }));
+                txsArr.forEach(t => activities.push({ type: 'tx', text: `Transacción: ${t.desc} ($${Math.abs(t.amount)})`, date: t.date || 0 }));
+                
+                activities.sort((a, b) => b.date - a.date);
+                activities.slice(0, 10).forEach(act => {
+                    let icon = 'zap';
+                    let color = 'text-slate-500';
+                    if (act.type === 'user') { icon = 'user'; color = 'text-blue-500'; }
+                    if (act.type === 'job') { icon = 'briefcase'; color = 'text-brand'; }
+                    if (act.type === 'app') { icon = 'file-text'; color = 'text-purple-500'; }
+                    if (act.type === 'tx') { icon = 'dollar-sign'; color = 'text-escrow'; }
+                    
+                    activityContainer.innerHTML += `
+                        <div class="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
+                            <div class="p-2 bg-gray-50 rounded-lg ${color}">
+                                <i data-lucide="${icon}" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-slate-700">${act.text}</p>
+                                <p class="text-xs text-slate-400">${new Date(act.date).toLocaleString()}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                if (window.lucide) lucide.createIcons();
+            } catch (e) {
+                console.error('Error renderizando CRM', e);
+            }
+        }
+
+        // 13. UTILIDADES Y LOOP (Cronómetro y UI)
         function showToast(msg, type='info') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -1493,8 +1694,9 @@
                 // Seed local data if empty
                 if (!localStorage.getItem('wn_profiles')) {
                     localStorage.setItem('wn_profiles', JSON.stringify([
-                        { id: 'emp_dev', role: 'employer', name: 'Empleador (Dev)', email: 'emp@dev.com', phone: '+593999999999', balance: 500, escrow: 0 },
-                        { id: 'wrk_dev', role: 'worker', name: 'Trabajador (Dev)', email: 'wrk@dev.com', phone: '+593888888888', balance: 0, escrow: 0 }
+                        { id: 'emp_dev', role: 'employer', name: 'Empleador (Dev)', email: 'emp@dev.com', phone: '+593999999999', balance: 500, escrow: 0, created_at: Date.now() },
+                        { id: 'wrk_dev', role: 'worker', name: 'Trabajador (Dev)', email: 'wrk@dev.com', phone: '+593888888888', balance: 0, escrow: 0, created_at: Date.now() },
+                        { id: 'admin_dev', role: 'admin', name: 'Admin (Dev)', email: 'admin@dev.com', phone: '+593777777777', balance: 0, escrow: 0, created_at: Date.now() }
                     ]));
                 }
                 
@@ -1557,7 +1759,7 @@ window.AG = (function(){
   const REAL_JOBS = JSON.parse(repaired);
 
   const $ = id => document.getElementById(id);
-  const state = { skills:[], keyword:'', geo:'', source:'', agent:'scout', currentJob:null, applied:new Set(), lastFiltered:[] };
+  const state = { skills:[], keyword:'', geo:'', source:'', agent:'scout', currentJob:null, applied:new Set(), lastFiltered:[], currentCvId: null };
 
   let internalJobs = [];
   function allJobs(){ return REAL_JOBS.concat(internalJobs); }
@@ -1664,8 +1866,27 @@ window.AG = (function(){
     log('[Supervisor] Inspeccionando oferta <b>'+esc(job.id)+'</b>','log-agent');
   }
 
-  function apply(id){
+  async function apply(id){
     const job=allJobs().find(j=>j.id===id); if(!job) return;
+    
+    // --- PERSISTENCIA SUPABASE ---
+    if (window.WN) {
+        try {
+            const appId = 'app_' + Date.now();
+            const appRecord = {
+                id: appId,
+                user_id: WN.state.currentUserId || 'local_user',
+                job_id: job.id,
+                cv_id: state.currentCvId || null,
+                status: 'active',
+                created_at: Date.now()
+            };
+            await WN.DB.insert('applications', appRecord);
+        } catch (err) {
+            console.error('[App Insert Error]', err);
+        }
+    }
+    
     if(job._internal){
       state.applied.add(id); render();
       if(window.WN){ WN.applyJob(job.id); WN.navigate('contracts'); }
@@ -1694,7 +1915,7 @@ window.AG = (function(){
   function handleFile(input){
     const f=input.files&&input.files[0]; if(!f) return;
     const reader=new FileReader();
-    reader.onload=e=>{
+    reader.onload=async e=>{
       const text=String(e.target.result).toLowerCase();
       state.skills=SKILL_DB.filter(k=>text.includes(k));
       $('uploadZone').classList.add('active');
@@ -1704,6 +1925,59 @@ window.AG = (function(){
       log('[Scout] CV analizado: '+state.skills.length+' skills detectadas','log-success');
       chat('Supervisor','supervisor','CV "'+f.name+'" procesado. Detecté '+state.skills.length+' skills. Actualizando scores de matching...',false);
       render();
+      
+      // --- PERSISTENCIA SUPABASE ---
+      if (window.WN) {
+          try {
+              const userId = WN.state.currentUserId || 'local_user';
+              const timestamp = Date.now();
+              const filePath = `${userId}/${timestamp}_${f.name}`;
+              
+              if (WN.state.sessionActive && window.supabaseClient) {
+                  const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                      .from('cvs')
+                      .upload(filePath, f);
+                  if (uploadError) throw uploadError;
+              }
+              
+              const cvRecord = {
+                  id: 'cv_' + timestamp,
+                  user_id: userId,
+                  file_name: f.name,
+                  file_path: filePath,
+                  mime_type: f.type || 'application/octet-stream',
+                  file_size: f.size,
+                  skills: state.skills,
+                  created_at: timestamp
+              };
+              await WN.DB.insert('candidate_cvs', cvRecord);
+              state.currentCvId = cvRecord.id;
+              
+              const profiles = await WN.DB.get('profiles');
+              const userProfile = profiles.find(p => p.id === userId);
+              if (userProfile) {
+                  const updatedSkills = Array.from(new Set([...(userProfile.skills || []), ...state.skills]));
+                  await WN.DB.update('profiles', userId, { skills: updatedSkills });
+              }
+              log('[Scout] CV guardado en Supabase Storage y perfil actualizado','log-success');
+          } catch (err) {
+              console.error('[CV Upload Error]', err);
+              log('[Scout] Error al guardar CV en Supabase (Fallback local activo)','log-warning');
+              
+              const cvRecord = {
+                  id: 'cv_' + Date.now(),
+                  user_id: WN.state.currentUserId || 'local_user',
+                  file_name: f.name,
+                  file_path: 'local',
+                  mime_type: f.type || 'application/octet-stream',
+                  file_size: f.size,
+                  skills: state.skills,
+                  created_at: Date.now()
+              };
+              await WN.DB.insert('candidate_cvs', cvRecord);
+              state.currentCvId = cvRecord.id;
+          }
+      }
     };
     reader.readAsText(f);
   }
