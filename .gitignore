@@ -1,0 +1,24 @@
+﻿# Secretos y variables de entorno
+.env
+.env.local
+.env.*.local
+*.env
+
+# Dependencias
+node_modules/
+
+# Builds
+dist/
+build/
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Temporales
+*.log
+*.tmp
+
+# Archivos de IDE
+.vscode/
+.idea/
