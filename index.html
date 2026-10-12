@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -28,7 +27,7 @@
     </script>
 
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <script>
         tailwind.config = {
@@ -36,7 +35,7 @@
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
-                        brand: '#2563eb', escrow: '#10b981', dark: '#0f172a', crypto: '#f59e0b'
+                        brand: '#0066FF', escrow: '#10b981', dark: '#0B1426', crypto: '#f59e0b'
                     }
                 }
             }
@@ -44,508 +43,2223 @@
     </script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .view-section { display: none; animation: fadeIn 0.2s ease-in; }
-        .view-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-        .toast { background: #0f172a; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transform: translateX(120%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500;}
-        .toast.show { transform: translateX(0); }
-        /* ============ BÚSQUEDA INTELIGENTE DE EMPLEO (scoped, módulo AG) ============ */
-/* ============ MÓDULO A: AGENTES (scoped #view-ai-search) ============ */
-#view-ai-search{--bg:var(--kimi-color-surface,#0a0e1a);--surface:var(--kimi-color-surface-raised,#111827);--surface-2:var(--kimi-color-surface-strong,#1f2937);--text:var(--kimi-color-text-primary,#f3f4f6);--text-muted:var(--kimi-color-text-secondary,#9ca3af);--border:var(--kimi-color-border,#374151);--primary:var(--kimi-color-accent,#3b82f6);--success:var(--kimi-color-positive,#10b981);--warning:var(--kimi-color-warning,#f59e0b);--danger:var(--kimi-color-danger,#ef4444);--font-sans:var(--kimi-font-sans,'Inter',sans-serif);--font-mono:var(--kimi-font-mono,'JetBrains Mono',monospace);font-family:var(--font-sans);background:var(--bg);color:var(--text);min-height:100%}
-#view-ai-search *{margin:0;padding:0;box-sizing:border-box}
-#view-ai-search .app{max-width:1400px;width:100%;margin:0 auto;padding:16px;overflow-x:hidden}
-#view-ai-search .header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
-#view-ai-search .brand{display:flex;align-items:center;gap:10px}
-#view-ai-search .brand-icon{width:36px;height:36px;background:var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
-#view-ai-search .brand h1{font-size:20px;font-weight:700}
-#view-ai-search .brand p{color:var(--text-muted);font-size:12px}
-#view-ai-search .status-bar{display:flex;gap:10px}
-#view-ai-search .status-pill{display:flex;align-items:center;gap:6px;background:var(--surface);padding:6px 12px;border-radius:100px;font-size:12px;border:1px solid var(--border)}
-#view-ai-search .status-dot{width:6px;height:6px;border-radius:50%;background:var(--success);animation:pulse 2s infinite}
+/* ===== BASE ===== */
+:root{
+    --brand:#0066FF; /* Azul vibrante de la referencia */
+    --escrow:#16A34A; 
+    --dark:#0B1426; /* Azul oscuro de la cabecera */
+    --crypto:#f59e0b;
+    --surface:#fff;
+    --surface-2:#F8FAFC;
+    --border:#E2E8F0;
+    --text:#0F172A;
+    --text-muted:#64748B;
+    --radius:20px;
+    --radius-sm:12px;
+    --shadow:0 4px 20px rgba(0,0,0,0.04);
+    --shadow-lg:0 10px 25px -5px rgba(0,0,0,0.1);
+}
+body{font-family:'Inter',sans-serif;background:var(--surface-2);color:var(--text);-webkit-tap-highlight-color:transparent}
+.view-section{display:none;animation:fadeIn .25s ease-out}.view-section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
+
+/* ===== TOAST ===== */
+#toast-container{position:fixed;bottom:90px;right:16px;left:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--dark);color:#fff;padding:14px 20px;border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);transform:translateY(120%);transition:transform .35s cubic-bezier(.4,0,.2,1),opacity .35s;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;pointer-events:auto;max-width:100%}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* ===== TOP BAR ===== */
+.top-bar{position:fixed;top:0;left:0;right:0;height:60px;background:var(--dark);z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 20px; transition: background 0.3s;}
+.top-bar .brand{display:flex;align-items:center;gap:8px;cursor:pointer}
+.top-bar .brand i{color:var(--brand); width: 28px; height: 28px;}
+.top-bar .brand span{font-weight:700;font-size:20px;color:#fff; letter-spacing: -0.5px;}
+.top-bar .brand .badge{display:none;} /* Oculto para limpiar diseño */
+.top-bar .right-controls{display:flex;align-items:center;gap:12px}
+.top-bar .right-controls select{font-size:11px;border:1px solid rgba(255,255,255,0.2);border-radius:var(--radius-sm);padding:6px 10px;outline:none;background:rgba(255,255,255,0.1);color:#fff;cursor:pointer}
+.top-bar .user-avatar{width:36px;height:36px;border-radius:50%;background:transparent;border: 1px solid rgba(255,255,255,0.2);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;cursor:pointer; transition: all 0.2s;}
+.top-bar .user-avatar:active { background: rgba(255,255,255,0.1); }
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:70px;background:#fff;border-top:none;box-shadow:0 -4px 20px rgba(0,0,0,0.04);border-top-left-radius:24px;border-top-right-radius:24px;z-index:100;display:flex;align-items:center;justify-content:space-around;padding:0 8px;padding-bottom:env(safe-area-inset-bottom,0)}
+.bottom-nav .nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;padding:8px 0;cursor:pointer;transition:all .2s;color:#94A3B8;border:none;background:none;font-family:inherit;}
+.bottom-nav .nav-item.active{color:var(--brand)}
+.bottom-nav .nav-item i{font-size:22px; width: 24px; height: 24px;}
+.bottom-nav .nav-item span{font-size:10px;font-weight:600}
+
+/* ===== MAIN APP AREA ===== */
+.app-main{position:absolute;top:60px;bottom:70px;left:0;right:0;overflow:hidden;background:var(--surface-2);overflow-y:auto}
+.app-main .section{padding:16px 20px;animation:fadeIn .25s ease-out}
+@media(min-width:1024px){.app-main{bottom:0}}
+/* En >=1024px la barra de navegación se reubica arriba (ver bloque HOME hw-), ya no se oculta */
+@media(max-width:1023px){.top-bar .right-controls select{display:none}}
+@media(max-width:1023px){.desktop-nav{display:none}}
+
+/* ===== NUEVO DISEÑO HOME (HERO + GRID) ===== */
+.hero-wrapper {
+    background: linear-gradient(to right, rgba(11, 20, 38, 0.95), rgba(11, 20, 38, 0.7)), url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80') center/cover;
+    margin: -16px -20px 16px -20px;
+    padding: 32px 20px 50px 20px;
+    color: white;
+    position: relative;
+    border-bottom-left-radius: 32px;
+    border-bottom-right-radius: 32px;
+}
+.hero-content h1 {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+}
+.hero-content h1 span { color: #38BDF8; }
+.hero-content p {
+    font-size: 14px;
+    color: #94A3B8;
+    line-height: 1.5;
+    margin-bottom: 24px;
+    max-width: 95%;
+}
+.new-search {
+    background: white;
+    border-radius: 100px;
+    padding: 6px 6px 6px 20px;
+    display: flex;
+    align-items: center;
+    box-shadow: var(--shadow-lg);
+    position: absolute;
+    bottom: -26px;
+    left: 20px;
+    right: 20px;
+    width: auto;
+    margin: 0;
+}
+.new-search i { color: var(--text-muted); width: 20px; height: 20px; }
+.new-search input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    color: var(--text);
+    background: transparent;
+    padding: 10px 12px;
+}
+.new-search input::placeholder { color: #94A3B8; }
+.new-search .search-arrow {
+    background: var(--brand);
+    color: white;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.new-search .search-arrow:active { transform: scale(0.95); }
+.new-search .search-arrow i { color: white; width: 20px; height: 20px; }
+
+.action-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 48px;
+    margin-bottom: 20px;
+}
+.action-card {
+    background: white;
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(0,0,0,0.02);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.action-card:active { transform: scale(0.97); }
+.action-card .ac-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+.action-card .ac-icon i { width: 24px; height: 24px; }
+.action-card span {
+    display: block;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text);
+    margin-bottom: 4px;
+    letter-spacing: -0.3px;
+}
+.action-card p {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.3;
+    margin: 0;
+}
+
+.video-banner {
+    background: #1E3A8A;
+    border-radius: 20px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    color: white;
+    margin-bottom: 24px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: transform 0.2s;
+}
+.video-banner:active { transform: scale(0.98); }
+.video-banner .vb-icon {
+    width: 44px;
+    height: 44px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+}
+.video-banner .vb-icon i { fill: white; width: 20px; height: 20px; }
+.video-banner .vb-text { flex: 1; }
+.video-banner .vb-text strong { display: block; font-size: 15px; margin-bottom: 2px; font-weight: 700; }
+.video-banner .vb-text span { font-size: 12px; color: #93C5FD; }
+
+/* ===== CATEGORY PILLS (Reemplaza grid anterior) ===== */
+.home-categories {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    scrollbar-width: none;
+}
+.home-categories::-webkit-scrollbar { display: none; }
+.home-categories .cat {
+    padding: 10px 20px;
+    border-radius: 100px;
+    background: white;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+.home-categories .cat.active {
+    background: var(--brand);
+    color: white;
+    border-color: var(--brand);
+}
+
+/* ===== JOB CARDS (NUEVO ESTILO) ===== */
+.jobs-feed{display:flex;flex-direction:column;gap:12px}
+.job-card.new-style {
+    display: flex;
+    gap: 14px;
+    padding: 14px;
+    border-radius: 20px;
+    background: white;
+    border: 1px solid rgba(0,0,0,0.03);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.job-card.new-style:active { transform: scale(0.98); }
+.jc-image-placeholder {
+    width: 85px;
+    height: 85px;
+    border-radius: 14px;
+    background: #F1F5F9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+.jc-image-placeholder img { width: 100%; height: 100%; object-fit: cover; }
+.jc-content { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.jc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+.jc-header .jc-title { font-weight: 700; font-size: 15px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.3px; }
+.jc-header .jc-fav { color: #CBD5E1; width: 20px; height: 20px; }
+.jc-location { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-bottom: 8px; }
+.jc-location i { width: 14px; height: 14px; }
+.jc-tags { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+.jc-tag { font-size: 10px; padding: 4px 8px; border-radius: 6px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+.jc-tag.type { background: #FEF3C7; color: #D97706; }
+.jc-tag.new { background: #DCFCE7; color: #16A34A; }
+.jc-tag.formal { background: #E0F2FE; color: #0284C7; }
+.jc-tag i { width: 12px; height: 12px; }
+.jc-price { font-weight: 800; font-size: 14px; color: var(--brand); }
+
+/* ===== DESKTOP NAV ===== */
+.desktop-nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.desktop-nav button{display:flex;align-items:center;gap:4px;padding:6px 10px;border:none;background:none;cursor:pointer;font-size:12px;font-weight:500;color:var(--text-muted);border-radius:var(--radius-sm);transition:all .15s;white-space:nowrap}
+.desktop-nav button:hover{color:var(--brand);background:rgba(37,99,235,0.06)}
+.desktop-nav button.active{color:var(--brand);background:rgba(37,99,235,0.08);font-weight:600}
+
+/* ===== CONTRACTS / ACUERDOS ===== */
+.contract-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;box-shadow:var(--shadow)}
+.contract-card .cc-status{display:inline-flex;font-size:10px;padding:3px 10px;border-radius:100px;font-weight:700;text-transform:uppercase}
+.contract-card .cc-status.negotiating{background:#fef3c7;color:#b45309}
+.contract-card .cc-status.agreed{background:#dbeafe;color:var(--brand)}
+.contract-card .cc-status.working{background:#d1fae5;color:var(--escrow)}
+.contract-card .cc-status.completed{background:#e5e7eb;color:#6b7280}
+.contract-card .cc-status.en_route{background:#ede9fe;color:#7c3aed}
+.contract-card .cc-status.on_site{background:#fed7aa;color:#ea580c}
+.contract-card .cc-status.pending_acceptance{background:#fef3c7;color:#b45309}
+.contract-card .cc-status.closed{background:#e5e7eb;color:#6b7280}
+.contract-card .cc-title{font-weight:700;font-size:16px;color:var(--text);margin:6px 0}
+.contract-card .cc-people{font-size:12px;color:var(--text-muted);margin-bottom:4px}
+.contract-card .cc-breakdown{padding:8px 0;font-size:12px}
+.contract-card .cc-breakdown .row{display:flex;justify-content:space-between;padding:2px 0}
+.contract-card .cc-breakdown .row.fee{color:var(--crypto)}
+.contract-card .cc-breakdown .row.total{font-weight:700;color:var(--text);border-top:1px solid var(--border);padding-top:4px;margin-top:4px}
+.contract-card .cc-breakdown .row.net{font-weight:700;color:var(--escrow)}
+.contract-card .cc-timer{font-family:'Courier New',monospace;font-size:28px;font-weight:700;color:var(--text);text-align:center;padding:6px 0}
+.contract-card .cc-action{width:100%;padding:12px;border:none;border-radius:var(--radius-sm);font-weight:600;font-size:14px;cursor:pointer;margin-top:8px;transition:all .15s}
+.contract-card .cc-action.primary{background:var(--brand);color:#fff}
+.contract-card .cc-action.success{background:var(--escrow);color:#fff}
+.contract-card .cc-action.warning{background:#f59e0b;color:#fff}
+.contract-card .cc-action.danger{background:#ef4444;color:#fff}
+.contract-card .cc-action.ghost{background:#f3f4f6;color:var(--text-muted);border:1px solid var(--border)}
+.contract-card .cc-contact{font-size:12px;color:var(--text-muted);margin-top:4px}
+
+/* ===== WALLET ===== */
+.wallet-card{background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:var(--radius);padding:20px;margin-bottom:16px;color:#fff;position:relative;overflow:hidden;box-shadow:var(--shadow-lg)}
+.wallet-card .wc-bg-icon{position:absolute;right:-10px;top:-10px;opacity:.08;font-size:120px}
+.wallet-card .wc-label{font-size:11px;color:#94a3b8;font-weight:500;margin-bottom:2px}
+.wallet-card .wc-balance{font-size:36px;font-weight:800;margin-bottom:4px}
+.wallet-card .wc-escrow{font-size:12px;color:var(--escrow);margin-bottom:16px;display:flex;align-items:center;gap:4px}
+.wallet-card .wc-actions{display:flex;gap:10px}
+.wallet-card .wc-actions button{flex:1;padding:12px;border:none;border-radius:var(--radius-sm);font-weight:600;font-size:13px;cursor:pointer;transition:all .15s}
+.wallet-card .wc-actions button:active{transform:scale(.97)}
+.wallet-card .wc-actions .primary{background:var(--brand);color:#fff}
+.wallet-card .wc-actions .ghost{background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.15)}
+
+/* ===== EMPTY STATE ===== */
+.empty-state{padding:40px 20px;text-align:center;color:var(--text-muted);font-size:14px}
+.empty-state i{font-size:40px;display:block;margin-bottom:12px;opacity:.5}
+
+/* ===== MODAL ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(11,20,38,.8);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.hidden{display:none}
+.modal-box{background:#fff;border-radius:var(--radius);width:100%;max-width:400px;max-height:90vh;overflow:hidden;box-shadow:var(--shadow-lg)}
+.modal-box .modal-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border)}
+.modal-box .modal-header h2{font-weight:700;font-size:18px}
+.modal-box .modal-header button{background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:20px}
+.modal-box .modal-body{padding:16px 20px;overflow-y:auto}
+.modal-box label{display:block;font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px}
+.modal-box input,.modal-box textarea,.modal-box select{width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;outline:none;font-size:13px;background:#fff;transition:border .15s}
+.modal-box input:focus,.modal-box textarea:focus,.modal-box select:focus{border-color:var(--brand)}
+.modal-box .modal-btn{width:100%;padding:12px;border:none;border-radius:var(--radius-sm);font-weight:600;font-size:14px;cursor:pointer;background:var(--brand);color:#fff;transition:all .15s}
+
+/* ===== AUTH MODAL ===== */
+.auth-modal .auth-header{text-align:center;margin-bottom:16px}
+.auth-modal .auth-header .icon{width:56px;height:56px;border-radius:50%;background:rgba(0,102,255,.08);display:flex;align-items:center;justify-content:center;margin:0 auto 8px}
+.auth-modal .auth-header .icon i{color:var(--brand)}
+.auth-modal .auth-header h2{font-weight:700;font-size:22px;color:var(--text)}
+.auth-modal .auth-header p{font-size:12px;color:var(--text-muted)}
+.auth-modal .auth-btn{width:100%;padding:14px;border:none;border-radius:var(--radius-sm);font-weight:600;font-size:15px;cursor:pointer;transition:all .15s}
+.auth-modal .auth-btn.primary{background:var(--brand);color:#fff}
+.auth-modal .auth-btn.success{background:var(--escrow);color:#fff}
+.auth-modal .auth-toggle{font-size:13px;color:var(--text-muted);text-align:center;cursor:pointer;font-weight:500;margin-top:12px}
+.auth-modal .auth-toggle:hover{color:var(--brand)}
+.auth-modal .field-group{margin-bottom:10px}
+
+/* ===== MAPA ===== */
+.map-section{position:relative;height:calc(100vh - 120px);min-height:300px;background:#e5e7eb;overflow:hidden; border-radius: var(--radius); margin-bottom: 16px;}
+.map-section #map{position:absolute;inset:0}
+.map-section .gps-overlay{position:absolute;bottom:16px;left:16px;z-index:400;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--text-muted);box-shadow:var(--shadow)}
+
+/* ===== DESKTOP LAYOUT ===== */
+@media(min-width:1024px){
+  .desktop-split{display:flex;height:100%}
+  .desktop-split .side-panel{width:380px;background:#fff;border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0}
+  .desktop-split .main-panel{flex:1;min-width:0}
+}
+
+/* ===== RESPONSIVE HELPERS ===== */
+.mobile-only{display:block}@media(min-width:1024px){.mobile-only{display:none}}
+.desktop-only{display:none}@media(min-width:1024px){.desktop-only{display:block}}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:100px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ===== ANIMATIONS ===== */
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-#view-ai-search .main-grid{display:grid;grid-template-columns:260px 1fr 300px;gap:16px}
-@media (max-width:1000px){#view-ai-search .main-grid{grid-template-columns:1fr}}
-#view-ai-search .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px}
-#view-ai-search .card-title{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
-#view-ai-search .upload-zone{border:2px dashed var(--border);border-radius:8px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .3s}
-#view-ai-search .upload-zone:hover{border-color:var(--primary)}
-#view-ai-search .upload-zone.active{border-color:var(--success);background:rgba(16,185,129,.05)}
+
+/* ============ HOME REDISEÑADO (prefijo hw-) + NAVEGACIÓN ============ */
+/* Marca en la barra superior */
+.top-bar .brand .brand-logo{width:34px;height:34px;flex-shrink:0}
+.top-bar .brand .brand-text{display:flex;flex-direction:column;line-height:1.1}
+.top-bar .brand .brand-tag{font-size:10px;font-weight:500;color:#93C5FD;letter-spacing:0}
+
+/* Navegación: indicador de elemento activo (móvil: barra superior del ítem) */
+.bottom-nav .nav-item{position:relative}
+.bottom-nav .nav-item.active::before{content:"";position:absolute;top:0;left:50%;width:30px;height:3px;margin-left:-15px;border-radius:0 0 4px 4px;background:var(--brand)}
+.bottom-nav .nav-item:focus-visible{outline:2px solid var(--brand);outline-offset:-2px;border-radius:12px}
+/* Navegación en escritorio: la misma barra, reubicada dentro de la barra superior */
+@media(min-width:1024px){
+  .bottom-nav{top:0;bottom:auto;left:240px;right:auto;width:auto;height:60px;padding:0;background:transparent;box-shadow:none;border-radius:0;justify-content:flex-start;gap:2px;z-index:101}
+  .bottom-nav .nav-item{flex:none;flex-direction:row;gap:6px;height:60px;padding:0 14px;color:#CBD5E1}
+  .bottom-nav .nav-item span{font-size:13px}
+  .bottom-nav .nav-item svg{width:18px;height:18px}
+  .bottom-nav .nav-item:hover{color:#fff}
+  .bottom-nav .nav-item.active{color:#fff}
+  .bottom-nav .nav-item.active::before{top:auto;bottom:0;left:14px;right:14px;width:auto;margin-left:0;height:3px;border-radius:3px 3px 0 0;background:#38BDF8}
+}
+@media(min-width:1024px) and (max-width:1279px){.bottom-nav .nav-item svg{display:none}}
+
+/* HOME: contenedor sin padding para que el hero ocupe todo el ancho */
+.app-main .hw-home.section{padding:0 0 28px}
+
+/* A) Hero */
+.hw-hero{position:relative;overflow:hidden;border-radius:0 0 28px 28px;background:radial-gradient(120% 90% at 85% 25%,rgba(37,99,235,.55) 0%,rgba(37,99,235,0) 62%),linear-gradient(180deg,#0B1426 0%,#0B2559 100%)}
+.hw-hero-inner{position:relative;max-width:1080px;margin:0 auto;padding:6px 16px 66px}
+.hw-hero-text{position:relative;z-index:2;max-width:62%;min-height:150px}
+.hw-title{font-size:clamp(21px,6.2vw,36px);line-height:1.17;font-weight:800;letter-spacing:-.5px;color:#fff;margin:6px 0 10px}
+.hw-title span{color:#38BDF8}
+.hw-sub{font-size:clamp(11px,2.9vw,14px);line-height:1.45;color:#CBD5E1;margin:0}
+.hw-hero-art{position:absolute;right:8px;bottom:0;width:min(46%,400px);z-index:1;pointer-events:none}
+.hw-hero-art svg{display:block;width:100%;height:auto}
+
+/* B) Buscador flotante */
+.hw-body{max-width:1080px;margin:0 auto;padding:0 16px}
+.hw-search{position:relative;z-index:3;margin-top:-46px;padding:10px 10px 10px 16px;background:#fff;border-radius:22px;box-shadow:0 14px 32px rgba(11,20,38,.2)}
+.hw-search-row{display:flex;align-items:center;gap:10px}
+.hw-search-ico{width:22px;height:22px;color:#64748B;flex-shrink:0}
+.hw-search input{flex:1;min-width:0;border:none;outline:none;background:transparent;font-size:16px;font-weight:500;color:var(--text);padding:8px 0}
+.hw-search input::placeholder{color:#94A3B8;font-weight:500}
+.hw-search-go{width:46px;height:46px;border-radius:50%;border:none;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;box-shadow:0 6px 14px rgba(0,102,255,.35);transition:transform .15s}
+.hw-search-go:active{transform:scale(.94)}
+.hw-search-go svg{width:22px;height:22px}
+.hw-search-hint{font-size:11px;color:#94A3B8;margin:0 0 0 32px}
+@media(min-width:1024px){.hw-search{max-width:760px}}
+
+/* C) Cuadrícula de 4 accesos */
+.hw-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px}
+@media(min-width:720px){.hw-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.hw-card{display:flex;flex-direction:column;align-items:flex-start;width:100%;min-height:132px;padding:16px 14px 14px;text-align:left;font-family:inherit;border:1px solid rgba(15,23,42,.06);border-radius:20px;box-shadow:0 6px 18px rgba(15,23,42,.06);cursor:pointer;transition:transform .15s,box-shadow .15s}
+.hw-card:hover{box-shadow:0 10px 24px rgba(15,23,42,.12)}
+.hw-card:active{transform:scale(.97)}
+.hw-card:focus-visible{outline:3px solid #93C5FD;outline-offset:2px}
+.hw-card-ico{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;color:#fff;flex-shrink:0}
+.hw-card-ico svg{width:28px;height:28px}
+.hw-card-title{display:block;font-size:15px;font-weight:700;letter-spacing:-.2px;color:var(--text);margin-bottom:3px}
+.hw-card-desc{display:block;font-size:12px;line-height:1.35;color:var(--text-muted)}
+.hw-card.blue{background:linear-gradient(180deg,#EFF6FF,#fff)}.hw-card.blue .hw-card-ico{background:linear-gradient(135deg,#2563EB,#1D4ED8)}
+.hw-card.green{background:linear-gradient(180deg,#ECFDF5,#fff)}.hw-card.green .hw-card-ico{background:linear-gradient(135deg,#22C55E,#16A34A)}
+.hw-card.violet{background:linear-gradient(180deg,#F5F3FF,#fff)}.hw-card.violet .hw-card-ico{background:linear-gradient(135deg,#8B5CF6,#7C3AED)}
+.hw-card.orange{background:linear-gradient(180deg,#FFF7ED,#fff)}.hw-card.orange .hw-card-ico{background:linear-gradient(135deg,#FB923C,#EA580C)}
+
+/* D) Banner de tutorial (sin recurso de video en el proyecto: no interactivo) */
+.hw-tutorial{display:flex;align-items:center;gap:14px;margin-top:14px;padding:14px 16px;border-radius:20px;color:#fff;background:linear-gradient(110deg,#0B1F4D 0%,#123A8C 100%);box-shadow:0 10px 24px rgba(11,31,77,.28)}
+.hw-tutorial-play{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#38BDF8;background:rgba(56,189,248,.16);border:1.5px solid #38BDF8}
+.hw-tutorial-play svg{width:20px;height:20px;fill:currentColor}
+.hw-tutorial-text{flex:1;min-width:0}
+.hw-tutorial-text strong{display:block;font-size:15px;font-weight:700}
+.hw-tutorial-text span{display:block;font-size:12px;color:#93C5FD}
+.hw-tutorial-go{width:20px;height:20px;color:#93C5FD;flex-shrink:0}
+
+/* Encabezado de la lista de trabajos cercanos */
+.hw-section-title{font-size:17px;font-weight:700;letter-spacing:-.3px;color:var(--text);margin:24px 0 12px}
+
+/* ============ MÓDULO A: AGENTES (scoped #view-ai-search, preservado) ============ */
+#view-ai-search{--ai-bg:var(--kimi-color-surface,#0a0e1a);--ai-surface:var(--kimi-color-surface-raised,#111827);--ai-surface-2:var(--kimi-color-surface-strong,#1f2937);--ai-text:var(--kimi-color-text-primary,#f3f4f6);--ai-text-muted:var(--kimi-color-text-secondary,#9ca3af);--ai-border:var(--kimi-color-border,#374151);--ai-primary:var(--kimi-color-accent,#3b82f6);--ai-success:var(--kimi-color-positive,#10b981);--ai-warning:var(--kimi-color-warning,#f59e0b);--ai-danger:var(--kimi-color-danger,#ef4444);--ai-font-sans:var(--kimi-font-sans,'Inter',sans-serif);--ai-font-mono:var(--kimi-font-mono,'JetBrains Mono',monospace);font-family:var(--ai-font-sans);background:var(--ai-bg);color:var(--ai-text);min-height:100%}
+#view-ai-search *{margin:0;padding:0;box-sizing:border-box}
+#view-ai-search .app{max-width:100%;width:100%;margin:0;padding:12px;overflow-x:hidden}
+#view-ai-search .header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--ai-border)}
+#view-ai-search .brand{display:flex;align-items:center;gap:8px}
+#view-ai-search .brand-icon{width:32px;height:32px;background:var(--ai-primary);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+#view-ai-search .brand h1{font-size:16px;font-weight:700}
+#view-ai-search .brand p{color:var(--ai-text-muted);font-size:11px}
+#view-ai-search .status-bar{display:flex;gap:8px;flex-shrink:0}
+#view-ai-search .status-pill{display:flex;align-items:center;gap:4px;background:var(--ai-surface);padding:4px 10px;border-radius:100px;font-size:11px;border:1px solid var(--ai-border)}
+#view-ai-search .status-dot{width:6px;height:6px;border-radius:50%;background:var(--ai-success);animation:pulse 2s infinite}
+#view-ai-search .main-grid{display:block}
+#view-ai-search .card{background:var(--ai-surface);border:1px solid var(--ai-border);border-radius:10px;padding:12px;margin-bottom:10px}
+#view-ai-search .card-title{font-size:11px;font-weight:600;color:var(--ai-text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+#view-ai-search .upload-zone{border:2px dashed var(--ai-border);border-radius:8px;padding:20px 12px;text-align:center;cursor:pointer;transition:all .3s}
+#view-ai-search .upload-zone:hover{border-color:var(--ai-primary)}
+#view-ai-search .upload-zone.active{border-color:var(--ai-success);background:rgba(16,185,129,.05)}
 #view-ai-search .upload-zone input{display:none}
-#view-ai-search .upload-icon{font-size:28px;margin-bottom:8px}
-#view-ai-search .upload-text{font-size:12px;color:var(--text-muted)}
-#view-ai-search .upload-text strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}
-#view-ai-search .file-info{margin-top:10px;padding:8px;background:var(--surface-2);border-radius:6px;font-size:12px;display:none}
+#view-ai-search .upload-icon{font-size:24px;margin-bottom:6px}
+#view-ai-search .upload-text{font-size:11px;color:var(--ai-text-muted)}
+#view-ai-search .upload-text strong{color:var(--ai-text);display:block;margin-bottom:2px;font-size:12px}
+#view-ai-search .file-info{margin-top:8px;padding:8px;background:var(--ai-surface-2);border-radius:6px;font-size:11px;display:none}
 #view-ai-search .file-info.show{display:block}
-#view-ai-search .agent-list{display:flex;flex-direction:column;gap:8px}
-#view-ai-search .agent-item{display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface-2);border-radius:8px;border:1px solid transparent;cursor:pointer;transition:all .2s}
-#view-ai-search .agent-item:hover{border-color:var(--border)}
-#view-ai-search .agent-item.active{border-color:var(--primary)}
-#view-ai-search .agent-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+#view-ai-search .agent-list{display:flex;flex-direction:column;gap:6px}
+#view-ai-search .agent-item{display:flex;align-items:center;gap:8px;padding:8px;background:var(--ai-surface-2);border-radius:8px;border:1px solid transparent;cursor:pointer;transition:all .2s}
+#view-ai-search .agent-item:hover{border-color:var(--ai-border)}
+#view-ai-search .agent-item.active{border-color:var(--ai-primary)}
+#view-ai-search .agent-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
 #view-ai-search .agent-avatar.scout{background:rgba(59,130,246,.15)}
 #view-ai-search .agent-avatar.applier{background:rgba(16,185,129,.15)}
 #view-ai-search .agent-avatar.negotiator{background:rgba(245,158,11,.15)}
 #view-ai-search .agent-avatar.supervisor{background:rgba(139,92,246,.15)}
 #view-ai-search .agent-info{flex:1}
-#view-ai-search .agent-name{font-weight:600;font-size:13px}
-#view-ai-search .agent-role{font-size:11px;color:var(--text-muted)}
-#view-ai-search .agent-status{width:6px;height:6px;border-radius:50%;background:var(--success)}
-#view-ai-search .agent-status.idle{background:var(--text-muted)}
-#view-ai-search .agent-status.busy{background:var(--warning)}
-#view-ai-search .metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
-@media (max-width:640px){#view-ai-search .metrics-grid{grid-template-columns:repeat(2,1fr)}}
-#view-ai-search .metric{background:var(--surface);padding:14px;border-radius:8px;border:1px solid var(--border)}
-#view-ai-search .metric-value{font-size:24px;font-weight:800;color:var(--text)}
-#view-ai-search .metric-label{font-size:11px;color:var(--text-muted);margin-top:2px}
-#view-ai-search .filter-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
-#view-ai-search .filter-input{flex:1;min-width:140px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;outline:none}
-#view-ai-search .filter-input:focus{border-color:var(--primary)}
-#view-ai-search .filter-select{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;outline:none}
-#view-ai-search .btn-sm{padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--primary);color:#fff;text-decoration:none;display:inline-block}
+#view-ai-search .agent-name{font-weight:600;font-size:12px}
+#view-ai-search .agent-role{font-size:10px;color:var(--ai-text-muted)}
+#view-ai-search .agent-status{width:6px;height:6px;border-radius:50%;background:var(--ai-success);flex-shrink:0}
+#view-ai-search .agent-status.idle{background:var(--ai-text-muted)}
+#view-ai-search .agent-status.busy{background:var(--ai-warning)}
+#view-ai-search .metrics-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+@media(min-width:600px){#view-ai-search .metrics-grid{grid-template-columns:repeat(4,1fr)}}
+#view-ai-search .metric{background:var(--ai-surface);padding:10px;border-radius:8px;border:1px solid var(--ai-border)}
+#view-ai-search .metric-value{font-size:22px;font-weight:800;color:var(--ai-text)}
+#view-ai-search .metric-label{font-size:10px;color:var(--ai-text-muted);margin-top:2px}
+#view-ai-search .filter-bar{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+#view-ai-search .filter-input{flex:1;min-width:120px;background:var(--ai-surface-2);border:1px solid var(--ai-border);border-radius:8px;padding:6px 10px;color:var(--ai-text);font-size:11px;outline:none}
+#view-ai-search .filter-input:focus{border-color:var(--ai-primary)}
+#view-ai-search .filter-select{background:var(--ai-surface-2);border:1px solid var(--ai-border);border-radius:8px;padding:6px 10px;color:var(--ai-text);font-size:11px;outline:none}
+#view-ai-search .btn-sm{padding:8px 12px;border-radius:8px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:var(--ai-primary);color:#fff;text-decoration:none;display:inline-block}
 #view-ai-search .btn-sm:hover{opacity:.9}
-#view-ai-search .btn-ghost-sm{background:transparent;color:var(--text-muted);border:1px solid var(--border)}
-#view-ai-search .btn-ghost-sm:hover{border-color:var(--text);color:var(--text)}
-#view-ai-search .jobs-list{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto}
-#view-ai-search .job-card{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:12px;transition:all .2s;cursor:pointer}
-#view-ai-search .job-card:hover{border-color:var(--primary)}
-#view-ai-search .job-card.applied{border-left:3px solid var(--success)}
-#view-ai-search .job-header{display:flex;justify-content:space-between;align-items:start;margin-bottom:6px}
-#view-ai-search .job-title{font-weight:600;font-size:13px}
-#view-ai-search .job-badge{font-size:9px;padding:3px 8px;border-radius:100px;font-weight:600;text-transform:uppercase}
-#view-ai-search .badge-new{background:rgba(16,185,129,.15);color:var(--success)}
-#view-ai-search .badge-hot{background:rgba(245,158,11,.15);color:var(--warning)}
-#view-ai-search .badge-match{background:rgba(59,130,246,.15);color:var(--primary)}
-#view-ai-search .job-meta{display:flex;gap:10px;font-size:11px;color:var(--text-muted);margin-bottom:6px;flex-wrap:wrap}
-#view-ai-search .job-actions{display:flex;gap:6px;margin-top:8px}
-#view-ai-search .match-bar{display:flex;align-items:center;gap:8px}
-#view-ai-search .progress-bar{flex:1;height:4px;background:var(--surface);border-radius:100px;overflow:hidden}
+#view-ai-search .btn-ghost-sm{background:transparent;color:var(--ai-text-muted);border:1px solid var(--ai-border)}
+#view-ai-search .btn-ghost-sm:hover{border-color:var(--ai-text);color:var(--ai-text)}
+#view-ai-search .jobs-list{display:flex;flex-direction:column;gap:6px;max-height:360px;overflow-y:auto}
+#view-ai-search .job-card{background:var(--ai-surface-2);border:1px solid var(--ai-border);border-radius:8px;padding:10px;transition:all .2s;cursor:pointer}
+#view-ai-search .job-card:hover{border-color:var(--ai-primary)}
+#view-ai-search .job-card.applied{border-left:3px solid var(--ai-success)}
+#view-ai-search .job-header{display:flex;justify-content:space-between;align-items:start;margin-bottom:4px}
+#view-ai-search .job-title{font-weight:600;font-size:12px}
+#view-ai-search .job-badge{font-size:9px;padding:2px 6px;border-radius:100px;font-weight:600;text-transform:uppercase}
+#view-ai-search .badge-new{background:rgba(16,185,129,.15);color:var(--ai-success)}
+#view-ai-search .badge-hot{background:rgba(245,158,11,.15);color:var(--ai-warning)}
+#view-ai-search .badge-match{background:rgba(59,130,246,.15);color:var(--ai-primary)}
+#view-ai-search .job-meta{display:flex;gap:6px;font-size:10px;color:var(--ai-text-muted);margin-bottom:4px;flex-wrap:wrap}
+#view-ai-search .job-actions{display:flex;gap:4px;margin-top:6px}
+#view-ai-search .match-bar{display:flex;align-items:center;gap:6px}
+#view-ai-search .progress-bar{flex:1;height:4px;background:var(--ai-surface);border-radius:100px;overflow:hidden}
 #view-ai-search .progress-fill{height:100%;border-radius:100px;transition:width .5s ease}
-#view-ai-search .match-score{font-size:10px;font-weight:700;min-width:28px;text-align:right}
-#view-ai-search .chat-area{display:flex;flex-direction:column;height:320px}
-#view-ai-search .chat-messages{flex:1;overflow-y:auto;padding-right:6px;margin-bottom:10px}
-#view-ai-search .message{display:flex;gap:8px;margin-bottom:10px;animation:fadeIn .3s ease}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-#view-ai-search .message-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
-#view-ai-search .message-content{background:var(--surface-2);padding:8px 12px;border-radius:8px;font-size:12px;line-height:1.5;max-width:90%}
-#view-ai-search .message-name{font-size:10px;font-weight:600;color:var(--primary);margin-bottom:2px}
+#view-ai-search .match-score{font-size:10px;font-weight:700;min-width:24px;text-align:right}
+#view-ai-search .chat-area{display:flex;flex-direction:column;max-height:280px}
+#view-ai-search .chat-messages{flex:1;overflow-y:auto;padding-right:4px;margin-bottom:8px}
+#view-ai-search .message{display:flex;gap:6px;margin-bottom:8px;animation:fadeIn .3s ease}
+#view-ai-search .message-avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+#view-ai-search .message-content{background:var(--ai-surface-2);padding:6px 10px;border-radius:8px;font-size:11px;line-height:1.4;max-width:90%}
+#view-ai-search .message-name{font-size:10px;font-weight:600;color:var(--ai-primary);margin-bottom:2px}
 #view-ai-search .message.user{flex-direction:row-reverse}
 #view-ai-search .message.user .message-content{background:rgba(59,130,246,.1)}
-#view-ai-search .message.user .message-name{color:var(--text);text-align:right}
-#view-ai-search .chat-input-area{display:flex;gap:6px}
-#view-ai-search .chat-input{flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;outline:none}
-#view-ai-search .chat-btn{background:var(--primary);border:none;border-radius:8px;padding:0 14px;color:#fff;font-weight:600;cursor:pointer}
-#view-ai-search .terminal{background:#000;border-radius:8px;padding:12px;font-family:var(--font-mono);font-size:11px;line-height:1.5;height:200px;overflow-y:auto;border:1px solid var(--border)}
-#view-ai-search .log-entry{margin-bottom:4px}
-#view-ai-search .log-time{color:#6b7280;margin-right:6px}
-#view-ai-search .log-agent{color:var(--primary)}
-#view-ai-search .log-success{color:var(--success)}
-#view-ai-search .log-warning{color:var(--warning)}
-#view-ai-search .control-panel{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-#view-ai-search .btn{flex:1;padding:10px;border-radius:8px;font-weight:600;font-size:12px;border:none;cursor:pointer;min-width:70px}
-#view-ai-search .btn-success{background:var(--success);color:#fff}
-#view-ai-search .btn-ghost{background:var(--surface-2);color:var(--text);border:1px solid var(--border)}
-#view-ai-search .detail-panel{background:var(--surface-2);border-radius:8px;padding:12px;margin-top:8px;font-size:12px;display:none}
+#view-ai-search .message.user .message-name{color:var(--ai-text);text-align:right}
+#view-ai-search .chat-input-area{display:flex;gap:4px}
+#view-ai-search .chat-input{flex:1;background:var(--ai-surface-2);border:1px solid var(--ai-border);border-radius:8px;padding:6px 10px;color:var(--ai-text);font-size:11px;outline:none}
+#view-ai-search .chat-btn{background:var(--ai-primary);border:none;border-radius:8px;padding:0 12px;color:#fff;font-weight:600;cursor:pointer}
+#view-ai-search .terminal{background:#000;border-radius:8px;padding:10px;font-family:var(--ai-font-mono);font-size:10px;line-height:1.4;max-height:160px;overflow-y:auto;border:1px solid var(--ai-border)}
+#view-ai-search .log-entry{margin-bottom:3px}
+#view-ai-search .log-time{color:#6b7280;margin-right:4px}
+#view-ai-search .log-agent{color:var(--ai-primary)}
+#view-ai-search .log-success{color:var(--ai-success)}
+#view-ai-search .log-warning{color:var(--ai-warning)}
+#view-ai-search .control-panel{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+#view-ai-search .btn{flex:1;padding:8px;border-radius:8px;font-weight:600;font-size:11px;border:none;cursor:pointer;min-width:60px}
+#view-ai-search .btn-success{background:var(--ai-success);color:#fff}
+#view-ai-search .btn-ghost{background:var(--ai-surface-2);color:var(--ai-text);border:1px solid var(--ai-border)}
+#view-ai-search .detail-panel{background:var(--ai-surface-2);border-radius:8px;padding:10px;margin-top:6px;font-size:11px;display:none}
 #view-ai-search .detail-panel.show{display:block}
-#view-ai-search .detail-title{font-weight:700;margin-bottom:6px}
-#view-ai-search .detail-text{color:var(--text-muted);line-height:1.5;max-height:120px;overflow-y:auto;white-space:pre-wrap}
-#view-ai-search ::-webkit-scrollbar{width:6px}
-#view-ai-search ::-webkit-scrollbar-thumb{background:var(--border);border-radius:100px}
-    </style>
+#view-ai-search .detail-title{font-weight:700;margin-bottom:4px;font-size:13px}
+#view-ai-search .detail-text{color:var(--ai-text-muted);line-height:1.5;max-height:100px;overflow-y:auto;white-space:pre-wrap;font-size:11px}
+#view-ai-search ::-webkit-scrollbar{width:4px}
+#view-ai-search ::-webkit-scrollbar-thumb{background:var(--ai-border);border-radius:100px}
+
+/* ===== REDISEÑO VISTA BUSCAR EMPLEO ===== */
+.search-view-bg {
+    background-color: #F8FAFC;
+    padding: 0;
+    padding-bottom: 90px; /* Espacio para bottom nav */
+}
+
+.search-header-bg {
+    background-color: #0B1426;
+    padding: 40px 20px 60px 20px;
+    border-bottom-left-radius: 24px;
+    border-bottom-right-radius: 24px;
+}
+
+.search-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: white;
+}
+
+.search-header-titles {
+    flex: 1;
+    margin-left: 12px;
+}
+
+.search-header-titles h1 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.search-header-titles p {
+    font-size: 12px;
+    color: #94A3B8;
+    margin: 0;
+}
+
+.filter-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 4px;
+}
+
+.search-floating-card {
+    background: white;
+    border-radius: 16px;
+    margin: -40px 20px 16px 20px;
+    padding: 14px 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    position: relative;
+    z-index: 10;
+}
+
+.search-input-row {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #E2E8F0;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+}
+
+.search-input-row input {
+    flex: 1;
+    border: none;
+    outline: none;
+    margin-left: 10px;
+    font-size: 15px;
+    color: #0F172A;
+    background: transparent;
+}
+
+.search-input-row input::placeholder {
+    color: #94A3B8;
+}
+
+.search-location-row {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: #10b981;
+    font-weight: 600;
+}
+
+.search-location-row span {
+    margin-left: 8px;
+    color: #10b981;
+}
+
+.search-filters-container {
+    padding: 0 20px;
+    margin-bottom: 16px;
+}
+
+/* Adaptación de los filtros existentes */
+#view-search .home-categories {
+    margin-bottom: 0;
+    padding-bottom: 4px;
+    gap: 10px;
+}
+
+#view-search .home-categories .cat {
+    background: #F1F5F9;
+    border: none;
+    color: #64748B;
+    padding: 8px 18px;
+    font-size: 13px;
+    border-radius: 100px;
+}
+
+#view-search .home-categories .cat.active {
+    background: #0066FF;
+    color: white;
+}
+
+.search-map-wrapper {
+    padding: 0 20px;
+    margin-bottom: 16px;
+}
+
+.search-sort-selector {
+    display: flex;
+    gap: 20px;
+    padding: 0 20px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.search-sort-selector::-webkit-scrollbar { display: none; }
+
+.sort-btn {
+    background: none;
+    border: none;
+    font-size: 13px;
+    color: #64748B;
+    font-weight: 500;
+    padding: 4px 0;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.sort-btn.active {
+    color: #0066FF;
+    font-weight: 600;
+    border-bottom: 2px solid #0066FF;
+}
+
+.search-jobs-wrapper {
+    padding: 0 20px;
+}
+
+/* Estilos para la nueva tarjeta inyectada por JS */
+.job-card-redesign-wrapper {
+    background: white;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    border: 1px solid #F1F5F9;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.job-card-redesign-wrapper:active { transform: scale(0.98); }
+
+.job-card-redesign {
+    display: flex;
+    padding: 14px;
+    gap: 14px;
+    position: relative;
+}
+
+.job-card-img {
+    width: 75px;
+    height: 75px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: #E2E8F0;
+    flex-shrink: 0;
+}
+
+.job-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.job-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0F172A;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 24px;
+}
+
+.job-card-location {
+    font-size: 12px;
+    color: #64748B;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.job-card-tags {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.job-card-tag {
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 100px;
+    font-weight: 600;
+}
+
+.job-card-tag.cachuelo { background: #FFF7ED; color: #EA580C; }
+.job-card-tag.formal { background: #EFF6FF; color: #2563EB; }
+.job-card-tag.instant { background: #ECFDF5; color: #10B981; display: flex; align-items: center; gap: 2px; }
+
+.job-card-price {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0F172A;
+}
+
+.job-card-price span {
+    font-size: 12px;
+    color: #64748B;
+    font-weight: 400;
+}
+
+.job-card-fav {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    color: #CBD5E1;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+/* ===== REDISEÑO AGENTES IA ===== */
+.ai-redesign-bg {
+    background-color: #0B1426 !important;
+    padding: 0 0 90px 0 !important; /* Espacio para la navegación inferior */
+    color: white;
+    font-family: 'Inter', sans-serif;
+}
+
+.ai-header {
+    display: flex;
+    align-items: center;
+    padding: 20px 20px 10px 20px;
+    gap: 16px;
+}
+
+.ai-back-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ai-header-title {
+    display: flex;
+    flex-direction: column;
+}
+
+.ai-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ai-title-row h1 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.5px;
+    color: white;
+}
+
+.ai-header-icon {
+    width: 20px;
+    height: 20px;
+    color: #38BDF8;
+}
+
+.ai-header-title p {
+    font-size: 12px;
+    color: #94A3B8;
+    margin: 2px 0 0 0;
+}
+
+.ai-robot-section {
+    display: flex;
+    padding: 20px;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.ai-robot-img {
+    width: 110px;
+    height: 110px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ai-robot-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3));
+}
+
+.ai-robot-chat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.ai-chat-bubble {
+    background-color: #111C33;
+    border: 1px solid #1E293B;
+    border-radius: 16px;
+    border-top-left-radius: 4px;
+    padding: 14px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #F8FAFC;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.ai-video-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid #38BDF8;
+    color: #38BDF8;
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ai-video-btn:active {
+    transform: scale(0.95);
+    background: rgba(56, 189, 248, 0.1);
+}
+
+.ai-video-btn i {
+    width: 14px;
+    height: 14px;
+}
+
+.ai-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    margin: 10px 20px 16px 20px;
+}
+
+.ai-agents-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 20px;
+}
+
+.ai-agent-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background-color: #111C33;
+    border: 1px solid #1E293B;
+    border-radius: 16px;
+    padding: 16px;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.ai-agent-card:active {
+    transform: scale(0.98);
+    background-color: #162440;
+}
+
+.ai-agent-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ai-agent-icon i {
+    width: 24px;
+    height: 24px;
+    color: white;
+}
+
+.ai-agent-info {
+    flex: 1;
+}
+
+.ai-agent-info h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 4px 0;
+}
+
+.ai-agent-info p {
+    font-size: 12px;
+    color: #94A3B8;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Ajustes para Tablet y Escritorio */
+@media (min-width: 768px) {
+    .ai-robot-section, .ai-agents-list, .ai-section-title {
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+    
+/* ===== REDISEÑO PUBLICAR EMPLEO ===== */
+#modalCreateJob.modal-overlay {
+    background: #0B1426;
+    padding: 0;
+    align-items: flex-start;
+    backdrop-filter: none;
+}
+
+#modalCreateJob.hidden {
+    display: none !important;
+}
+
+#modalCreateJob .pj-modal-box {
+    background: transparent;
+    box-shadow: none;
+    max-width: 100%;
+    height: 100%;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    border: none;
+}
+
+.pj-header {
+    display: flex;
+    align-items: center;
+    padding: 20px 20px 10px 20px;
+    gap: 16px;
+    color: white;
+    flex-shrink: 0;
+}
+
+.pj-back-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pj-header-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.pj-header-text h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.pj-header-text p {
+    font-size: 12px;
+    color: #94A3B8;
+    margin: 2px 0 0 0;
+}
+
+.pj-body {
+    padding: 10px 20px 40px 20px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.pj-category-selector {
+    display: flex;
+    background: #111C33;
+    border-radius: 12px;
+    padding: 4px;
+    border: 1px solid #1E293B;
+}
+
+.pj-cat-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    color: #94A3B8;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pj-cat-btn.active {
+    background: #0066FF;
+    color: white;
+}
+
+.pj-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 8px;
+}
+
+.pj-images-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.pj-images-row::-webkit-scrollbar {
+    display: none;
+}
+
+.pj-thumb {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #1E293B;
+    flex-shrink: 0;
+}
+
+.pj-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.pj-add-img {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    border: 1px dashed #38BDF8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #38BDF8;
+    cursor: pointer;
+    background: rgba(56, 189, 248, 0.05);
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.pj-add-img:active {
+    background: rgba(56, 189, 248, 0.1);
+}
+
+.pj-help-text {
+    font-size: 11px;
+    color: #94A3B8;
+    margin: 0;
+}
+
+.pj-input {
+    width: 100%;
+    background: white;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 14px;
+    color: #0F172A;
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: inherit;
+}
+
+.pj-input::placeholder {
+    color: #94A3B8;
+}
+
+.pj-input:focus {
+    border-color: #0066FF;
+}
+
+textarea.pj-input {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.pj-row {
+    display: flex;
+    gap: 12px;
+}
+
+.pj-col {
+    flex: 1;
+    min-width: 0;
+}
+
+.pj-input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.pj-input-with-icon span {
+    position: absolute;
+    left: 14px;
+    color: #64748B;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.pj-input-with-icon .pj-input {
+    padding-left: 28px;
+}
+
+.pj-input-icon-left {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.pj-input-icon-left i,
+.pj-input-icon-left svg {
+    position: absolute;
+    left: 14px;
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+}
+
+.pj-input-icon-left .pj-input {
+    padding-left: 40px;
+}
+
+.pj-submit-btn {
+    width: 100%;
+    background: #0066FF;
+    color: white;
+    border: none;
+    border-radius: 100px;
+    padding: 16px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pj-submit-btn:active {
+    transform: scale(0.98);
+}
+
+/* Ajustes para Tablet y Escritorio */
+@media (min-width: 768px) {
+    #modalCreateJob.modal-overlay {
+        padding: 40px;
+        background: rgba(11, 20, 38, 0.9);
+        backdrop-filter: blur(4px);
+        align-items: center;
+        justify-content: center;
+    }
+    
+    #modalCreateJob .pj-modal-box {
+        background: #0B1426;
+        max-width: 500px;
+        height: auto;
+        max-height: 90vh;
+        border-radius: 24px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        border: 1px solid #1E293B;
+    }
+}
+
+/* ===== VISTA DETALLE DEL TRABAJO (IMPLEMENTACIÓN 5 — prefijo jd-, aislada) ===== */
+#view-job-detail.jd-bg{background-color:#F8FAFC;padding:0 0 90px 0}
+#view-job-detail .jd-header{background-color:#0B1426;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:16px 20px;position:sticky;top:0;z-index:30}
+#view-job-detail .jd-header h1{font-size:16px;font-weight:600;margin:0;letter-spacing:-0.3px}
+#view-job-detail .jd-back-btn{background:transparent;border:none;color:#fff;cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center}
+#view-job-detail .jd-back-btn i{width:24px;height:24px}
+#view-job-detail .jd-image-container{width:100%;height:260px;position:relative;background-color:#E2E8F0}
+#view-job-detail .jd-image-container img{width:100%;height:100%;object-fit:cover}
+#view-job-detail .jd-content-card{background:#fff;border-radius:32px 32px 0 0;margin-top:-40px;position:relative;z-index:10;padding:28px 20px 40px 20px;box-shadow:0 -4px 24px rgba(0,0,0,0.08);min-height:calc(100vh - 220px)}
+#view-job-detail .jd-title{font-size:22px;font-weight:800;color:#0F172A;margin:0 0 8px 0;line-height:1.2;letter-spacing:-0.5px}
+#view-job-detail .jd-location{display:flex;align-items:center;gap:6px;color:#64748B;font-size:13px;font-weight:500;margin-bottom:16px}
+#view-job-detail .jd-location i{width:16px;height:16px;color:#94A3B8}
+#view-job-detail .jd-tags{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+#view-job-detail .jd-tag{font-size:11px;padding:6px 12px;border-radius:100px;font-weight:700;display:flex;align-items:center;gap:4px}
+#view-job-detail .jd-tag.cachuelo{background:#FFF7ED;color:#EA580C}
+#view-job-detail .jd-tag.formal{background:#EFF6FF;color:#2563EB}
+#view-job-detail .jd-tag.online{background:#F5F3FF;color:#7C3AED}
+#view-job-detail .jd-tag.instant{background:#ECFDF5;color:#10B981}
+#view-job-detail .jd-tag.instant i{width:14px;height:14px}
+#view-job-detail .jd-price{font-size:20px;font-weight:800;color:#0F172A;margin-bottom:24px}
+#view-job-detail .jd-section{margin-bottom:24px}
+#view-job-detail .jd-section-title{font-size:14px;font-weight:700;color:#0F172A;margin:0 0 10px 0}
+#view-job-detail .jd-desc-box{background:#F8FAFC;border:1px solid #F1F5F9;border-radius:16px;padding:16px}
+#view-job-detail .jd-desc-box p{font-size:13px;color:#475569;line-height:1.6;margin:0}
+#view-job-detail .jd-employer-card{display:flex;align-items:center;gap:12px;padding:16px 0;border-top:1px solid #F1F5F9;border-bottom:1px solid #F1F5F9;margin-bottom:32px}
+#view-job-detail .jd-emp-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;background:#E2E8F0}
+#view-job-detail .jd-emp-info{flex:1;min-width:0}
+#view-job-detail .jd-emp-label{display:block;font-size:13px;color:#64748B;margin-bottom:2px}
+#view-job-detail .jd-emp-label strong{color:#0F172A;font-weight:700}
+#view-job-detail .jd-emp-rating{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#0F172A}
+#view-job-detail .jd-star-icon{width:14px;height:14px;fill:#F59E0B;color:#F59E0B}
+#view-job-detail .jd-emp-rating span{color:#94A3B8;font-weight:500}
+#view-job-detail .jd-contact-btn{background:#EFF6FF;color:#0066FF;border:none;padding:8px 16px;border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.2s}
+#view-job-detail .jd-contact-btn:active{background:#DBEAFE}
+#view-job-detail .jd-action-btn{width:100%;background:#0066FF;color:#fff;border:none;padding:18px;border-radius:100px;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(0,102,255,0.25);transition:transform 0.2s,box-shadow 0.2s;display:flex;justify-content:center;align-items:center}
+#view-job-detail .jd-action-btn:active{transform:scale(0.98);box-shadow:0 4px 12px rgba(0,102,255,0.2)}
+@media (min-width:768px){
+  #view-job-detail .jd-content-card{max-width:600px;margin-left:auto;margin-right:auto;border-radius:32px;margin-top:-80px;box-shadow:0 10px 40px rgba(0,0,0,0.1)}
+  #view-job-detail .jd-image-container{height:350px}
+}
+
+/* ===== VISTA: ACUERDO DE TRABAJO (prefijo wa-) ===== */
+.wa-bg { background-color: #0B1426; padding: 0 0 90px 0; }
+.wa-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; color: white; position: sticky; top: 0; z-index: 30; }
+.wa-header h1 { font-size: 18px; font-weight: 700; margin: 0; letter-spacing: -0.3px; }
+.wa-back-btn { background: transparent; border: none; color: white; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; }
+.wa-back-btn i { width: 24px; height: 24px; }
+.wa-content-card { background: white; border-radius: 32px 32px 0 0; padding: 24px 20px 40px 20px; min-height: calc(100vh - 70px); box-shadow: 0 -4px 24px rgba(0,0,0,0.08); }
+.wa-status-banner { background: #DCFCE7; border: 1px solid #BBF7D0; border-radius: 16px; padding: 16px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 24px; }
+.wa-status-icon { color: #16A34A; flex-shrink: 0; }
+.wa-status-icon i { width: 24px; height: 24px; }
+.wa-status-text h2 { font-size: 15px; font-weight: 700; color: #166534; margin: 0 0 4px 0; }
+.wa-status-text p { font-size: 12px; color: #15803D; margin: 0; line-height: 1.4; }
+.wa-section { margin-bottom: 24px; }
+.wa-section-title { font-size: 15px; font-weight: 700; color: #0F172A; margin: 0 0 12px 0; }
+.wa-summary-box { display: flex; flex-direction: column; gap: 12px; }
+.wa-summary-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; border-bottom: 1px solid #F1F5F9; padding-bottom: 12px; }
+.wa-summary-row:last-child { border-bottom: none; padding-bottom: 0; }
+.wa-label { color: #64748B; font-weight: 500; }
+.wa-value { color: #0F172A; font-weight: 600; text-align: right; }
+.wa-highlight { color: #0066FF; font-weight: 800; font-size: 14px; }
+.wa-payment-option { display: flex; align-items: center; gap: 12px; padding: 16px; border: 1px solid #E2E8F0; border-radius: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; }
+.wa-payment-option:has(input:checked) { border-color: #0066FF; background: #EFF6FF; }
+.wa-radio { accent-color: #0066FF; width: 18px; height: 18px; cursor: pointer; }
+.wa-payment-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.wa-payment-icon i { width: 20px; height: 20px; }
+.wa-payment-info { flex: 1; }
+.wa-payment-info h4 { font-size: 14px; font-weight: 700; color: #0F172A; margin: 0 0 2px 0; }
+.wa-payment-info p { font-size: 11px; color: #64748B; margin: 0; }
+.wa-crypto-badges { display: flex; gap: 4px; }
+.wa-crypto-badges img { width: 16px; height: 16px; border-radius: 50%; }
+.wa-action-container { margin-top: 32px; }
+.wa-action-btn { width: 100%; background: #0066FF; color: white; border: none; padding: 16px; border-radius: 100px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 20px rgba(0,102,255,0.25); transition: transform 0.2s; }
+.wa-action-btn:active { transform: scale(0.98); }
+.wa-info-text { display: flex; align-items: flex-start; gap: 6px; margin-top: 12px; padding: 0 8px; }
+.wa-info-text i { width: 14px; height: 14px; color: #94A3B8; flex-shrink: 0; margin-top: 2px; }
+.wa-info-text span { font-size: 11px; color: #64748B; line-height: 1.4; }
+@media (min-width: 768px) { .wa-content-card { max-width: 600px; margin: 0 auto; border-radius: 32px; min-height: auto; } }
+
+/* ===== VISTA: TRABAJO EN CURSO (prefijo wip-) ===== */
+.wip-bg { background-color: #0B1426; padding: 0 0 90px 0; }
+.wip-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; color: white; position: sticky; top: 0; z-index: 30; }
+.wip-header h1 { font-size: 18px; font-weight: 700; margin: 0; letter-spacing: -0.3px; }
+.wip-back-btn { background: transparent; border: none; color: white; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; }
+.wip-back-btn i { width: 24px; height: 24px; }
+.wip-content-card { background: white; border-radius: 32px 32px 0 0; padding: 32px 20px 40px 20px; min-height: calc(100vh - 70px); box-shadow: 0 -4px 24px rgba(0,0,0,0.08); }
+.wip-timer-container { display: flex; justify-content: center; margin-bottom: 32px; }
+.wip-timer-circle { width: 200px; height: 200px; border-radius: 50%; background: white; border: 8px solid #E2E8F0; border-top-color: #0066FF; border-right-color: #10B981; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.05); transform: rotate(-45deg); }
+.wip-timer-circle > * { transform: rotate(45deg); }
+.wip-time { font-size: 32px; font-weight: 800; color: #0F172A; font-family: 'Courier New', monospace; letter-spacing: -1px; margin-bottom: 4px; }
+.wip-time-label { font-size: 12px; color: #64748B; font-weight: 500; }
+.wip-frozen-card { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; padding: 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.wip-frozen-icon { width: 40px; height: 40px; background: #FFF7ED; color: #F59E0B; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.wip-frozen-icon i { width: 20px; height: 20px; }
+.wip-frozen-info { flex: 1; }
+.wip-frozen-info h3 { font-size: 14px; font-weight: 700; color: #0F172A; margin: 0 0 2px 0; }
+.wip-frozen-info p { font-size: 11px; color: #64748B; margin: 0; }
+.wip-frozen-amount { font-size: 18px; font-weight: 800; color: #0F172A; }
+.wip-section { margin-bottom: 32px; }
+.wip-section-title { font-size: 15px; font-weight: 700; color: #0F172A; margin: 0 0 12px 0; }
+.wip-options-box { border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; }
+.wip-option-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid #E2E8F0; background: white; }
+.wip-option-row:last-child { border-bottom: none; }
+.wip-option-left { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: #475569; }
+.wip-opt-icon { width: 16px; height: 16px; color: #94A3B8; }
+.wip-option-val { font-size: 14px; font-weight: 700; color: #0F172A; }
+.wip-action-container { margin-top: 20px; }
+.wip-action-btn { width: 100%; background: #0066FF; color: white; border: none; padding: 16px; border-radius: 100px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 20px rgba(0,102,255,0.25); transition: transform 0.2s; }
+.wip-action-btn:active { transform: scale(0.98); }
+.wip-info-text { display: flex; align-items: flex-start; gap: 6px; margin-top: 12px; padding: 0 8px; }
+.wip-info-text i { width: 14px; height: 14px; color: #94A3B8; flex-shrink: 0; margin-top: 2px; }
+.wip-info-text span { font-size: 11px; color: #64748B; line-height: 1.4; }
+@media (min-width: 768px) { .wip-content-card { max-width: 600px; margin: 0 auto; border-radius: 32px; min-height: auto; } }
+
+/* ===== VISTA: TRABAJO COMPLETADO (prefijo wc-) ===== */
+.wc-bg { background-color: #0B1426; padding: 0 0 90px 0; }
+.wc-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; color: white; position: sticky; top: 0; z-index: 30; }
+.wc-header h1 { font-size: 18px; font-weight: 700; margin: 0; letter-spacing: -0.3px; }
+.wc-back-btn { background: transparent; border: none; color: white; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; }
+.wc-back-btn i { width: 24px; height: 24px; }
+.wc-content-card { background: white; border-radius: 32px 32px 0 0; padding: 40px 20px; min-height: calc(100vh - 70px); box-shadow: 0 -4px 24px rgba(0,0,0,0.08); display: flex; flex-direction: column; align-items: center; }
+.wc-success-header { text-align: center; margin-bottom: 32px; }
+.wc-success-icon { width: 72px; height: 72px; background: #10B981; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; box-shadow: 0 8px 20px rgba(16,185,129,0.3); }
+.wc-success-icon i { width: 36px; height: 36px; stroke-width: 3px; }
+.wc-success-header h2 { font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 8px 0; letter-spacing: -0.5px; }
+.wc-success-header p { font-size: 13px; color: #64748B; line-height: 1.5; margin: 0; max-width: 280px; }
+.wc-summary-box { width: 100%; border-bottom: 1px solid #E2E8F0; padding-bottom: 24px; margin-bottom: 24px; }
+.wc-summary-row { display: flex; justify-content: space-between; align-items: flex-end; }
+.wc-sum-col { display: flex; flex-direction: column; gap: 4px; }
+.wc-sum-col.right { text-align: right; }
+.wc-label { font-size: 12px; color: #64748B; font-weight: 500; }
+.wc-value-large { font-size: 24px; font-weight: 800; color: #0F172A; }
+.wc-value-small { font-size: 16px; font-weight: 700; color: #0F172A; }
+.wc-net-card { width: 100%; background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 20px; padding: 24px; text-align: center; margin-bottom: 32px; }
+.wc-net-header { display: flex; justify-content: center; margin-bottom: 8px; }
+.wc-net-title { display: flex; align-items: center; gap: 6px; color: #059669; font-size: 14px; font-weight: 700; }
+.wc-net-title i { width: 18px; height: 18px; }
+.wc-net-amount { font-size: 36px; font-weight: 800; color: #065F46; letter-spacing: -1px; margin-bottom: 4px; }
+.wc-net-status { font-size: 12px; color: #10B981; font-weight: 500; }
+.wc-action-container { width: 100%; }
+.wc-receipt-btn { width: 100%; background: transparent; color: #0066FF; border: 2px solid #0066FF; padding: 14px; border-radius: 100px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+.wc-receipt-btn:active { background: #EFF6FF; }
+@media (min-width: 768px) { .wc-content-card { max-width: 600px; margin: 0 auto; border-radius: 32px; min-height: auto; } }
+
+</style>
+<base target="_blank">
+<base target="_blank">
 <base target="_blank">
 </head>
-<body class="h-screen flex flex-col overflow-hidden text-slate-800">
+<body class="h-screen flex flex-col overflow-hidden">
 
-    <!-- NAVBAR -->
-    <nav class="bg-white border-b shadow-sm z-50 h-16 flex-shrink-0">
-        <div class="max-w-7xl mx-auto px-4 h-full flex items-center justify-between gap-4">
-            <div class="flex items-center gap-2 text-brand font-bold text-xl md:text-2xl cursor-pointer flex-shrink-0" onclick="navigate('dashboard')">
-                <i data-lucide="zap" class="fill-brand"></i> <span class="hidden sm:inline">WorkNow</span> <span class="text-xs bg-brand text-white px-2 py-0.5 rounded-full ml-1">PRO</span>
+    <!-- TOP BAR -->
+    <div class="top-bar">
+        <div class="brand" onclick="navigate('dashboard')">
+            <svg class="brand-logo" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+                <circle cx="18" cy="18" r="11.5" stroke="#38BDF8" stroke-width="3.5"/>
+                <circle cx="18" cy="14.5" r="3.6" fill="#38BDF8"/>
+                <path d="M10.8 24.2c1.2-3.2 4-4.6 7.2-4.6s6 1.4 7.2 4.6" stroke="#38BDF8" stroke-width="3" stroke-linecap="round"/>
+                <path d="M27 27l9 9" stroke="#2563EB" stroke-width="4.5" stroke-linecap="round"/>
+            </svg>
+            <div class="brand-text">
+                <span>WorkNow</span>
+                <small class="brand-tag">Tu trabajo, tu futuro</small>
             </div>
-            
-            <div class="flex flex-wrap gap-2 md:gap-4 font-medium text-sm text-slate-600 flex-1">
-                <button onclick="navigate('dashboard')" class="hover:text-brand flex items-center gap-1 nav-btn whitespace-nowrap" data-target="dashboard"><i data-lucide="map"></i> Explorar</button>
-                <button onclick="navigate('ai-search')" class="hover:text-brand flex items-center gap-1 nav-btn whitespace-nowrap" data-target="ai-search"><i data-lucide="sparkles"></i> Búsqueda Inteligente de Empleo</button>
-                <button onclick="navigate('contracts')" class="hover:text-brand flex items-center gap-1 nav-btn whitespace-nowrap" data-target="contracts"><i data-lucide="briefcase"></i> Contratos</button>
-                <button onclick="navigate('wallet')" class="hover:text-brand flex items-center gap-1 nav-btn whitespace-nowrap" data-target="wallet"><i data-lucide="wallet"></i> Billetera</button>
-                <button id="nav-crm-btn" onclick="navigate('crm')" class="hover:text-brand flex items-center gap-1 nav-btn whitespace-nowrap hidden" data-target="crm"><i data-lucide="bar-chart"></i> CRM</button>
-            </div>
-
-            <div class="flex items-center gap-3 flex-shrink-0">
-                <!-- Se oculta en producción cuando hay sesión real -->
-                <select id="roleSelect" onchange="changeRole(this.value)" class="bg-gray-100 border border-gray-200 text-xs font-bold rounded-lg px-3 py-1.5 outline-none cursor-pointer text-brand">
-                    <option value="employer">👁️ Modo: Empleador</option>
-                    <option value="worker">🛠️ Modo: Trabajador</option>
-                    <option value="admin">👑 Modo: Administrador</option>
-                </select>
-                <button onclick="handleLogout()" class="flex items-center gap-1 bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm" title="Cerrar Sesión">
-                    <i data-lucide="log-out" class="w-4 h-4"></i> <span class="whitespace-nowrap">Cerrar Sesión</span>
-                </button>
-                <div class="h-9 w-9 rounded-full bg-gradient-to-tr from-brand to-blue-400 text-white flex items-center justify-center font-bold text-sm shadow-md cursor-pointer hover:opacity-80 transition" onclick="handleLogout()" title="Cerrar Sesión">
-                    <span id="userInitials">--</span>
-                </div>
+            <span class="badge">PRO</span>
+        </div>
+        <div class="right-controls">
+            <select id="roleSelect" onchange="changeRole(this.value)">
+                <option value="employer">👁️ Modo: Empleador</option>
+                <option value="worker">🛠️ Modo: Trabajador</option>
+                <option value="admin">👑 Modo: Administrador</option>
+            </select>
+            <div class="user-avatar" onclick="handleLogout()" title="Cerrar Sesión">
+                <span id="userInitials">--</span>
             </div>
         </div>
+    </div>
+
+    <!-- BOTTOM NAV (mobile) -->
+    <nav class="bottom-nav" id="bottomNav">
+        <button class="nav-item active" onclick="navigate('dashboard')" data-nav="dashboard">
+            <i data-lucide="home"></i><span>Inicio</span>
+        </button>
+        <button class="nav-item" onclick="navigate('ai-search')" data-nav="ai-search">
+            <i data-lucide="search"></i><span>Buscar</span>
+        </button>
+        <button class="nav-item" onclick="document.getElementById('modalCreateJob').classList.remove('hidden')" data-nav="post">
+            <i data-lucide="plus-circle"></i><span>Publicar</span>
+        </button>
+        <button class="nav-item" onclick="navigate('contracts')" data-nav="contracts">
+            <i data-lucide="file-text"></i><span>Postulaciones</span>
+        </button>
+        <button class="nav-item" onclick="navigate('wallet')" data-nav="wallet">
+            <i data-lucide="wallet"></i><span>Billetera</span>
+        </button>
+        <button class="nav-item" id="nav-crm-btn" style="display:none" onclick="navigate('crm')" data-nav="crm">
+            <i data-lucide="bar-chart"></i><span>CRM</span>
+        </button>
     </nav>
 
     <!-- MAIN APP CONTAINER -->
-    <main class="flex-1 overflow-hidden relative flex bg-gray-50">
+    <main class="app-main" id="appMain">
 
-        <!-- ================= VISTA 1: DASHBOARD & MAPA ================= -->
-        <section id="view-dashboard" class="view-section active h-full w-full flex flex-col md:flex-row">
-            <!-- Lista Izquierda -->
-            <div class="w-full md:w-1/3 lg:w-[400px] h-1/2 md:h-full bg-white border-r border-gray-200 flex flex-col z-10 shadow-lg">
-                <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                    <div>
-                        <h2 class="font-bold text-lg">Explorar Servicios</h2>
-                        <p class="text-xs text-slate-500">Global / Cualquier País</p>
+        <!-- ================= VISTA 1: INICIO / DASHBOARD ================= -->
+        <section id="view-dashboard" class="view-section active section hw-home">
+            
+            <!-- Elementos ocultos para preservar IDs funcionales de JS -->
+            <div style="display:none">
+                <h1 id="homeGreeting"></h1>
+                <p id="homeSubtitle"></p>
+            </div>
+
+            <!-- A) Hero: texto a la izquierda, ilustración de trabajadores a la derecha -->
+            <div class="hw-hero">
+                <div class="hw-hero-inner">
+                    <div class="hw-hero-art" aria-hidden="true">
+                        <!-- Ilustración vectorial propia (el proyecto no incluye una fotografía de trabajadores) -->
+                        <svg viewBox="0 0 260 270" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="150" cy="125" r="112" fill="#2563EB" opacity=".28"/>
+                            <!-- Mujer (fondo) -->
+                            <path d="M181 122C176 150 180 172 190 182L188 130Z" fill="#3B2314"/>
+                            <path d="M150 270V196Q150 168 182 162L224 162Q252 168 252 196V270Z" fill="#1E3A8A"/>
+                            <path d="M192 162L216 162L204 194Z" fill="#F8FAFC"/>
+                            <rect x="196" y="146" width="16" height="20" fill="#E8B796"/>
+                            <ellipse cx="204" cy="122" rx="21" ry="25" fill="#F1C6A4"/>
+                            <path d="M182 124C178 94 198 84 214 90C230 96 233 114 227 132C225 114 216 104 202 104C192 106 185 114 182 124Z" fill="#3B2314"/>
+                            <circle cx="197" cy="124" r="1.8" fill="#3B2314"/><circle cx="211" cy="124" r="1.8" fill="#3B2314"/>
+                            <path d="M198 136Q204 141 210 136" stroke="#9A3412" stroke-width="2" fill="none" stroke-linecap="round"/>
+                            <g transform="rotate(-8 195 222)">
+                                <rect x="172" y="204" width="46" height="32" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1.5"/>
+                                <rect x="176" y="208" width="38" height="24" rx="2" fill="#38BDF8" opacity=".55"/>
+                            </g>
+                            <!-- Hombre con casco (frente) -->
+                            <path d="M14 270V208Q14 180 52 174L118 174Q156 180 156 208V270Z" fill="#1D4ED8"/>
+                            <path d="M40 176L66 176L70 270L36 270Z" fill="#F59E0B"/>
+                            <path d="M104 176L130 176L134 270L100 270Z" fill="#F59E0B"/>
+                            <rect x="37" y="226" width="33" height="6" fill="#E2E8F0"/><rect x="101" y="226" width="33" height="6" fill="#E2E8F0"/>
+                            <rect x="76" y="152" width="18" height="26" fill="#D9A07F"/>
+                            <ellipse cx="85" cy="128" rx="24" ry="28" fill="#E6B08E"/>
+                            <circle cx="76" cy="128" r="2" fill="#3B2314"/><circle cx="94" cy="128" r="2" fill="#3B2314"/>
+                            <path d="M76 142Q85 150 94 142" stroke="#7C2D12" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <path d="M58 120C58 94 72 84 86 84C100 84 112 94 112 120Z" fill="#FACC15"/>
+                            <rect x="80" y="82" width="12" height="34" rx="3" fill="#EAB308" opacity=".7"/>
+                            <rect x="52" y="116" width="66" height="9" rx="4.5" fill="#EAB308"/>
+                        </svg>
                     </div>
-                    <button id="btnCreateJob" onclick="document.getElementById('modalCreateJob').classList.remove('hidden')" class="bg-brand text-white p-2 rounded-full shadow hover:bg-blue-700 transition">
-                        <i data-lucide="plus"></i>
-                    </button>
+                    <div class="hw-hero-text">
+                        <h1 class="hw-title">Conecta con <span>oportunidades reales</span> y <span>consigue empleo</span> de <span>forma inteligente</span></h1>
+                        <p class="hw-sub">Nuestra IA te ayuda a encontrar, postular y cerrar acuerdos, ya sea en empleo formal o informal (cachuelos).</p>
+                    </div>
                 </div>
-                <div class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar" id="jobsListContainer">
+            </div>
+
+            <div class="hw-body">
+                
+            <!-- B) Buscador: redirige a la vista de búsqueda -->
+            <div class="hw-search">
+                <div class="hw-search-row">
+                    <i data-lucide="search" class="hw-search-ico"></i>
+                    <input type="search" id="homeSearchDummy" placeholder="¿Qué trabajo buscas?" autocomplete="off" onfocus="navigate('ai-search'); setTimeout(() => document.getElementById('homeSearch').focus(), 100);">
+                    <button type="button" class="hw-search-go" aria-label="Buscar empleo" onclick="navigate('ai-search')"><i data-lucide="arrow-right"></i></button>
+                </div>
+                <p class="hw-search-hint">Ej: Albañilería, Limpieza, Diseño, Ventas...</p>
+            </div>
+            
+            <!-- C) Cuadrícula de 4 accesos (cada uno usa navigate() existente) -->
+            <div class="hw-grid">
+                <button type="button" class="hw-card blue" onclick="navigate('ai-search')">
+                    <span class="hw-card-ico"><i data-lucide="search"></i></span>
+                    <span class="hw-card-title">Buscar empleo</span>
+                    <span class="hw-card-desc">Explora miles de oportunidades</span>
+                </button>
+                <button type="button" class="hw-card green" onclick="navigate('contracts')">
+                    <span class="hw-card-ico"><i data-lucide="file-text"></i></span>
+                    <span class="hw-card-title">Mis postulaciones</span>
+                    <span class="hw-card-desc">Gestiona tus aplicaciones</span>
+                </button>
+                <button type="button" class="hw-card violet" onclick="navigate('ai-search')">
+                    <span class="hw-card-ico"><i data-lucide="user"></i></span>
+                    <span class="hw-card-title">Mi CV</span>
+                    <span class="hw-card-desc">Crea y mejora tu perfil profesional</span>
+                </button>
+                <button type="button" class="hw-card orange" onclick="navigate('ai-search')">
+                    <span class="hw-card-ico"><i data-lucide="bot"></i></span>
+                    <span class="hw-card-title">Agentes IA</span>
+                    <span class="hw-card-desc">Te ayudan a postular y conseguir empleo</span>
+                </button>
+            </div>
+
+            <!-- D) Tutorial: el proyecto no tiene video/recurso real, por eso NO es interactivo (data-tutorial-src queda vacío hasta conectar uno) -->
+            <div class="hw-tutorial" data-tutorial-src="" aria-disabled="true">
+                <div class="hw-tutorial-play"><i data-lucide="play"></i></div>
+                <div class="hw-tutorial-text">
+                    <strong>Ver video tutorial</strong>
+                    <span>Aprende a usar WorkNow en 1 minuto</span>
+                </div>
+                <i data-lucide="chevron-right" class="hw-tutorial-go"></i>
+            </div>
+            
+            </div><!-- /hw-body -->
+            
+        </section>
+
+        <!-- ================= VISTA BÚSQUEDA (NUEVA) ================= -->
+        <section id="view-search" class="view-section h-full w-full overflow-y-auto search-view-bg">
+            
+            <!-- A. Encabezado azul oscuro -->
+            <div class="search-header-bg">
+                <div class="search-header-top">
+                    <i data-lucide="search" class="text-white w-6 h-6"></i>
+                    <div class="search-header-titles">
+                        <h1>Buscar empleo</h1>
+                        <p>Encuentra oportunidades cerca de ti</p>
+                    </div>
+                    <button class="filter-btn" aria-label="Filtros"><i data-lucide="sliders-horizontal"></i></button>
+                </div>
+            </div>
+
+            <!-- B. Tarjeta de búsqueda y ubicación -->
+            <div class="search-floating-card">
+                <div class="search-input-row">
+                    <i data-lucide="search" class="text-slate-400 w-5 h-5"></i>
+                    <!-- Buscador trasladado desde HOME -->
+                    <input type="search" id="homeSearch" placeholder="Puesto, empresa o área..." autocomplete="off" enterkeyhint="search" oninput="handleHomeSearch(this.value)" onkeydown="if(event.key==='Enter'){submitHomeSearch()}">
+                </div>
+                <div class="search-location-row">
+                    <i data-lucide="map-pin" class="text-green-500 w-5 h-5"></i>
+                    <!-- Texto de GPS trasladado desde HOME -->
+                    <span id="gpsStatusText">Tu ubicación actual</span>
+                </div>
+            </div>
+
+            <!-- C. Filtros horizontales -->
+            <div class="search-filters-container">
+                <!-- Filtros trasladados desde HOME -->
+                <div class="home-categories" id="homeCategories">
+                    <div class="cat active" onclick="filterCategory('all',this)"><span>Todos</span></div>
+                    <div class="cat" onclick="filterCategory('formal',this)"><span>Formal</span></div>
+                    <div class="cat" onclick="filterCategory('cachuelo',this)"><span>Cachuelos</span></div>
+                    <div class="cat" onclick="onlineCategory('online',this)"><span>En línea</span></div>
+                </div>
+            </div>
+
+            <!-- D. Mapa de oportunidades -->
+            <div class="search-map-wrapper">
+                <!-- Contenedor del mapa trasladado desde HOME -->
+                <div class="map-section" id="map-container" style="height: 280px; margin-bottom: 0; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <div id="map" style="position:absolute;inset:0;width:100%;height:100%; border-radius: 16px;"></div>
+                </div>
+            </div>
+
+            <!-- E. Selector de orden (Visual) -->
+            <div class="search-sort-selector">
+                <button class="sort-btn active">Más cercanos</button>
+                <button class="sort-btn">Mejor pago</button>
+                <button class="sort-btn">Más recientes</button>
+            </div>
+
+            <!-- F. Tarjetas de ofertas laborales -->
+            <div class="search-jobs-wrapper">
+                <!-- Contenedor de trabajos trasladado desde HOME -->
+                <div class="jobs-feed" id="jobsListContainer">
                     <!-- Los trabajos se renderizan aquí mediante JS -->
                 </div>
             </div>
-            
-            <!-- Mapa Derecha -->
-            <div class="flex-1 h-1/2 md:h-full relative bg-gray-200" id="map-container">
-                <div id="map" class="h-full w-full z-0"></div>
-                <!-- GPS Overlay -->
-                <div class="absolute bottom-6 left-6 z-[400] bg-white/90 backdrop-blur p-3 rounded-xl shadow-xl border border-gray-200 flex items-center gap-3">
-                    <div class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-brand"></span></div>
-                    <span class="text-xs font-bold text-slate-700" id="gpsStatusText">Conectado a Red Global</span>
+
+        </section>
+
+        
+        <!-- ================= VISTA: DETALLE DEL TRABAJO (IMPLEMENTACIÓN 5 — NUEVA) ================= -->
+        <section id="view-job-detail" class="view-section h-full w-full overflow-y-auto jd-bg">
+
+            <!-- A. Encabezado oscuro -->
+            <div class="jd-header">
+                <button class="jd-back-btn" onclick="navigate('ai-search')" aria-label="Volver a la búsqueda">
+                    <i data-lucide="arrow-left"></i>
+                </button>
+                <h1>Detalle del trabajo</h1>
+                <div style="width:28px"></div>
+            </div>
+
+            <!-- B. Fotografía principal -->
+            <div class="jd-image-container">
+                <img id="jd-main-img" src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80" alt="Fotografía del trabajo">
+            </div>
+
+            <!-- C. Tarjeta blanca superpuesta -->
+            <div class="jd-content-card">
+
+                <h2 class="jd-title" id="jd-title">Trabajo</h2>
+
+                <div class="jd-location">
+                    <i data-lucide="map-pin"></i>
+                    <span id="jd-location-text">Tu zona</span>
                 </div>
+
+                <div class="jd-tags" id="jd-tags-container"></div>
+
+                <div class="jd-price" id="jd-price-text"></div>
+
+                <div class="jd-section">
+                    <h3 class="jd-section-title">Descripción</h3>
+                    <div class="jd-desc-box">
+                        <p id="jd-description-text"></p>
+                    </div>
+                </div>
+
+                <div class="jd-employer-card">
+                    <img src="https://ui-avatars.com/api/?name=Empleador+WorkNow&background=0B1426&color=fff" alt="Avatar del empleador" class="jd-emp-avatar" id="jd-emp-avatar">
+                    <div class="jd-emp-info">
+                        <span class="jd-emp-label">Ofrece: <strong id="jd-emp-name">Empleador WorkNow</strong></span>
+                        <div class="jd-emp-rating" id="jd-emp-rating"></div>
+                    </div>
+                    <!-- Nota: el proyecto no dispone de un sistema de contacto directo; se indica honestamente sin simular funcionalidad -->
+                    <button class="jd-contact-btn" onclick="showToast('El chat directo aún no está disponible en esta versión.','info')">Contactar</button>
+                </div>
+
+                <!-- Utiliza el flujo original applyJob() del proyecto -->
+                <button class="jd-action-btn" id="jd-action-btn" onclick="if(window.currentSelectedJobId) applyJob(window.currentSelectedJobId)">Hacer acuerdo</button>
+
             </div>
         </section>
 
-        <!-- ================= VISTA 2: CONTRATOS & ACUERDOS ================= -->
-        <section id="view-contracts" class="view-section h-full w-full overflow-y-auto bg-gray-50 p-4 md:p-8">
-            <div class="max-w-4xl mx-auto">
-                <div class="flex justify-between items-end mb-6">
-                    <div>
-                        <h1 class="text-3xl font-bold text-slate-900">Centro de Acuerdos</h1>
-                        <p class="text-slate-500">Negociación y Operación en Tiempo Real</p>
+
+<!-- ================= VISTA: ACUERDO DE TRABAJO (PASO 6) ================= -->
+<section id="view-agreement" class="view-section h-full w-full overflow-y-auto wa-bg">
+    <div class="wa-header">
+        <button class="wa-back-btn" onclick="navigate('contracts')" aria-label="Volver a postulaciones">
+            <i data-lucide="arrow-left"></i>
+        </button>
+        <h1>Acuerdo de trabajo</h1>
+        <div style="width:28px"></div>
+    </div>
+    <div class="wa-content-card">
+        <div class="wa-status-banner">
+            <div class="wa-status-icon">
+                <i data-lucide="check-circle-2"></i>
+            </div>
+            <div class="wa-status-text">
+                <h2>&iexcl;Acuerdo en proceso!</h2>
+                <p>El empleador ha aceptado tu propuesta. Ahora procede con el pago.</p>
+            </div>
+        </div>
+        <div class="wa-section">
+            <h3 class="wa-section-title">Resumen del acuerdo</h3>
+            <div class="wa-summary-box">
+                <div class="wa-summary-row">
+                    <span class="wa-label">Trabajo:</span>
+                    <span class="wa-value" id="wa-job-title">&mdash;</span>
+                </div>
+                <div class="wa-summary-row">
+                    <span class="wa-label">Pago acordado:</span>
+                    <span class="wa-value wa-highlight" id="wa-price">$0.00</span>
+                </div>
+                <div class="wa-summary-row">
+                    <span class="wa-label">Tipo:</span>
+                    <span class="wa-value" id="wa-type">&mdash;</span>
+                </div>
+                <div class="wa-summary-row">
+                    <span class="wa-label">Comisi&oacute;n de plataforma:</span>
+                    <span class="wa-value" id="wa-commission">5% (ambos)</span>
+                </div>
+            </div>
+        </div>
+        <div class="wa-section">
+            <h3 class="wa-section-title">Pasarela de pago</h3>
+            <label class="wa-payment-option">
+                <input type="radio" name="payment_method" value="crypto" checked class="wa-radio">
+                <div class="wa-payment-icon" style="background: #FFFBEB; color: #F59E0B;">
+                    <i data-lucide="bitcoin"></i>
+                </div>
+                <div class="wa-payment-info">
+                    <h4>Criptomonedas</h4>
+                    <p>BTC, USDT, ETH</p>
+                </div>
+                <div class="wa-crypto-badges">
+                    <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=025" alt="BTC">
+                    <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg?v=025" alt="USDT">
+                    <img src="https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=025" alt="ETH">
+                </div>
+            </label>
+            <label class="wa-payment-option">
+                <input type="radio" name="payment_method" value="bank" class="wa-radio">
+                <div class="wa-payment-icon" style="background: #F1F5F9; color: #64748B;">
+                    <i data-lucide="building-2"></i>
+                </div>
+                <div class="wa-payment-info">
+                    <h4>Transferencia bancaria</h4>
+                    <p>Cuenta segura de WorkNow</p>
+                </div>
+            </label>
+        </div>
+        <div class="wa-action-container">
+            <button class="wa-action-btn" id="wa-pay-btn" onclick="processAgreementPayment()">Realizar pago</button>
+            <div class="wa-info-text">
+                <i data-lucide="info"></i>
+                <span>El pago quedar&aacute; congelado en la app hasta que completes el trabajo. (Selecci&oacute;n visual del m&eacute;todo; el ret&eacute;n real ya opera v&iacute;a escrow de WorkNow.)</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ================= VISTA: TRABAJO EN CURSO (PASO 7) ================= -->
+<section id="view-work-in-progress" class="view-section h-full w-full overflow-y-auto wip-bg">
+    <div class="wip-header">
+        <button class="wip-back-btn" onclick="navigate('contracts')" aria-label="Volver a postulaciones">
+            <i data-lucide="arrow-left"></i>
+        </button>
+        <h1>Trabajo en curso</h1>
+        <div style="width:28px"></div>
+    </div>
+    <div class="wip-content-card">
+        <div class="wip-timer-container">
+            <div class="wip-timer-circle">
+                <div class="wip-time timer-elem" id="wip-timer-display" data-start="">00:00:00</div>
+                <div class="wip-time-label">Tiempo transcurrido</div>
+            </div>
+        </div>
+        <div class="wip-frozen-card">
+            <div class="wip-frozen-icon">
+                <i data-lucide="lock"></i>
+            </div>
+            <div class="wip-frozen-info">
+                <h3>Pago congelado</h3>
+                <p>Se liberar&aacute; al completar el trabajo.</p>
+            </div>
+            <div class="wip-frozen-amount" id="wip-frozen-amount">$0.00</div>
+        </div>
+        <div class="wip-section">
+            <h3 class="wip-section-title">Opciones de pago</h3>
+            <div class="wip-options-box">
+                <div class="wip-option-row">
+                    <div class="wip-option-left">
+                        <i data-lucide="clock" class="wip-opt-icon"></i>
+                        <span>Por hora</span>
                     </div>
+                    <span class="wip-option-val" id="wip-rate-hourly">&mdash;</span>
                 </div>
-                <div id="contractsContainer" class="space-y-6">
-                    <!-- Contratos renderizados por JS -->
+                <div class="wip-option-row">
+                    <div class="wip-option-left">
+                        <i data-lucide="file-text" class="wip-opt-icon"></i>
+                        <span>Por contrato</span>
+                    </div>
+                    <span class="wip-option-val" id="wip-rate-fixed">$0.00</span>
                 </div>
+            </div>
+        </div>
+        <div class="wip-action-container">
+            <button class="wip-action-btn" id="wip-finish-btn" onclick="if(window.currentActiveContractId) finishWork(window.currentActiveContractId)">Finalizar trabajo</button>
+            <div class="wip-info-text">
+                <i data-lucide="info"></i>
+                <span>Al finalizar, el empleador podr&aacute; liberar el pago desde sus postulaciones.</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ================= VISTA: TRABAJO COMPLETADO (PASO 8) ================= -->
+<section id="view-work-completed" class="view-section h-full w-full overflow-y-auto wc-bg">
+    <div class="wc-header">
+        <button class="wc-back-btn" onclick="navigate('contracts')" aria-label="Volver a postulaciones">
+            <i data-lucide="arrow-left"></i>
+        </button>
+        <h1>Trabajo completado</h1>
+        <div style="width:28px"></div>
+    </div>
+    <div class="wc-content-card">
+        <div class="wc-success-header">
+            <div class="wc-success-icon">
+                <i data-lucide="check"></i>
+            </div>
+            <h2>&iexcl;Trabajo finalizado!</h2>
+            <p>El trabajo ha finalizado. El empleador debe liberar el pago para completar la operaci&oacute;n.</p>
+        </div>
+        <div class="wc-summary-box">
+            <div class="wc-summary-row">
+                <div class="wc-sum-col">
+                    <span class="wc-label">Pago a liberar</span>
+                    <span class="wc-value-large" id="wc-gross">$0.00</span>
+                </div>
+                <div class="wc-sum-col right">
+                    <span class="wc-label">Comisi&oacute;n plataforma (5%)</span>
+                    <span class="wc-value-small" id="wc-commission">$0.00</span>
+                </div>
+            </div>
+        </div>
+        <div class="wc-net-card">
+            <div class="wc-net-header">
+                <div class="wc-net-title">
+                    <i data-lucide="check-circle-2"></i>
+                    <span>Tu saldo neto estimado</span>
+                </div>
+            </div>
+            <div class="wc-net-amount" id="wc-net">$0.00</div>
+            <div class="wc-net-status" id="wc-net-status">(Pendiente de liberaci&oacute;n)</div>
+        </div>
+        <div class="wc-action-container">
+            <button class="wc-receipt-btn" onclick="viewReceipt()">Ver comprobante</button>
+        </div>
+    </div>
+</section>
+
+        <!-- ================= VISTA 2: ACUERDOS / CONTRATOS ================= -->
+        <section id="view-contracts" class="view-section section">
+            <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:16px">
+                <span>Mis Postulaciones</span>
+            </div>
+            <div id="contractsContainer" style="display:flex;flex-direction:column;gap:0">
+                <!-- Contratos renderizados por JS -->
             </div>
         </section>
 
         <!-- ================= VISTA 3: BILLETERA / WALLET ================= -->
-        <section id="view-wallet" class="view-section h-full w-full overflow-y-auto bg-gray-50 p-4 md:p-8">
-            <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-dark rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
-                    <div class="absolute right-0 top-0 opacity-10"><i data-lucide="wallet" class="w-48 h-48 -mr-10 -mt-10"></i></div>
-                    <h3 class="text-slate-400 font-medium text-sm mb-1">Saldo Disponible</h3>
-                    <div class="text-5xl font-bold mb-2">$<span id="walletBalance">0.00</span></div>
-                    <p class="text-xs text-escrow mb-8"><i data-lucide="lock" class="inline w-3 h-3"></i> $<span id="walletEscrow">0.00</span> en Retención Interna</p>
-                    
-                    <div class="flex gap-3">
-                        <button onclick="promptDeposit()" class="flex-1 bg-brand text-white py-2 rounded-lg font-bold text-sm shadow hover:bg-blue-600 transition">+ Fondear</button>
-                        <button onclick="promptWithdraw()" class="flex-1 border border-white/20 hover:bg-white/10 text-white py-2 rounded-lg font-bold text-sm transition">- Retirar</button>
-                    </div>
+        <section id="view-wallet" class="view-section section">
+            <!-- Wallet Card -->
+            <div class="wallet-card">
+                <div class="wc-bg-icon"><i data-lucide="wallet" style="font-size:120px"></i></div>
+                <div class="wc-label">Saldo Disponible</div>
+                <div class="wc-balance">$<span id="walletBalance">0.00</span></div>
+                <div class="wc-escrow">
+                    <i data-lucide="lock"></i>
+                    $<span id="walletEscrow">0.00</span> en Pago Protegido (Escrow)
                 </div>
-
-                <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-col">
-                    <h3 class="font-bold text-lg mb-4 border-b pb-2">Historial de Transacciones</h3>
-                    <div id="txHistory" class="flex-1 overflow-y-auto space-y-3 no-scrollbar h-[200px]">
-                        <!-- Transacciones JS -->
-                    </div>
+                <div class="wc-actions">
+                    <button class="primary" onclick="promptDeposit()">+ Fondear</button>
+                    <button class="ghost" onclick="promptWithdraw()">- Retirar</button>
                 </div>
+            </div>
+            
+            <!-- Commission Info -->
+            <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text-muted)">
+                <strong style="color:var(--crypto)">Comisiones WorkNow</strong><br>
+                Empleador: <strong>+5%</strong> · Trabajador: <strong>-5%</strong><br>
+                <span style="font-size:11px">Ej: Trabajo $100 → Empleador paga $105 · Trabajador recibe $95</span>
+            </div>
+            
+            <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px">
+                <span>Historial de Transacciones</span>
+            </div>
+            <div id="txHistory" style="display:flex;flex-direction:column;gap:0">
+                <!-- Transacciones JS -->
             </div>
         </section>
 
         <!-- ================= VISTA 4: CRM ADMINISTRATIVO ================= -->
-        <section id="view-crm" class="view-section h-full w-full overflow-y-auto bg-gray-50 p-4 md:p-8">
-            <div class="max-w-7xl mx-auto">
-                <div class="flex justify-between items-end mb-6">
-                    <div>
-                        <h1 class="text-3xl font-bold text-slate-900">CRM Administrativo</h1>
-                        <p class="text-slate-500">Métricas y Estadísticas en Tiempo Real</p>
-                    </div>
-                    <button onclick="renderCRM()" class="bg-brand text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-blue-600 transition flex items-center gap-2">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Actualizar
-                    </button>
+        <section id="view-crm" class="view-section section">
+            <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+                <span>CRM Administrativo</span>
+                <button onclick="renderCRM()" style="padding:6px 12px;border:none;border-radius:var(--radius-sm);font-weight:600;font-size:12px;cursor:pointer;background:var(--brand);color:#fff">
+                    ↻ Actualizar
+                </button>
+            </div>
+            
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px">
+                <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px">
+                    <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:2px">Usuarios</div>
+                    <div style="font-size:28px;font-weight:800;color:var(--text)" id="crm-users-total">0</div>
+                    <div style="font-size:10px;color:var(--text-muted)">👷 <span id="crm-users-workers">0</span> · 🏢 <span id="crm-users-employers">0</span></div>
                 </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                    <!-- Usuarios -->
-                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-                        <h3 class="text-sm font-bold text-slate-500 mb-1">Usuarios Totales</h3>
-                        <div class="text-3xl font-bold text-slate-800" id="crm-users-total">0</div>
-                        <div class="text-xs text-slate-500 mt-2 flex justify-between">
-                            <span>Trabajadores: <b id="crm-users-workers">0</b></span>
-                            <span>Empleadores: <b id="crm-users-employers">0</b></span>
-                        </div>
-                    </div>
-                    <!-- Trabajos -->
-                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-                        <h3 class="text-sm font-bold text-slate-500 mb-1">Trabajos Publicados</h3>
-                        <div class="text-3xl font-bold text-slate-800" id="crm-jobs-total">0</div>
-                        <div class="text-xs text-slate-500 mt-2 flex justify-between">
-                            <span>Activos: <b id="crm-jobs-active">0</b></span>
-                            <span>Completados: <b id="crm-jobs-completed">0</b></span>
-                        </div>
-                    </div>
-                    <!-- Postulaciones -->
-                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-                        <h3 class="text-sm font-bold text-slate-500 mb-1">Postulaciones</h3>
-                        <div class="text-3xl font-bold text-slate-800" id="crm-apps-total">0</div>
-                        <div class="text-xs text-slate-500 mt-2 flex justify-between">
-                            <span>Activas: <b id="crm-apps-active">0</b></span>
-                            <span>CVs: <b id="crm-cvs-total">0</b></span>
-                        </div>
-                    </div>
-                    <!-- Finanzas -->
-                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-                        <h3 class="text-sm font-bold text-slate-500 mb-1">Volumen Transaccional</h3>
-                        <div class="text-3xl font-bold text-escrow" id="crm-tx-volume">$0.00</div>
-                        <div class="text-xs text-slate-500 mt-2 flex justify-between">
-                            <span>Depósitos: <b id="crm-tx-deposits">$0.00</b></span>
-                            <span>Retiros: <b id="crm-tx-withdrawals">$0.00</b></span>
-                        </div>
+                <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px">
+                    <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:2px">Trabajos</div>
+                    <div style="font-size:28px;font-weight:800;color:var(--text)" id="crm-jobs-total">0</div>
+                    <div style="font-size:10px;color:var(--text-muted)">▶ <span id="crm-jobs-active">0</span> · ✓ <span id="crm-jobs-completed">0</span></div>
+                </div>
+                <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px">
+                    <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:2px">Postulaciones</div>
+                    <div style="font-size:28px;font-weight:800;color:var(--text)" id="crm-apps-total">0</div>
+                    <div style="font-size:10px;color:var(--text-muted)">📄 <span id="crm-apps-active">0</span> · CVs: <span id="crm-cvs-total">0</span></div>
+                </div>
+                <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px">
+                    <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:2px">Volumen</div>
+                    <div style="font-size:28px;font-weight:800;color:var(--escrow)" id="crm-tx-volume">$0.00</div>
+                    <div style="font-size:10px;color:var(--text-muted)">⬆ <span id="crm-tx-deposits">$0.00</span> · ⬇ <span id="crm-tx-withdrawals">$0.00</span></div>
+                </div>
+            </div>
+            
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px">
+                <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px">
+                    <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">Contratos</div>
+                    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);padding:2px 0">
+                        <span>Total: <b id="crm-contracts-total">0</b></span>
+                        <span style="color:#b45309">Neg: <b id="crm-contracts-negotiating">0</b></span>
+                        <span style="color:var(--brand)">Act: <b id="crm-contracts-active">0</b></span>
+                        <span style="color:var(--escrow)">Compl: <b id="crm-contracts-completed">0</b></span>
                     </div>
                 </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Contratos -->
-                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-                        <h3 class="font-bold text-lg mb-4 border-b pb-2">Estado de Contratos</h3>
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-slate-600">Total de Contratos</span>
-                                <span class="font-bold" id="crm-contracts-total">0</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-slate-600">En Negociación</span>
-                                <span class="font-bold text-yellow-600" id="crm-contracts-negotiating">0</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-slate-600">Activos / En Curso</span>
-                                <span class="font-bold text-brand" id="crm-contracts-active">0</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-slate-600">Completados / Cerrados</span>
-                                <span class="font-bold text-escrow" id="crm-contracts-completed">0</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Actividad Reciente -->
-                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col">
-                        <h3 class="font-bold text-lg mb-4 border-b pb-2">Actividad Reciente</h3>
-                        <div id="crm-recent-activity" class="flex-1 overflow-y-auto space-y-3 no-scrollbar h-[200px]">
-                            <!-- JS render -->
-                        </div>
+                <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px">
+                    <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">Actividad</div>
+                    <div id="crm-recent-activity" style="font-size:11px;color:var(--text-muted);max-height:120px;overflow-y:auto">
+                        <!-- JS render -->
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- ================= VISTA 5: BÚSQUEDA INTELIGENTE DE EMPLEO (Módulo AG) ================= -->
-        <section id="view-ai-search" class="view-section h-full w-full overflow-y-auto">
-<div class="app">
-  <div class="header">
-    <div class="brand">
-      <div class="brand-icon">🤖</div>
-      <div>
-        <h1>Búsqueda Inteligente de Empleo</h1>
-        <p><span id="totalOffers">98</span> Ofertas indexadas · Jobicy + Remotive + WorkNow</p>
-      </div>
-    </div>
-    <div class="status-bar">
-      <div class="status-pill"><div class="status-dot"></div><span>En línea</span></div>
-      <div class="status-pill"><span>🌐</span><span id="active-regions">Global</span></div>
-    </div>
-  </div>
-  <div class="main-grid">
-    <div class="left-panel">
-      <div class="card">
-        <div class="card-title">📄 Currículum</div>
-        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('cvInput').click()">
-          <div class="upload-icon">📤</div>
-          <div class="upload-text"><strong>Sube tu CV</strong>PDF, DOCX o TXT</div>
-          <input type="file" id="cvInput" accept=".pdf,.docx,.txt" onchange="AG.handleFile(this)">
-          <div class="file-info" id="fileInfo">
-            <div>✅ <strong id="fileName"></strong></div>
-            <div style="margin-top:4px;color:var(--text-muted);font-size:11px">Skills detectados: <span id="detectedSkills"></span></div>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">🔍 Filtros</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <input type="text" class="filter-input" id="keywordFilter" placeholder="Palabra clave (ej: react)" oninput="AG.filterJobs()">
-          <select class="filter-select" id="geoFilter" onchange="AG.filterJobs()">
-            <option value="">Todas las regiones</option>
-            <option value="usa">🇺🇸 USA</option>
-            <option value="europe">🇪🇺 Europa</option>
-            <option value="latam">🌎 LATAM</option>
-            <option value="canada">🇨🇦 Canadá</option>
-            <option value="apac">🌏 APAC</option>
-          </select>
-          <select class="filter-select" id="sourceFilter" onchange="AG.filterJobs()">
-            <option value="">Todas las fuentes</option>
-            <option value="Jobicy">Jobicy</option>
-            <option value="Remotive">Remotive</option>
-            <option value="WorkNow">WorkNow (internos)</option>
-          </select>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">🎯 Agentes</div>
-        <div class="agent-list">
-          <div class="agent-item active" onclick="AG.selectAgent('scout', this)">
-            <div class="agent-avatar scout">🕵️</div>
-            <div class="agent-info"><div class="agent-name">Scout</div><div class="agent-role">Búsqueda</div></div>
-            <div class="agent-status" id="st-scout"></div>
-          </div>
-          <div class="agent-item" onclick="AG.selectAgent('applier', this)">
-            <div class="agent-avatar applier">📝</div>
-            <div class="agent-info"><div class="agent-name">Aplicador</div><div class="agent-role">Postulaciones</div></div>
-            <div class="agent-status idle" id="st-applier"></div>
-          </div>
-          <div class="agent-item" onclick="AG.selectAgent('negotiator', this)">
-            <div class="agent-avatar negotiator">💬</div>
-            <div class="agent-info"><div class="agent-name">Negociador</div><div class="agent-role">Comunicación</div></div>
-            <div class="agent-status idle" id="st-negotiator"></div>
-          </div>
-          <div class="agent-item" onclick="AG.selectAgent('supervisor', this)">
-            <div class="agent-avatar supervisor">👁️</div>
-            <div class="agent-info"><div class="agent-name">Supervisor</div><div class="agent-role">Oversight</div></div>
-            <div class="agent-status" id="st-supervisor"></div>
-          </div>
-        </div>
-        <div class="control-panel">
-          <button class="btn btn-success" onclick="AG.startSearch()">▶ Buscar</button>
-          <button class="btn btn-ghost" onclick="AG.resetAll()">↺ Reset</button>
-          <button class="btn btn-ghost" onclick="AG.pushToMarketplace()" title="Convertir coincidencias en tareas geolocalizadas">⇩ A Explorar</button>
-        </div>
-      </div>
-    </div>
-    <div class="center-panel">
-      <div class="metrics-grid">
-        <div class="metric"><div class="metric-value" id="m-total">98</div><div class="metric-label">Ofertas Cargadas</div></div>
-        <div class="metric"><div class="metric-value" id="m-filtered">0</div><div class="metric-label">Coincidencias</div></div>
-        <div class="metric"><div class="metric-value" id="m-applied">0</div><div class="metric-label">Aplicadas</div></div>
-        <div class="metric"><div class="metric-value" id="m-match">0%</div><div class="metric-label">Match Promedio</div></div>
-      </div>
-      <div class="card">
-        <div class="card-title">📋 Oportunidades Reales</div>
-        <div class="jobs-list" id="jobsList"></div>
-      </div>
-      <div class="detail-panel" id="detailPanel">
-        <div class="detail-title" id="detailTitle"></div>
-        <div class="detail-text" id="detailText"></div>
-        <div class="job-actions" style="margin-top:8px">
-          <button class="btn-sm" onclick="AG.applyCurrent()">Aplicar Ahora</button>
-          <button class="btn-sm btn-ghost-sm" onclick="AG.generateLetter()">Generar Carta</button>
-          <a class="btn-sm btn-ghost-sm" id="detailLink" target="_blank" rel="noopener">Ver Oferta ↗</a>
-        </div>
-      </div>
-    </div>
-    <div class="right-panel">
-      <div class="card">
-        <div class="card-title">💬 Supervisor</div>
-        <div class="chat-area">
-          <div class="chat-messages" id="chatBox">
-            <div class="message">
-              <div class="message-avatar supervisor">👁️</div>
-              <div class="message-content">
-                <div class="message-name">Supervisor</div>
-                Hola. Tengo 98 ofertas reales cargadas desde Jobicy y Remotive. Sube tu CV o dime qué buscas para empezar el matching.
-              </div>
+        <section id="view-ai-search" class="view-section h-full w-full overflow-y-auto ai-redesign-bg">
+            
+            <!-- Encabezado -->
+            <div class="ai-header">
+                <button class="ai-back-btn" onclick="navigate('dashboard')">
+                    <i data-lucide="arrow-left"></i>
+                </button>
+                <div class="ai-header-title">
+                    <div class="ai-title-row">
+                        <i data-lucide="bot" class="ai-header-icon"></i>
+                        <h1>Agentes IA</h1>
+                    </div>
+                    <p>Tu asistente inteligente 24/7</p>
+                </div>
             </div>
-          </div>
-          <div class="chat-input-area">
-            <input type="text" class="chat-input" id="chatInput" placeholder="Instrucción..." onkeypress="if(event.key==='Enter')AG.sendChat()">
-            <button class="chat-btn" onclick="AG.sendChat()">➤</button>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">🖥️ Logs</div>
-        <div class="terminal" id="terminal">
-          <div class="log-entry"><span class="log-time">[00:00:00]</span> <span class="log-success">Sistema iniciado — bolsa indexada y verificada</span></div>
-          <div class="log-entry"><span class="log-time">[00:00:01]</span> <span class="log-agent">[Scout]</span> Fuentes: Jobicy API, Remotive API</div>
-          <div class="log-entry"><span class="log-time">[00:00:01]</span> <span class="log-warning">Esperando instrucciones del usuario...</span></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+
+            <!-- Zona del Robot -->
+            <div class="ai-robot-section">
+                <div class="ai-robot-img">
+                    <!-- Nota: Se utiliza un placeholder ya que no hay un recurso 3D de robot en el proyecto -->
+                    <img src="https://cdn-icons-png.flaticon.com/512/8649/8649605.png" alt="Asistente Robot">
+                </div>
+                <div class="ai-robot-chat">
+                    <div class="ai-chat-bubble">
+                        Hola, soy tu asistente de empleo. Te ayudo a crear tu CV, postularte, encontrar cachuelos y más.
+                    </div>
+                    <!-- Botón de video sin conexión real según instrucciones -->
+                    <button class="ai-video-btn">
+                        <i data-lucide="play"></i> Ver video
+                    </button>
+                </div>
+            </div>
+
+            <!-- Título de lista -->
+            <h2 class="ai-section-title">Elige un agente</h2>
+
+            <!-- Lista de Agentes -->
+            <div class="ai-agents-list">
+                
+                <!-- Tarjeta 1: Agente de Búsqueda -->
+                <div class="ai-agent-card" onclick="AG.selectAgent('scout', this); AG.startSearch();">
+                    <div class="ai-agent-icon" style="background-color: #2563EB;">
+                        <i data-lucide="search"></i>
+                    </div>
+                    <div class="ai-agent-info">
+                        <h3>Agente de Búsqueda</h3>
+                        <p>Encuentra empleos personalizados según tu perfil y ubicación.</p>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 2: Agente de Postulaciones -->
+                <div class="ai-agent-card" onclick="AG.selectAgent('applier', this)">
+                    <div class="ai-agent-icon" style="background-color: #3B82F6;">
+                        <i data-lucide="send"></i>
+                    </div>
+                    <div class="ai-agent-info">
+                        <h3>Agente de Postulaciones</h3>
+                        <p>Postula por ti y da seguimiento a tus aplicaciones.</p>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 3: Agente de CV -->
+                <div class="ai-agent-card" onclick="document.getElementById('cvInput').click()">
+                    <div class="ai-agent-icon" style="background-color: #10B981;">
+                        <i data-lucide="file-text"></i>
+                    </div>
+                    <div class="ai-agent-info">
+                        <h3>Agente de CV</h3>
+                        <p>Crea y optimiza tu CV con IA.</p>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 4: Agente de Cachuelos -->
+                <div class="ai-agent-card" onclick="navigate('ai-search'); setTimeout(() => filterCategory('cachuelo'), 100);">
+                    <div class="ai-agent-icon" style="background-color: #8B5CF6;">
+                        <i data-lucide="zap"></i>
+                    </div>
+                    <div class="ai-agent-info">
+                        <h3>Agente de Cachuelos</h3>
+                        <p>Busca trabajos informales al instante (sin contrato).</p>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 5: Agente de Soporte -->
+                <div class="ai-agent-card" onclick="AG.selectAgent('negotiator', this); document.getElementById('chatInput').focus();">
+                    <div class="ai-agent-icon" style="background-color: #3B82F6;">
+                        <i data-lucide="headphones"></i>
+                    </div>
+                    <div class="ai-agent-info">
+                        <h3>Agente de Soporte</h3>
+                        <p>Resuelve tus dudas 24/7.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ========================================== -->
+            <!-- ELEMENTOS FUNCIONALES ORIGINALES OCULTOS   -->
+            <!-- Se preservan para no romper la lógica JS   -->
+            <!-- ========================================== -->
+            <div style="display: none;" id="ai-hidden-functionality">
+                <span id="totalOffers"></span>
+                <span id="active-regions"></span>
+                
+                <div id="uploadZone">
+                    <input type="file" id="cvInput" accept=".pdf,.docx,.txt" onchange="AG.handleFile(this)">
+                    <div id="fileInfo">
+                        <strong id="fileName"></strong>
+                        <span id="detectedSkills"></span>
+                    </div>
+                </div>
+                
+                <input type="text" id="keywordFilter" oninput="AG.filterJobs()">
+                <select id="geoFilter" onchange="AG.filterJobs()"></select>
+                <select id="sourceFilter" onchange="AG.filterJobs()"></select>
+                
+                <div id="st-scout"></div>
+                <div id="st-applier"></div>
+                <div id="st-negotiator"></div>
+                <div id="st-supervisor"></div>
+                
+                <div id="m-total"></div>
+                <div id="m-filtered"></div>
+                <div id="m-applied"></div>
+                <div id="m-match"></div>
+                
+                <div id="jobsList"></div>
+                
+                <div id="detailPanel">
+                    <div id="detailTitle"></div>
+                    <div id="detailText"></div>
+                    <a id="detailLink"></a>
+                </div>
+                
+                <div id="chatBox"></div>
+                <input type="text" id="chatInput" onkeypress="if(event.key==='Enter')AG.sendChat()">
+                
+                <div id="terminal"></div>
+            </div>
+
         </section>
 
     </main>
 
-    <!-- MODAL: PUBLICAR TRABAJO -->
-    <div id="modalCreateJob" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[1000] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h2 class="font-bold text-lg">Publicar Servicio</h2>
-                <button onclick="document.getElementById('modalCreateJob').classList.add('hidden')" class="text-slate-400 hover:text-red-500"><i data-lucide="x"></i></button>
+        <!-- MODAL: PUBLICAR TRABAJO (REDISEÑADO) -->
+    <div id="modalCreateJob" class="modal-overlay hidden">
+        <div class="modal-box pj-modal-box">
+            
+            <!-- Encabezado -->
+            <div class="pj-header">
+                <button class="pj-back-btn" onclick="document.getElementById('modalCreateJob').classList.add('hidden')">
+                    <i data-lucide="arrow-left"></i>
+                </button>
+                <div class="pj-header-text">
+                    <h2>Publicar empleo</h2>
+                    <p>Encuentra el talento que necesitas</p>
+                </div>
             </div>
-            <div class="p-6 space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">Título del trabajo</label>
-                    <input type="text" id="jobTitle" placeholder="Ej. Reparar tubería, Descargar camión..." class="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand">
+
+            <!-- Cuerpo del formulario -->
+            <div class="pj-body">
+                
+                <!-- Selector de Categoría -->
+                <div class="pj-category-selector">
+                    <button type="button" class="pj-cat-btn active" onclick="document.getElementById('jobCategory').value='formal'; this.parentElement.querySelectorAll('.pj-cat-btn').forEach(b=>b.classList.remove('active')); this.classList.add('active');">Trabajo formal</button>
+                    <button type="button" class="pj-cat-btn" onclick="document.getElementById('jobCategory').value='cachuelo'; this.parentElement.querySelectorAll('.pj-cat-btn').forEach(b=>b.classList.remove('active')); this.classList.add('active');">Cachuelo / Informal</button>
                 </div>
+                <!-- Select original oculto para preservar la lógica JS -->
+                <select id="jobCategory" style="display:none;">
+                    <option value="formal">Formal</option>
+                    <option value="cachuelo">Cachuelo / Informal</option>
+                    <option value="online">En línea</option>
+                </select>
+
+                <!-- Imágenes -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">Descripción / Requisitos</label>
-                    <textarea id="jobDesc" placeholder="Detalles del servicio..." class="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand"></textarea>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">Presupuesto ($)</label>
-                        <input type="number" id="jobPrice" placeholder="0.00" class="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand font-bold text-brand">
+                    <label class="pj-label">Sube imágenes del trabajo</label>
+                    <div class="pj-images-row">
+                        <!-- Miniaturas de ejemplo usando imágenes existentes en el proyecto -->
+                        <div class="pj-thumb"><img src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=150&q=80" alt="Ejemplo 1"></div>
+                        <div class="pj-thumb"><img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=150&q=80" alt="Ejemplo 2"></div>
+                        <div class="pj-thumb"><img src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=150&q=80" alt="Ejemplo 3"></div>
+                        
+                        <label for="jobImages" class="pj-add-img">
+                            <i data-lucide="plus"></i>
+                        </label>
+                        <!-- Input original preservado -->
+                        <input type="file" id="jobImages" accept="image/*" multiple style="display:none;">
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">Modalidad</label>
-                        <select id="jobType" class="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand bg-white">
-                            <option value="fixed">Por Obra (Fijo)</option>
-                            <option value="hourly">Por Hora</option>
+                    <p class="pj-help-text">Puedes subir varias imágenes. (Ej. antes y después)</p>
+                </div>
+
+                <!-- Título (Requerido por la lógica, añadido visualmente para no romper createJob) -->
+                <div>
+                    <label class="pj-label" for="jobTitle">Título del trabajo</label>
+                    <input type="text" id="jobTitle" class="pj-input" placeholder="Ej. Reparación de tubería">
+                </div>
+
+                <!-- Descripción -->
+                <div>
+                    <label class="pj-label" for="jobDesc">Descripción del trabajo</label>
+                    <textarea id="jobDesc" class="pj-input" placeholder="Ej. Enlucir una pared de 3x4 metros" rows="3"></textarea>
+                </div>
+
+                <!-- Presupuesto y Tipo -->
+                <div class="pj-row">
+                    <div class="pj-col">
+                        <label class="pj-label" for="jobPrice">Referencial de pago</label>
+                        <div class="pj-input-with-icon">
+                            <span>$</span>
+                            <input type="number" id="jobPrice" class="pj-input" placeholder="60">
+                        </div>
+                    </div>
+                    <div class="pj-col">
+                        <label class="pj-label" for="jobType">Tipo</label>
+                        <select id="jobType" class="pj-input">
+                            <option value="fixed">Por trabajo</option>
+                            <option value="hourly">Por hora</option>
                         </select>
                     </div>
                 </div>
-                <button onclick="createJob()" class="w-full bg-brand hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition mt-4">Publicar Servicio</button>
+
+                <!-- Ubicación (Visual, la lógica usa GPS automático) -->
+                <div>
+                    <label class="pj-label">Ubicación</label>
+                    <div class="pj-input-icon-left">
+                        <i data-lucide="map-pin" class="text-green-500"></i>
+                        <input type="text" class="pj-input" value="Quito, Ecuador" readonly>
+                    </div>
+                </div>
+
+                <!-- Fecha límite (Visual) -->
+                <div>
+                    <label class="pj-label">Fecha límite (opcional)</label>
+                    <div class="pj-input-icon-left">
+                        <i data-lucide="calendar" class="text-slate-400"></i>
+                        <input type="date" class="pj-input">
+                    </div>
+                </div>
+
+                <!-- Botón de publicación -->
+                <button type="button" onclick="createJob()" class="pj-submit-btn">Publicar trabajo</button>
+
             </div>
         </div>
     </div>
 
-    <!-- MODAL: AUTENTICACIÓN (EXCEPCIÓN CONTROLADA) -->
-    <div id="modalAuth" class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-[2000] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden p-8 space-y-5">
-            <div class="text-center mb-4">
-                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-brand/10 text-brand mb-2">
-                    <i data-lucide="zap" class="w-6 h-6 fill-brand"></i>
+    <!-- MODAL: AUTENTICACIÓN -->
+    <div id="modalAuth" class="modal-overlay hidden">
+        <div class="modal-box auth-modal">
+            <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+                <div class="auth-header">
+                    <div class="icon"><i data-lucide="zap" style="font-size:28px"></i></div>
+                    <h2>Acceso WorkNow</h2>
+                    <p>Plataforma de Operaciones en Tiempo Real</p>
                 </div>
-                <h2 class="font-bold text-2xl text-slate-900">Acceso WorkNow</h2>
-                <p class="text-sm text-slate-500">Plataforma de Operaciones en Tiempo Real</p>
+                <div class="field-group">
+                    <input type="email" id="authEmail" placeholder="Correo electrónico" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;outline:none;font-size:14px;background:#fff">
+                </div>
+                <div class="field-group">
+                    <input type="password" id="authPassword" placeholder="Contraseña" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;outline:none;font-size:14px;background:#fff">
+                </div>
+                <div id="registerFields" class="hidden">
+                    <input type="text" id="authName" placeholder="Nombre completo" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;outline:none;font-size:14px;background:#fff">
+                    <input type="text" id="authPhone" placeholder="Teléfono (ej. +593...)" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;outline:none;font-size:14px;background:#fff">
+                    <select id="authRole" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;outline:none;font-size:14px;background:#fff">
+                        <option value="employer">Quiero contratar (Empleador)</option>
+                        <option value="worker">Quiero trabajar (Trabajador)</option>
+                    </select>
+                </div>
+                <button onclick="handleLogin()" id="btnLogin" class="auth-btn primary">Iniciar Sesión</button>
+                <button onclick="handleRegister()" id="btnRegister" class="auth-btn success hidden">Crear Cuenta</button>
+                <div class="auth-toggle" onclick="toggleAuthMode()" id="authToggleText">¿No tienes cuenta? Regístrate</div>
             </div>
-            
-            <input type="email" id="authEmail" placeholder="Correo electrónico" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-brand transition">
-            <input type="password" id="authPassword" placeholder="Contraseña" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-brand transition">
-            
-            <div id="registerFields" class="hidden space-y-5">
-                <input type="text" id="authName" placeholder="Nombre completo" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-brand transition">
-                <input type="text" id="authPhone" placeholder="Teléfono (ej. +593...)" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-brand transition">
-                <select id="authRole" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-brand bg-white transition">
-                    <option value="employer">Quiero contratar (Empleador)</option>
-                    <option value="worker">Quiero trabajar (Trabajador)</option>
-                    
-                </select>
-            </div>
-
-            <button onclick="handleLogin()" id="btnLogin" class="w-full bg-brand hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition">Iniciar Sesión</button>
-            <button onclick="handleRegister()" id="btnRegister" class="hidden w-full bg-escrow hover:bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg transition">Crear Cuenta</button>
-            
-            <p class="text-center text-sm text-slate-500 mt-4 cursor-pointer hover:text-brand font-medium" onclick="toggleAuthMode()" id="authToggleText">¿No tienes cuenta? Regístrate</p>
         </div>
     </div>
 
@@ -853,10 +2567,10 @@
                 icon: {
                     path: google.maps.SymbolPath.CIRCLE,
                     scale: 8,
-                    fillColor: '#2563eb',
+                    fillColor: '#0066FF',
                     fillOpacity: 0.5,
                     strokeWeight: 2,
-                    strokeColor: '#2563eb'
+                    strokeColor: '#0066FF'
                 },
                 title: "Tu Ubicación"
             });
@@ -872,8 +2586,8 @@
 
             state.userMarker = L.circleMarker([state.userLat, state.userLng], {
                 radius: 8,
-                fillColor: '#2563eb',
-                color: '#2563eb',
+                fillColor: '#0066FF',
+                color: '#0066FF',
                 weight: 2,
                 opacity: 0.5,
                 fillOpacity: 0.5
@@ -945,15 +2659,14 @@
             if(!state.sessionActive) {
                 document.getElementById('userInitials').innerText = state.currentRole === 'employer' ? 'EM' : state.currentRole === 'admin' ? 'AD' : 'TR';
             }
-            document.getElementById('btnCreateJob').style.display = state.currentRole === 'employer' ? 'block' : 'none';
-            
+            // Toggle bottom nav "Publicar" visibility based on role
+            const postBtn = document.querySelector('.bottom-nav .nav-item[data-nav="post"]');
+            if(postBtn) {
+                postBtn.style.display = state.currentRole === 'employer' || !state.sessionActive ? '' : 'none';
+            }
             const crmBtn = document.getElementById('nav-crm-btn');
             if (crmBtn) {
-                if (state.currentRole === 'admin') {
-                    crmBtn.classList.remove('hidden');
-                } else {
-                    crmBtn.classList.add('hidden');
-                }
+                crmBtn.style.display = state.currentRole === 'admin' ? '' : 'none';
             }
         }
 
@@ -971,8 +2684,14 @@
 
         function navigate(view) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.getElementById(`view-${view}`).classList.add('active');
-            if(view === 'dashboard' && state.map) {
+            const target = document.getElementById(`view-${view}`);
+            if(target) target.classList.add('active');
+            // Bottom nav active state
+            document.querySelectorAll('.bottom-nav .nav-item').forEach(b => b.classList.remove('active'));
+            const navBtn = document.querySelector(`.bottom-nav .nav-item[data-nav="${view}"]`);
+            if(navBtn) navBtn.classList.add('active');
+            // Fix map resize
+            if((view === 'dashboard' || view === 'search') && state.map) {
                 if (CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') {
                     setTimeout(() => google.maps.event.trigger(state.map, 'resize'), 100);
                 } else if (typeof L !== 'undefined') {
@@ -981,12 +2700,55 @@
             }
         }
 
+        // Commission calculation (5% employer + 5% worker)
+        function calcFees(amount) {
+            const empFee = amount * 0.05;
+            const wrkFee = amount * 0.05;
+            const empTotal = amount + empFee;
+            const wrkNet = amount - wrkFee;
+            const platformTotal = empFee + wrkFee;
+            return { gross: amount, empFee, wrkFee, empTotal, wrkNet, platformTotal };
+        }
+
+        // Home helpers
+        function handleHomeSearch(val) {
+            const jobsList = document.getElementById('jobsListContainer');
+            if(!jobsList) return;
+            const cards = jobsList.querySelectorAll('.job-card');
+            const q = val.toLowerCase().trim();
+            cards.forEach(c => {
+                const match = !q || c.getAttribute('data-search')?.includes(q);
+                c.style.display = match ? '' : 'none';
+            });
+        }
+
+        // Envía el texto del buscador a la búsqueda real (módulo AG) y filtra localmente
+        function submitHomeSearch() {
+            const main = document.getElementById('homeSearch');
+            let q = main ? main.value.trim() : '';
+            
+            const kw = document.getElementById('keywordFilter');
+            if (kw) kw.value = q;
+            
+            navigate('ai-search');
+            if (window.AG && typeof AG.filterJobs === 'function') AG.filterJobs();
+        }
+
+        let currentCategory = 'all';
+        function filterCategory(cat, el) {
+            currentCategory = cat;
+            document.querySelectorAll('#homeCategories .cat').forEach(c => c.classList.remove('active'));
+            if(el) el.classList.add('active');
+            renderJobs();
+        }
+
         // 8. LÓGICA DE NEGOCIO: TRABAJOS Y ALERTAS REALES
         async function createJob() {
             const title = document.getElementById('jobTitle').value;
             const desc = document.getElementById('jobDesc').value;
             const price = parseFloat(document.getElementById('jobPrice').value);
             const type = document.getElementById('jobType').value;
+            const category = document.getElementById('jobCategory')?.value || 'formal';
 
             if(!title || isNaN(price) || price <= 0) return showToast('Datos inválidos', 'error');
 
@@ -995,7 +2757,8 @@
 
             const newJob = {
                 id: 'job_' + Date.now(),
-                title, desc, price, currency: 'USD', payment_type: type, lat: rLat, lng: rLng,
+                title, desc, price, currency: 'USD', payment_type: type, category,
+                lat: rLat, lng: rLng,
                 status: 'open', employer_id: state.currentUserId, created_at: Date.now()
             };
 
@@ -1046,7 +2809,9 @@
             try {
                 const jobs = await DB.get('jobs');
                 const container = document.getElementById('jobsListContainer');
+                if(!container) return;
                 container.innerHTML = '';
+                window.jobsById = Object.fromEntries(jobs.map(j => [j.id, j])); // INTEGRACIÓN 5: caché para el detalle
                 
                 if(state.markers) {
                     if (CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') {
@@ -1059,7 +2824,22 @@
 
                 const isWorker = state.currentRole === 'worker';
 
-                jobs.filter(j => j.status === 'open').forEach(job => {
+                const filteredJobs = jobs.filter(j => {
+                    if(j.status !== 'open') return false;
+                    if(currentCategory === 'all') return true;
+                    const cat = j.category || 'formal';
+                    if(currentCategory === 'formal') return cat === 'formal';
+                    if(currentCategory === 'cachuelo') return cat === 'cachuelo';
+                    if(currentCategory === 'online') return cat === 'online';
+                    return true;
+                });
+
+                if(filteredJobs.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><i data-lucide="package"></i>No hay trabajos disponibles en esta categoría</div>';
+                    return;
+                }
+
+                filteredJobs.forEach(job => {
                     let dist = "N/A";
                     if(CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined' && google.maps.geometry) {
                         const p1 = new google.maps.LatLng(state.userLat, state.userLng);
@@ -1070,7 +2850,18 @@
                     }
                     
                     const isMine = job.employer_id === state.currentUserId;
-
+                    const cat = job.category || 'formal';
+                    const catLabel = cat === 'formal' ? 'Formal' : cat === 'cachuelo' ? 'Cachuelo' : 'En línea';
+                    const isNew = Date.now() - (job.created_at || 0) < 86400000;
+                    
+                    let actionHtml = '';
+                    if(isWorker) {
+                        actionHtml = `<button style="width:100%;margin-top:10px;padding:10px;border:none;border-radius:var(--radius-sm);font-weight:600;font-size:13px;cursor:pointer;background:var(--brand);color:#fff" onclick="event.stopPropagation();applyJob('${job.id}')">Aplicar al Servicio</button>`;
+                    } else if(isMine) {
+                        actionHtml = `<div style="width:100%;margin-top:10px;padding:10px;border-radius:var(--radius-sm);font-weight:600;font-size:13px;background:#f3f4f6;color:var(--text-muted);text-align:center">Tu Publicación</div>`;
+                    }
+                    
+                    // Map markers
                     if(CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined' && state.map) {
                         const marker = new google.maps.Marker({
                             position: { lat: job.lat, lng: job.lng },
@@ -1078,42 +2869,47 @@
                             title: job.title
                         });
                         const infoWindow = new google.maps.InfoWindow({
-                            content: `<div class="p-1"><b>${job.title}</b><br/>$${job.price} (${job.payment_type === 'fixed' ? 'Obra' : 'Hora'})</div>`
+                            content: `<div style="padding:4px"><b>${job.title}</b><br/>$${job.price}</div>`
                         });
                         marker.addListener('click', () => infoWindow.open(state.map, marker));
                         state.markers.push(marker);
                     } else if (typeof L !== 'undefined' && state.map) {
                         const marker = L.circleMarker([job.lat, job.lng], {
-                            radius: 8,
-                            fillColor: '#f59e0b',
-                            color: '#ffffff',
-                            weight: 2,
-                            opacity: 1,
-                            fillOpacity: 0.9
+                            radius: 8, fillColor: '#f59e0b', color: '#ffffff',
+                            weight: 2, opacity: 1, fillOpacity: 0.9
                         }).addTo(state.map);
-                        marker.bindPopup(`<div class="p-1"><b>${job.title}</b><br/>$${job.price} (${job.payment_type === 'fixed' ? 'Obra' : 'Hora'})</div>`);
+                        marker.bindPopup(`<div style="padding:4px"><b>${job.title}</b><br/>$${job.price}</div>`);
                         state.markers.push(marker);
                     }
 
-                    let actionBtn = '';
-                    if(isWorker) {
-                        actionBtn = `<button onclick="applyJob('${job.id}')" class="w-full mt-3 bg-brand text-white py-2 rounded font-bold text-sm hover:bg-blue-600 transition shadow">Aplicar al Servicio</button>`;
-                    } else if(isMine) {
-                        actionBtn = `<div class="w-full mt-3 bg-gray-100 text-slate-500 text-center py-2 rounded font-bold text-sm">Tu Publicación</div>`;
-                    }
+                    const searchText = (job.title + ' ' + (job.desc||'') + ' ' + catLabel).toLowerCase();
+                    const paymentLabel = job.payment_type === 'fixed' ? 'trabajo' : 'hora';
+                    
+                    // Imagen de placeholder genérica basada en la categoría para igualar el diseño
+                    const imgPlaceholder = cat === 'formal' 
+                        ? 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=150&q=80' 
+                        : 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=150&q=80';
 
+                    // Modificación visual del HTML de la tarjeta respetando la lógica y variables
                     container.innerHTML += `
-                        <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer" onclick="if(state.map) { if(CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') state.map.setCenter({lat: ${job.lat}, lng: ${job.lng}}); else if(typeof L !== 'undefined') state.map.setView([${job.lat}, ${job.lng}]); }">
-                            <div class="flex justify-between items-start">
-                                <h3 class="font-bold text-slate-800">${job.title}</h3>
-                                <span class="font-bold text-brand text-lg">$${job.price}</span>
+                        <div class="job-card job-card-redesign-wrapper" data-search="${searchText}" onclick="openJobDetail('${job.id}'); if(state.map) { if(CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') state.map.setCenter({lat: ${job.lat}, lng: ${job.lng}}); else if(typeof L !== 'undefined') state.map.setView([${job.lat}, ${job.lng}]); }">
+                            <div class="job-card-redesign">
+                                <img src="${imgPlaceholder}" alt="Miniatura del trabajo" class="job-card-img">
+                                <div class="job-card-info">
+                                    <div class="job-card-title">${job.title}</div>
+                                    <div class="job-card-location">
+                                        <i data-lucide="map-pin" style="width: 12px; height: 12px;"></i>
+                                        A ${dist} km de ti
+                                    </div>
+                                    <div class="job-card-tags">
+                                        <span class="job-card-tag ${cat === 'formal' ? 'formal' : 'cachuelo'}">${catLabel} ${cat === 'cachuelo' ? '(sin contrato)' : ''}</span>
+                                        ${isNew ? '<span class="job-card-tag instant"><i data-lucide="check-circle-2" style="width: 10px; height: 10px;"></i> Al instante</span>' : ''}
+                                    </div>
+                                    <div class="job-card-price">$${job.price} <span>/ ${paymentLabel}</span></div>
+                                </div>
+                                <button class="job-card-fav" onclick="event.stopPropagation();"><i data-lucide="heart" style="width: 18px; height: 18px;"></i></button>
                             </div>
-                            <p class="text-xs text-slate-500 mt-1 line-clamp-2">${job.desc || 'Sin descripción'}</p>
-                            <div class="flex gap-2 mt-2">
-                                <span class="text-xs bg-gray-100 px-2 py-1 rounded text-slate-600">${job.payment_type === 'fixed' ? 'Por Obra' : 'Por Hora'}</span>
-                                <span class="text-xs text-slate-500 px-2 py-1"><i data-lucide="map-pin" class="inline w-3 h-3"></i> a ${dist} km</span>
-                            </div>
-                            ${actionBtn}
+                            ${actionHtml ? `<div style="padding: 0 14px 14px 14px;">${actionHtml}</div>` : ''}
                         </div>
                     `;
                 });
@@ -1123,13 +2919,73 @@
             }
         }
 
-        // 9. LÓGICA DE ACUERDOS REALES (SIN AUTOAPROBACIÓN)
+                // ====================================================================
+        // 🆕 INTEGRACIÓN 5: DETALLE DEL TRABAJO (pantalla nueva, lógica añadida)
+        // Almacena en caché los trabajos renderizados para poder abrir el detalle
+        // ====================================================================
+        async function openJobDetail(jobId) {
+            const job = (window.jobsById || {})[jobId];
+            if(!job) return;
+            window.currentSelectedJobId = jobId;
+
+            // Preserva el comportamiento original de centrado del mapa
+            if(state.map) {
+                if(CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') state.map.setCenter({lat: job.lat, lng: job.lng});
+                else if(typeof L !== 'undefined') state.map.setView([job.lat, job.lng]);
+            }
+
+            const cat = job.category || 'formal';
+            const catLabel = cat === 'formal' ? 'Formal' : cat === 'cachuelo' ? 'Cachuelo' : 'En línea';
+            const isNew = Date.now() - (job.created_at || 0) < 86400000;
+            const paymentLabel = job.payment_type === 'fixed' ? 'trabajo' : 'hora';
+
+            let dist = 'N/A';
+            if(CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined' && google.maps.geometry) {
+                const p1 = new google.maps.LatLng(state.userLat, state.userLng);
+                const p2 = new google.maps.LatLng(job.lat, job.lng);
+                dist = (google.maps.geometry.spherical.computeDistanceBetween(p1, p2) / 1000).toFixed(1);
+            } else {
+                dist = (getDistance(state.userLat, state.userLng, job.lat, job.lng) / 1000).toFixed(1);
+            }
+
+            document.getElementById('jd-title').innerText = job.title;
+            document.getElementById('jd-location-text').innerText = 'A ' + dist + ' km de ti';
+            document.getElementById('jd-price-text').innerText = '$' + job.price + ' / ' + paymentLabel;
+            document.getElementById('jd-description-text').innerText = job.desc || 'Sin descripción disponible.';
+
+            const imgPlaceholder = cat === 'formal'
+                ? 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80'
+                : 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80';
+            document.getElementById('jd-main-img').src = imgPlaceholder;
+
+            let tagsHtml = '<span class="jd-tag ' + (cat === 'formal' ? 'formal' : cat === 'cachuelo' ? 'cachuelo' : 'online') + '">' + catLabel + (cat === 'cachuelo' ? ' (sin contrato)' : '') + '</span>';
+            if(isNew) tagsHtml += '<span class="jd-tag instant"><i data-lucide="check-circle-2"></i> Al instante</span>';
+            document.getElementById('jd-tags-container').innerHTML = tagsHtml;
+
+            try {
+                const profilesArr = await DB.get('profiles');
+                const emp = profilesArr.find(p => p.id === job.employer_id);
+                const empName = emp && emp.name ? emp.name : 'Empleador WorkNow';
+                document.getElementById('jd-emp-name').innerText = empName;
+                document.getElementById('jd-emp-avatar').src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(empName) + '&background=0B1426&color=fff';
+                // Las reseñas no existen en el modelo de datos: presentación neutral (no se inventan datos)
+                document.getElementById('jd-emp-rating').innerHTML = '<i data-lucide="star" class="jd-star-icon"></i> <span>Sin reseñas todavía</span>';
+            } catch(e) {
+                document.getElementById('jd-emp-name').innerText = 'Empleador WorkNow';
+            }
+
+            navigate('job-detail');
+            lucide.createIcons();
+        }
+
+// 9. LÓGICA DE ACUERDOS REALES (SIN AUTOAPROBACIÓN)
         async function applyJob(jobId) {
             try {
                 const jobs = await DB.get('jobs');
                 const job = jobs.find(j => j.id === jobId);
                 if(!job) return;
 
+                const fees = calcFees(job.price);
                 const newContract = {
                     id: 'ct_' + Date.now(),
                     job_id: jobId,
@@ -1149,7 +3005,17 @@
                 await DB.insert('contracts', newContract);
                 await DB.update('jobs', jobId, { status: 'negotiating' });
                 
-                showToast('Aplicación enviada. Esperando propuesta del empleador.', 'success');
+                // Reserve escrow from employer balance
+                const profilesArr = await DB.get('profiles');
+                const employer = profilesArr.find(p => p.id === job.employer_id);
+                if(employer && employer.balance >= fees.empTotal) {
+                    await DB.update('profiles', employer.id, {
+                        balance: employer.balance - fees.empTotal,
+                        escrow: (employer.escrow || 0) + fees.empTotal
+                    });
+                }
+                
+                showToast('Aplicación enviada. Fondos protegidos en escrow.', 'success');
                 navigate('contracts');
                 await renderApp();
             } catch (e) {
@@ -1292,28 +3158,54 @@
                 const profilesArr = await DB.get('profiles');
                 const employer = profilesArr.find(p => p.id === contract.employer_id);
                 const worker = profilesArr.find(p => p.id === contract.worker_id);
+                if(!employer || !worker) return showToast('Error: perfiles no encontrados', 'error');
 
-                let amount = contract.agreed_price;
+                // Calculate with commissions
+                let grossAmount = contract.agreed_price;
                 if(contract.payment_type === 'hourly' && contract.work_started_at && contract.work_ended_at) {
                     const hours = (contract.work_ended_at - contract.work_started_at) / (1000 * 60 * 60);
-                    amount = parseFloat((hours * contract.agreed_price).toFixed(2));
-                    if(amount <= 0) amount = contract.agreed_price;
+                    grossAmount = parseFloat((hours * contract.agreed_price).toFixed(2));
+                    if(grossAmount <= 0) grossAmount = contract.agreed_price;
+                }
+                const fees = calcFees(grossAmount);
+
+                // Check employer has funds (balance + escrow)
+                if((employer.balance + (employer.escrow||0)) < fees.empTotal) {
+                    return showToast('Saldo insuficiente para liberar el pago (incluye comisiones)', 'error');
                 }
 
-                if(employer.balance < amount) {
-                    return showToast('Saldo insuficiente para liberar el pago.', 'error');
-                }
+                // Deduct employer (gross + 5% fee)
+                let empRemaining = fees.empTotal;
+                let fromEscrow = Math.min(employer.escrow || 0, empRemaining);
+                let fromBalance = empRemaining - fromEscrow;
+                
+                await DB.update('profiles', employer.id, {
+                    balance: employer.balance - fromBalance,
+                    escrow: (employer.escrow || 0) - fromEscrow
+                });
 
-                // Operaciones atómicas
-                await DB.update('profiles', employer.id, { balance: employer.balance - amount });
-                await DB.update('profiles', worker.id, { balance: worker.balance + amount });
+                // Pay worker (gross - 5% fee)
+                await DB.update('profiles', worker.id, {
+                    balance: worker.balance + fees.wrkNet
+                });
+
+                // Update contract
                 await DB.update('contracts', contractId, { status: 'closed' });
                 await DB.update('jobs', contract.job_id, { status: 'closed' });
                 
-                await DB.insert('txs', { id: 'tx_'+Date.now()+'_1', userId: employer.id, desc: `Pago Liberado - ${contract.title}`, amount: -amount, date: Date.now() });
-                await DB.insert('txs', { id: 'tx_'+Date.now()+'_2', userId: worker.id, desc: `Pago Recibido - ${contract.title}`, amount: amount, date: Date.now() });
-                
-                showToast(`Pago de $${amount} liberado exitosamente.`, 'success');
+                // Record transactions
+                const ts = Date.now();
+                await DB.insert('txs', { id: 'tx_'+ts+'_emp', userId: employer.id,
+                    desc: `Pago Liberado + Comisión · ${contract.title}`,
+                    amount: -fees.empTotal, date: ts, type: 'payment' });
+                await DB.insert('txs', { id: 'tx_'+ts+'_wrk', userId: worker.id,
+                    desc: `Pago Recibido (neto) · ${contract.title}`,
+                    amount: fees.wrkNet, date: ts, type: 'payment' });
+                await DB.insert('txs', { id: 'tx_'+ts+'_fee', userId: 'platform',
+                    desc: `Comisión WorkNow · ${contract.title}`,
+                    amount: fees.platformTotal, date: ts, type: 'fee' });
+
+                showToast(`Pago liberado: Empleador pagó $${fees.empTotal.toFixed(2)} · Trabajador recibió $${fees.wrkNet.toFixed(2)}`, 'success');
                 await renderApp();
             } catch (e) {
                 showToast('Error al liberar el pago', 'error');
@@ -1333,115 +3225,133 @@
                 const myContracts = contracts.filter(c => (c.employer_id === state.currentUserId || c.worker_id === state.currentUserId) && c.status !== 'closed');
 
                 if(myContracts.length === 0) {
-                    container.innerHTML = `<div class="text-center p-10 text-slate-400 font-medium">No tienes acuerdos activos</div>`;
+                    container.innerHTML = '<div class="empty-state"><i data-lucide="briefcase"></i>No tienes acuerdos activos</div>';
                     return;
                 }
 
                 myContracts.forEach(c => {
                     const isEmployer = state.currentUserId === c.employer_id;
-                    let statusUI = '';
-                    let actionUI = '';
-                    let timerUI = '';
-                    let infoUI = '';
-                    let contactUI = '';
+                    const statusClass = c.status;
+                    const statusLabels = {
+                        negotiating: 'Aplicación Recibida', pending_acceptance: 'Términos Propuestos',
+                        agreed: 'Acuerdo Confirmado', en_route: 'En Camino', on_site: 'En Sitio',
+                        working: 'Trabajando', completed: 'Finalizado', closed: 'Cerrado'
+                    };
+                    const statusLabel = statusLabels[c.status] || c.status;
+                    
+                    // Commission breakdown
+                    let grossPrice = c.agreed_price || 0;
+                    let fees = { gross: grossPrice, empFee: grossPrice*0.05, wrkFee: grossPrice*0.05, empTotal: grossPrice*1.05, wrkNet: grossPrice*0.95, platformTotal: grossPrice*0.10 };
+                    if(c.payment_type === 'hourly' && c.work_started_at && c.work_ended_at) {
+                        const hours = (c.work_ended_at - c.work_started_at) / (1000 * 60 * 60);
+                        grossPrice = hours * (c.agreed_price || 0);
+                        fees = calcFees(Math.max(grossPrice, 0));
+                    }
 
-                    if (['agreed', 'en_route', 'on_site', 'working', 'completed'].includes(c.status)) {
-                        const otherUserId = isEmployer ? c.worker_id : c.employer_id;
-                        const otherUser = profiles[otherUserId];
-                        if(otherUser) {
-                            contactUI = `<p class="text-xs text-slate-500 mt-1"><i data-lucide="phone" class="w-3 h-3 inline"></i> ${otherUser.phone}</p>`;
-                        }
+                    let actionHtml = '';
+                    let timerHtml = '';
+                    let contactHtml = '';
+
+                    const otherUserId = isEmployer ? c.worker_id : c.employer_id;
+                    const otherUser = profiles[otherUserId];
+                    if(otherUser && ['agreed','en_route','on_site','working','completed'].includes(c.status)) {
+                        contactHtml = `<div class="cc-contact">📞 ${otherUser.phone || 'Sin teléfono'}</div>`;
                     }
 
                     if(c.status === 'working' && c.payment_type === 'hourly' && c.work_started_at) {
-                        timerUI = `<div class="text-3xl font-mono font-bold text-slate-800 my-2 timer-elem" data-start="${c.work_started_at}">00:00:00</div>`;
+                        timerHtml = `<div class="cc-timer timer-elem" data-start="${c.work_started_at}">00:00:00</div>`;
                     } else if (c.status === 'working' && c.payment_type === 'fixed') {
-                        timerUI = `<div class="text-sm font-bold text-brand my-2">Trabajo en progreso (Precio Fijo)</div>`;
+                        timerHtml = '<div style="font-size:13px;font-weight:600;color:var(--brand);text-align:center;padding:4px 0">Trabajo en progreso (Precio Fijo)</div>';
                     }
 
                     switch(c.status) {
                         case 'negotiating':
-                            statusUI = `<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold uppercase">Aplicación Recibida</span>`;
                             if(isEmployer) {
-                                actionUI = `<button onclick="proposeTerms('${c.id}')" class="bg-brand text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-blue-600 w-full mt-4">Proponer Términos</button>`;
+                                actionHtml = `<button class="cc-action primary" onclick="proposeTerms('${c.id}')">Proponer Términos</button>`;
                             } else {
-                                actionUI = `<p class="text-xs text-slate-500 mt-4 text-center">Esperando propuesta del empleador</p>`;
+                                actionHtml = `<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:8px">Esperando propuesta del empleador</div>`;
                             }
                             break;
                         case 'pending_acceptance':
-                            statusUI = `<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold uppercase">Términos Propuestos</span>`;
                             if(!isEmployer) {
-                                actionUI = `<button onclick="acceptTerms('${c.id}')" class="bg-brand text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-blue-600 w-full mt-4">Aceptar Propuesta ($${c.agreed_price})</button>`;
+                                actionHtml = `<button class="cc-action success" onclick="acceptTerms('${c.id}')">✓ Aceptar Propuesta ($${c.agreed_price})</button>`;
+                                actionHtml += `<button class="cc-action ghost" onclick="openAgreement('${c.id}')">Ver acuerdo de trabajo</button>`;
                             } else {
-                                actionUI = `<p class="text-xs text-slate-500 mt-4 text-center">Esperando aceptación del trabajador</p>`;
+                                actionHtml = `<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:8px">Esperando aceptación del trabajador</div>`;
                             }
                             break;
                         case 'agreed':
-                            statusUI = `<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold uppercase">Acuerdo Confirmado</span>`;
                             if(!isEmployer) {
-                                actionUI = `<button onclick="startTracking('${c.id}', ${c.lat}, ${c.lng}, '${c.employer_id}')" class="bg-purple-600 text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-purple-700 w-full mt-4">Ir al lugar (Activar GPS)</button>`;
+                                actionHtml = `<button class="cc-action warning" onclick="startTracking('${c.id}', ${c.lat}, ${c.lng}, '${c.employer_id}')">📍 Ir al lugar (Activar GPS)</button>`;
                             } else {
-                                actionUI = `<p class="text-xs text-slate-500 mt-4 text-center">El trabajador aún no ha iniciado el seguimiento en vivo.</p>`;
+                                actionHtml = `<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:8px">El trabajador aún no ha iniciado el seguimiento</div>`;
                             }
                             break;
                         case 'en_route':
-                            statusUI = `<span class="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-bold uppercase">En Camino</span>`;
                             if(!isEmployer) {
-                                actionUI = `<div class="bg-purple-50 text-purple-700 p-2 text-center text-sm font-bold rounded mt-4 animate-pulse">Compartiendo ubicación en vivo...</div>
-                                            <button onclick="checkGeofence(${state.userLat}, ${state.userLng}, ${c.lat}, ${c.lng}, '${c.id}')" class="text-xs text-slate-400 w-full text-center mt-2 underline">Forzar llegada (Dev)</button>`;
+                                actionHtml = `<div style="font-size:12px;color:#7c3aed;text-align:center;padding:8px">📍 Compartiendo ubicación en vivo...</div>`;
                             } else {
-                                infoUI = `<p id="worker_status_${c.id}" class="text-xs text-slate-500 mt-2">Esperando actualización de ubicación real...</p>`;
-                                actionUI = `<button onclick="navigate('dashboard')" class="bg-gray-100 text-slate-700 px-4 py-2 rounded-lg font-bold shadow-sm hover:bg-gray-200 w-full mt-4">Ver en Mapa</button>`;
+                                actionHtml = `<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:8px">El trabajador está en camino</div>`;
                             }
                             break;
                         case 'on_site':
-                            statusUI = `<span class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold uppercase">En Sitio</span>`;
                             if(!isEmployer) {
-                                actionUI = `<button onclick="startWork('${c.id}')" class="bg-brand text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-blue-600 w-full mt-4">Iniciar Trabajo</button>`;
+                                actionHtml = `<button class="cc-action primary" onclick="startWork('${c.id}')">▶ Iniciar Trabajo</button>`;
                             } else {
-                                actionUI = `<p class="text-xs text-slate-500 mt-4 text-center">El trabajador ha llegado al sitio.</p>`;
+                                actionHtml = `<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:8px">El trabajador ha llegado al sitio</div>`;
                             }
                             break;
                         case 'working':
-                            statusUI = `<span class="bg-escrow/20 text-escrow px-2 py-1 rounded text-xs font-bold uppercase border border-escrow/50">Trabajando</span>`;
                             if(!isEmployer) {
-                                actionUI = `<button onclick="finishWork('${c.id}')" class="bg-red-500 text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-red-600 w-full mt-4">Finalizar Trabajo</button>`;
+                                actionHtml = `<button class="cc-action danger" onclick="finishWork('${c.id}')">■ Finalizar Trabajo</button>`;
+                                actionHtml += `<button class="cc-action ghost" onclick="openWorkInProgress('${c.id}')">Ver trabajo en curso</button>`;
                             } else {
-                                actionUI = `<div class="bg-blue-50 text-brand p-2 text-center text-sm font-bold rounded mt-4">Operación en curso</div>`;
+                                actionHtml = `<div style="font-size:12px;color:var(--brand);text-align:center;padding:8px;font-weight:600">Operación en curso</div>`;
                             }
                             break;
                         case 'completed':
-                            statusUI = `<span class="bg-gray-200 text-gray-600 px-2 py-1 rounded text-xs font-bold uppercase">Finalizado</span>`;
                             if(isEmployer) {
-                                let finalPrice = c.agreed_price;
-                                if(c.payment_type === 'hourly' && c.work_started_at && c.work_ended_at) {
-                                    const hours = (c.work_ended_at - c.work_started_at) / (1000 * 60 * 60);
-                                    finalPrice = parseFloat((hours * c.agreed_price).toFixed(2));
-                                    if(finalPrice <= 0) finalPrice = c.agreed_price;
-                                }
-                                actionUI = `<button onclick="releasePayment('${c.id}')" class="bg-escrow text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-emerald-600 w-full mt-4">✓ Liberar Pago ($${finalPrice})</button>`;
+                                const finalPrice = fees.gross;
+                                actionHtml = `
+                                    <div style="font-size:12px;color:var(--text-muted);padding:4px 0">Empleador pagas: <b>$${fees.empTotal.toFixed(2)}</b> ($${finalPrice.toFixed(2)} + $${fees.empFee.toFixed(2)} comisión)</div>
+                                    <div style="font-size:12px;color:var(--text-muted);padding:4px 0">Trabajador recibe: <b>$${fees.wrkNet.toFixed(2)}</b> ($${finalPrice.toFixed(2)} - $${fees.wrkFee.toFixed(2)} comisión)</div>
+                                    <button class="cc-action success" onclick="releasePayment('${c.id}')">✓ Liberar Pago ($${fees.empTotal.toFixed(2)})</button>`;
                             } else {
-                                actionUI = `<p class="text-xs text-slate-500 mt-4 text-center">Esperando liberación de fondos</p>`;
+                                actionHtml = `<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:8px">Esperando liberación de fondos</div>`;
                             }
+                            actionHtml += `<button class="cc-action ghost" onclick="openWorkCompleted('${c.id}')">Ver resumen de trabajo completado</button>`;
                             break;
                     }
 
+                    const breakdownHtml = c.status === 'completed' || c.status === 'working' || c.status === 'agreed' ? `
+                        <div class="cc-breakdown">
+                            <div class="row"><span>Bruto</span><span>$${fees.gross.toFixed(2)}</span></div>
+                            <div class="row fee"><span>Comisión empleador (5%)</span><span>+$${fees.empFee.toFixed(2)}</span></div>
+                            <div class="row fee"><span>Comisión trabajador (5%)</span><span>−$${fees.wrkFee.toFixed(2)}</span></div>
+                            <div class="row total"><span>Total empleador</span><span>$${fees.empTotal.toFixed(2)}</span></div>
+                            <div class="row net"><span>Neto trabajador</span><span>$${fees.wrkNet.toFixed(2)}</span></div>
+                            <div style="font-size:10px;color:var(--crypto);padding-top:2px">WorkNow: $${fees.platformTotal.toFixed(2)}</div>
+                        </div>` : '';
+
+                    const otherName = otherUser ? (isEmployer ? otherUser.name : otherUser.name) : 'Usuario';
+
                     container.innerHTML += `
-                        <div class="bg-white border border-gray-200 p-6 rounded-xl shadow-sm">
-                            <div class="flex justify-between items-start mb-2">
+                        <div class="contract-card">
+                            <div style="display:flex;justify-content:space-between;align-items:flex-start">
                                 <div>
-                                    ${statusUI}
-                                    <h3 class="font-bold text-xl mt-2 text-slate-800">${c.title}</h3>
-                                    ${contactUI}
+                                    <span class="cc-status ${statusClass}">${statusLabel}</span>
+                                    <div class="cc-title">${c.title}</div>
+                                    <div class="cc-people">${isEmployer ? '👷' : '🏢'} ${otherName} · ${c.payment_type === 'hourly' ? 'Por Hora' : 'Por Obra'}</div>
+                                    ${contactHtml}
                                 </div>
-                                <div class="text-right">
-                                    <span class="font-bold text-2xl text-slate-800">$${c.agreed_price}</span>
-                                    <p class="text-xs text-slate-500">${c.payment_type === 'hourly' ? 'Por Hora' : 'Por Obra'}</p>
+                                <div style="font-size:22px;font-weight:700;color:var(--brand);text-align:right">
+                                    $${c.agreed_price}
+                                    <div style="font-size:10px;color:var(--text-muted)">${c.payment_type === 'hourly' ? '/hora' : 'fijo'}</div>
                                 </div>
                             </div>
-                            ${infoUI}
-                            ${timerUI}
-                            ${actionUI}
+                            ${breakdownHtml}
+                            ${timerHtml}
+                            ${actionHtml}
                         </div>
                     `;
                 });
@@ -1458,25 +3368,27 @@
                 const user = profilesArr.find(p => p.id === state.currentUserId);
                 if(!user) return;
                 
-                document.getElementById('walletBalance').innerText = user.balance.toFixed(2);
-                document.getElementById('walletEscrow').innerText = user.escrow.toFixed(2);
+                document.getElementById('walletBalance').innerText = (user.balance || 0).toFixed(2);
+                document.getElementById('walletEscrow').innerText = (user.escrow || 0).toFixed(2);
 
                 const txs = await DB.get('txs');
                 const myTxs = txs.filter(t => t.userId === state.currentUserId).reverse();
                 const txContainer = document.getElementById('txHistory');
                 txContainer.innerHTML = '';
                 
-                if(myTxs.length === 0) txContainer.innerHTML = '<p class="text-slate-400 text-sm">No hay transacciones.</p>';
+                if(myTxs.length === 0) txContainer.innerHTML = '<div class="empty-state" style="padding:20px"><i data-lucide="clock"></i>No hay transacciones</div>';
 
                 myTxs.forEach(tx => {
                     const isPos = tx.amount > 0;
+                    const txType = tx.type || 'generic';
+                    const colorClass = txType === 'fee' ? 'color:var(--crypto)' : isPos ? 'color:var(--escrow)' : 'color:var(--text)';
                     txContainer.innerHTML += `
-                        <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                        <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
                             <div>
-                                <p class="font-bold text-sm text-slate-700">${tx.desc}</p>
-                                <p class="text-xs text-slate-400">${new Date(tx.date).toLocaleString()}</p>
+                                <div style="font-weight:600;font-size:13px;color:var(--text)">${tx.desc}</div>
+                                <div style="font-size:11px;color:var(--text-muted)">${new Date(tx.date).toLocaleString()}</div>
                             </div>
-                            <span class="font-bold ${isPos ? 'text-escrow' : 'text-slate-800'}">${isPos?'+':''}$${tx.amount.toFixed(2)}</span>
+                            <div style="font-weight:700;font-size:16px;${colorClass}">${isPos?'+':''}$${tx.amount.toFixed(2)}</div>
                         </div>
                     `;
                 });
@@ -1507,7 +3419,8 @@
                 const user = profilesArr.find(p => p.id === state.currentUserId);
                 if(user.balance <= 0) return showToast('No tienes fondos disponibles', 'error');
                 
-                const amount = parseFloat(prompt(`Fondos disponibles: $${user.balance}\nMonto a retirar:`, user.balance));
+                const amount = parseFloat(prompt(`Fondos disponibles: $${user.balance}
+Monto a retirar:`, user.balance));
                 if(amount && amount > 0 && amount <= user.balance) {
                     await DB.update('profiles', user.id, { balance: user.balance - amount });
                     await DB.insert('txs', { id: 'tx_'+Date.now(), userId: user.id, desc: 'Retiro a Cuenta Bancaria', amount: -amount, date: Date.now() });
@@ -1699,6 +3612,17 @@
                         { id: 'wrk_dev', role: 'worker', name: 'Trabajador (Dev)', email: 'wrk@dev.com', phone: '+593888888888', balance: 0, escrow: 0, created_at: Date.now() },
                         { id: 'admin_dev', role: 'admin', name: 'Admin (Dev)', email: 'admin@dev.com', phone: '+593777777777', balance: 0, escrow: 0, created_at: Date.now() }
                     ]));
+                }
+                
+                // Set greeting (Preservando lógica original en elementos ocultos)
+                const greeting = document.getElementById('homeGreeting');
+                const subtitle = document.getElementById('homeSubtitle');
+                if(greeting && state.currentRole) {
+                    const names = {employer:'Empleador',worker:'Trabajador',admin:'Admin'};
+                    greeting.innerText = '¡Bienvenido, ' + (names[state.currentRole] || 'Usuario') + '!';
+                }
+                if(subtitle) {
+                    subtitle.innerText = state.currentRole === 'employer' ? 'Publica trabajos y encuentra talento' : 'Encuentra trabajo formal e informal en tu zona';
                 }
                 
                 await renderApp();
@@ -1907,9 +3831,16 @@ window.AG = (function(){
     const job=state.currentJob;
     if(!job){ chat('Supervisor','supervisor','Primero selecciona una oferta para generar la carta.',false); return; }
     const skills=state.skills.length?state.skills.slice(0,5).join(', '):'mi stack principal';
-    $('detailText').textContent='Estimado equipo de '+job.company+':\n\nMe entusiasma la posición de '+job.title+
+    $('detailText').textContent='Estimado equipo de '+job.company+':
+
+Me entusiasma la posición de '+job.title+
       '. Con experiencia sólida en '+skills+', estoy listo para aportar desde el día uno en '+job.location+
-      '.\n\nQuedo atento a una entrevista.\n\nSaludos cordiales,\nCandidato WorkNow';
+      '.
+
+Quedo atento a una entrevista.
+
+Saludos cordiales,
+Candidato WorkNow';
     log('[Negociador] Carta de presentación generada (template + skills del CV)','log-success');
   }
 
@@ -2069,5 +4000,109 @@ window.AG = (function(){
             };
         });
     </script>
+
+    <!-- ================= PASOS 6, 7 Y 8: CONEXIÓN FUNCIONAL DE LAS NUEVAS VISTAS ================= -->
+    <script>
+        // Busca un contrato por ID en la fuente de datos real (misma vía que renderContracts)
+        async function getContractById(contractId) {
+            const contracts = await DB.get('contracts');
+            return contracts.find(c => c.id === contractId) || null;
+        }
+
+        // Importe bruto real del contrato (respeta la misma lógica que renderContracts/releasePayment)
+        function getContractGross(c) {
+            let gross = c.agreed_price || 0;
+            if(c.payment_type === 'hourly' && c.work_started_at && c.work_ended_at) {
+                const hours = (c.work_ended_at - c.work_started_at) / (1000 * 60 * 60);
+                gross = hours * (c.agreed_price || 0);
+                if(gross <= 0) gross = c.agreed_price || 0;
+            }
+            return gross;
+        }
+
+        // PASO 6 — Abre la vista de acuerdo con los datos reales del contrato seleccionado
+        async function openAgreement(contractId) {
+            const c = await getContractById(contractId);
+            if(!c) return showToast('Contrato no encontrado', 'error');
+            window.currentActiveContractId = c.id;
+
+            const fees = calcFees(c.agreed_price || 0);
+            document.getElementById('wa-job-title').innerText = c.title || 'Trabajo';
+            document.getElementById('wa-price').innerText = '$' + (c.agreed_price || 0).toFixed(2);
+            document.getElementById('wa-type').innerText = c.payment_type === 'hourly' ? 'Por hora' : 'Por trabajo';
+            document.getElementById('wa-commission').innerText =
+                (fees.empFee > 0 ? ((fees.empFee / fees.gross) * 100).toFixed(0) : 5) + '% (ambos)';
+
+            navigate('agreement');
+            lucide.createIcons();
+        }
+
+        // PASO 6 — Confirma el acuerdo usando la transición real de estado 'agreed' (acceptTerms).
+        // La retención financiera (escrow) ya se realizó en applyJob(); no se crean transacciones aquí.
+        async function processAgreementPayment() {
+            const contractId = window.currentActiveContractId;
+            if(!contractId) return showToast('No hay un acuerdo seleccionado', 'error');
+            const c = await getContractById(contractId);
+            if(!c) return showToast('Contrato no encontrado', 'error');
+            if(c.status === 'agreed') {
+                showToast('El acuerdo ya está confirmado. Puedes iniciar la ruta desde tus postulaciones.', 'info');
+                return navigate('contracts');
+            }
+            if(c.status !== 'pending_acceptance') {
+                return showToast('Este acuerdo no está pendiente de confirmación (' + c.status + ').', 'error');
+            }
+            await acceptTerms(contractId); // función real existente: contracts.status -> 'agreed'
+        }
+
+        // PASO 7 — Abre la vista de trabajo en curso con datos reales del contrato
+        async function openWorkInProgress(contractId) {
+            const c = await getContractById(contractId);
+            if(!c) return showToast('Contrato no encontrado', 'error');
+            window.currentActiveContractId = c.id;
+
+            const fees = calcFees(getContractGross(c));
+            document.getElementById('wip-frozen-amount').innerText = '$' + fees.empTotal.toFixed(2); // retén real en escrow
+            document.getElementById('wip-rate-hourly').innerText = c.payment_type === 'hourly'
+                ? '$' + (c.agreed_price || 0).toFixed(2) + '/h' : 'No aplica';
+            document.getElementById('wip-rate-fixed').innerText = '$' + (c.agreed_price || 0).toFixed(2);
+
+            // Temporizador: solo con la fecha de inicio real, en el formato que espera el setInterval global
+            const timerEl = document.getElementById('wip-timer-display');
+            if(c.work_started_at) {
+                timerEl.setAttribute('data-start', c.work_started_at);
+                timerEl.innerText = '00:00:00';
+            } else {
+                timerEl.setAttribute('data-start', '');
+                timerEl.innerText = '--:--:--';
+            }
+
+            navigate('work-in-progress');
+            lucide.createIcons();
+        }
+
+        // PASO 8 — Abre la vista de trabajo completado usando calcFees() real
+        async function openWorkCompleted(contractId) {
+            const c = await getContractById(contractId);
+            if(!c) return showToast('Contrato no encontrado', 'error');
+            window.currentActiveContractId = c.id;
+
+            const fees = calcFees(getContractGross(c));
+            document.getElementById('wc-gross').innerText = '$' + fees.gross.toFixed(2);
+            document.getElementById('wc-commission').innerText = '$' + fees.wrkFee.toFixed(2);
+            document.getElementById('wc-net').innerText = '$' + fees.wrkNet.toFixed(2);
+            document.getElementById('wc-net-status').innerText = c.status === 'closed'
+                ? '(Ya en tu cuenta)' : '(Pendiente de liberación por el empleador)';
+
+            navigate('work-completed');
+            lucide.createIcons();
+        }
+
+        // Comprobante: no existe una función real de recibo individual en el proyecto.
+        // Se conserva el botón y se informa honestamente sin generar datos ficticios.
+        function viewReceipt() {
+            showToast('El comprobante individual aún no está disponible. Consulta el historial en tu Billetera.', 'info');
+        }
+    </script>
+
 </body>
 </html>
