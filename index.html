@@ -474,6 +474,40 @@ body{font-family:'Inter',sans-serif;background:var(--surface-2);color:var(--text
 /* Encabezado de la lista de trabajos cercanos */
 .hw-section-title{font-size:17px;font-weight:700;letter-spacing:-.3px;color:var(--text);margin:24px 0 12px}
 
+/* ===== Capa de descubrimiento continuo (empieza dentro de Inicio) ===== */
+.dc-shell{max-width:1080px;margin:0 auto;padding:28px 16px 40px}
+.dc-title{font-size:22px;font-weight:800;letter-spacing:-.4px;color:var(--text);margin:0 0 4px}
+.dc-sub{font-size:13px;color:var(--text-muted);margin:0 0 20px}
+.dc-flow{display:flex;flex-direction:column;gap:14px}
+.dc-step{position:relative;display:flex;flex-direction:column;gap:10px;background:#fff;border:1px solid var(--border);border-radius:22px;padding:18px;box-shadow:var(--shadow);overflow:visible}
+.dc-step::before{content:attr(data-step);position:absolute;top:14px;right:14px;font-size:11px;font-weight:800;letter-spacing:.6px;color:#fff;background:var(--brand);border-radius:100px;padding:3px 10px}
+.dc-step.active{box-shadow:0 0 0 2px rgba(0,102,255,.15)}
+.dc-head{display:flex;align-items:center;gap:12px}
+.dc-ico{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
+.dc-ico svg{width:24px;height:24px}
+.dc-name{font-weight:700;font-size:16px;letter-spacing:-.2px;color:var(--text);margin:0}
+.dc-desc{font-size:13px;color:var(--text-muted);line-height:1.5;margin:0}
+.dc-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border:none;border-radius:100px;font-weight:600;font-size:13px;cursor:pointer;background:var(--brand);color:#fff;transition:transform .15s}
+.dc-btn:active{transform:scale(.97)}
+.dc-btn.ghost{background:#fff;color:var(--text);border:1px solid var(--border)}
+.dc-empty{background:#f8fafc;border:1px dashed var(--border);border-radius:14px;padding:14px;font-size:12px;color:var(--text-muted);line-height:1.5}
+.dc-empty strong{color:var(--text)}
+.dc-list{display:flex;flex-direction:column;gap:8px}
+.dc-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#F8FAFC;border:1px solid #F1F5F9;border-radius:12px;padding:10px 12px;cursor:pointer}
+.dc-row:active{background:#f1f5f9}
+.dc-row-title{font-weight:600;font-size:13px;color:var(--text);line-height:1.2}
+.dc-row-meta{font-size:11px;color:var(--text-muted);margin-top:2px}
+.dc-row-price{font-weight:800;font-size:13px;color:var(--brand);white-space:nowrap}
+.dc-note{font-size:11px;color:var(--text-muted);background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:8px 10px}
+.dc-agents{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dc-agent{display:flex;align-items:center;gap:8px;background:#F8FAFC;border:1px solid #F1F5F9;border-radius:12px;padding:10px}
+.dc-agent-ico{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dc-agent-name{font-weight:600;font-size:12px;color:var(--text)}
+.dc-agent-role{font-size:10px;color:var(--text-muted)}
+@media(min-width:1024px){.dc-shell{padding:40px 24px 60px}.dc-flow{display:grid;grid-template-columns:repeat(2,1fr);align-items:start}}@media(min-width:1280px){.dc-flow{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:1023px){.dc-desktop-hint{display:none}}
+.dc-desktop-hint{margin-top:20px;font-size:12px;color:var(--text-muted);background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+
 /* ============ MÓDULO A: AGENTES (scoped #view-ai-search, preservado) ============ */
 #view-ai-search{--ai-bg:var(--kimi-color-surface,#0a0e1a);--ai-surface:var(--kimi-color-surface-raised,#111827);--ai-surface-2:var(--kimi-color-surface-strong,#1f2937);--ai-text:var(--kimi-color-text-primary,#f3f4f6);--ai-text-muted:var(--kimi-color-text-secondary,#9ca3af);--ai-border:var(--kimi-color-border,#374151);--ai-primary:var(--kimi-color-accent,#3b82f6);--ai-success:var(--kimi-color-positive,#10b981);--ai-warning:var(--kimi-color-warning,#f59e0b);--ai-danger:var(--kimi-color-danger,#ef4444);--ai-font-sans:var(--kimi-font-sans,'Inter',sans-serif);--ai-font-mono:var(--kimi-font-mono,'JetBrains Mono',monospace);font-family:var(--ai-font-sans);background:var(--ai-bg);color:var(--ai-text);min-height:100%}
 #view-ai-search *{margin:0;padding:0;box-sizing:border-box}
@@ -818,6 +852,16 @@ body{font-family:'Inter',sans-serif;background:var(--surface-2);color:var(--text
     border: none;
     padding: 0;
     cursor: pointer;
+}
+
+.job-card-fav.fav-active,
+.job-card-fav.fav-active i {
+    color: #F59E0B;
+}
+
+.job-card-fav.fav-active svg {
+    fill: #F59E0B;
+    color: #F59E0B;
 }
 
 /* ===== REDISEÑO AGENTES IA ===== */
@@ -1549,8 +1593,8 @@ textarea.pj-input {
             <div class="hw-search">
                 <div class="hw-search-row">
                     <i data-lucide="search" class="hw-search-ico"></i>
-                    <input type="search" id="homeSearchDummy" placeholder="¿Qué trabajo buscas?" autocomplete="off" onfocus="navigate('ai-search'); setTimeout(() => document.getElementById('homeSearch').focus(), 100);">
-                    <button type="button" class="hw-search-go" aria-label="Buscar empleo" onclick="navigate('ai-search')"><i data-lucide="arrow-right"></i></button>
+                    <input type="search" id="homeSearchDummy" placeholder="¿Qué trabajo buscas?" autocomplete="off" oninput="document.getElementById('homeSearch').value = this.value" onfocus="navigate('search'); setTimeout(() => { const h=document.getElementById('homeSearch'); if(h){ h.focus(); handleHomeSearch(h.value);} }, 90);">
+                    <button type="button" class="hw-search-go" aria-label="Buscar empleo" onclick="submitHomeSearch()"><i data-lucide="arrow-right"></i></button>
                 </div>
                 <p class="hw-search-hint">Ej: Albañilería, Limpieza, Diseño, Ventas...</p>
             </div>
@@ -1567,7 +1611,7 @@ textarea.pj-input {
                     <span class="hw-card-title">Mis postulaciones</span>
                     <span class="hw-card-desc">Gestiona tus aplicaciones</span>
                 </button>
-                <button type="button" class="hw-card violet" onclick="navigate('ai-search')">
+                <button type="button" class="hw-card violet" onclick="navigate('cv')">
                     <span class="hw-card-ico"><i data-lucide="user"></i></span>
                     <span class="hw-card-title">Mi CV</span>
                     <span class="hw-card-desc">Crea y mejora tu perfil profesional</span>
@@ -1590,7 +1634,117 @@ textarea.pj-input {
             </div>
             
             </div><!-- /hw-body -->
-            
+
+            <!-- ===== CAPA DE DESCUBRIMIENTO CONTINUO (presenta los servicios en orden, sin abrir 8 pantallas) ===== -->
+            <div class="dc-shell">
+                <h2 class="dc-title">Descubre WorkNow</h2>
+                <p class="dc-sub">Recorre tus servicios en orden y entra en el flujo real cuando quieras.</p>
+
+                <div class="dc-flow" id="dc-flow">
+
+                    <!-- 1. Inicio -->
+                    <div class="dc-step" data-step="1">
+                        <div class="dc-head">
+                            <div class="dc-ico" style="background:linear-gradient(135deg,#2563EB,#1D4ED8)"><i data-lucide="home"></i></div>
+                            <h3 class="dc-name">Inicio</h3>
+                        </div>
+                        <p class="dc-desc">Tu punto de entrada: búsqueda rápida, acceso a empleos cercanos y estado de tu cuenta.</p>
+                        <div class="dc-list" id="dc-inicio-list">
+                            <div class="dc-row"><div><div class="dc-row-title">Tu saldo y escrow</div><div class="dc-row-meta">Se consulta en tu billetera real</div></div><div class="dc-row-price">Billetera →</div></div>
+                        </div>
+                        <button class="dc-btn ghost" onclick="navigate('wallet')">Abrir billetera</button>
+                    </div>
+
+                    <!-- 2. Buscar empleo -->
+                    <div class="dc-step" data-step="2">
+                        <div class="dc-head">
+                            <div class="dc-ico" style="background:linear-gradient(135deg,#FB923C,#EA580C)"><i data-lucide="search"></i></div>
+                            <h3 class="dc-name">Buscar empleo</h3>
+                        </div>
+                        <p class="dc-desc">Explora oportunidades reales en el mapa y en lista, con filtros y orden por cercanía, mejor pago o recientes.</p>
+                        <div class="dc-list" id="dc-jobs-preview">
+                            <!-- 3 trabajos reales más cercanos (mismo dataset de renderJobs) -->
+                        </div>
+                        <div class="dc-empty"><strong>Sin trabajos aún.</strong> Cuando existan ofertas publicadas, aparecerán aquí.</div>
+                        <button class="dc-btn" onclick="navigate('search')">Ver búsqueda completa</button>
+                    </div>
+
+                    <!-- 3. Agentes IA -->
+                    <div class="dc-step" data-step="3" id="dc-agents-step">
+                        <div class="dc-head">
+                            <div class="dc-ico" style="background:linear-gradient(135deg,#8B5CF6,#7C3AED)"><i data-lucide="bot"></i></div>
+                            <h3 class="dc-name">Agentes IA</h3>
+                        </div>
+                        <p class="dc-desc">Scout busca, Aplicador postula, Negociador acuerda y Supervisor coordina. Fundados en tus datos reales.</p>
+                        <div class="dc-agents">
+                            <div class="dc-agent"><div class="dc-agent-ico" style="background:#EFF6FF">🕵️</div><div><div class="dc-agent-name">Scout</div><div class="dc-agent-role">Búsqueda</div></div></div>
+                            <div class="dc-agent"><div class="dc-agent-ico" style="background:#ECFDF5">📝</div><div><div class="dc-agent-name">Aplicador</div><div class="dc-agent-role">Postulaciones</div></div></div>
+                            <div class="dc-agent"><div class="dc-agent-ico" style="background:#FFF7ED">💬</div><div><div class="dc-agent-name">Negociador</div><div class="dc-agent-role">Acuerdos</div></div></div>
+                            <div class="dc-agent"><div class="dc-agent-ico" style="background:#F5F3FF">👁️</div><div><div class="dc-agent-name">Supervisor</div><div class="dc-agent-role">Oversight</div></div></div>
+                        </div>
+                        <div class="dc-note">Los agentes solo actúan cuando tú los activas; no postulan automáticamente.</div>
+                        <button class="dc-btn" onclick="navigate('ai-search')">Abrir Agentes IA</button>
+                    </div>
+
+                    <!-- 4. Publicar empleo -->
+                    <div class="dc-step" data-step="4">
+                        <div class="dc-head">
+                            <div class="dc-ico" style="background:linear-gradient(135deg,#10B981,#059669)"><i data-lucide="briefcase"></i></div>
+                            <h3 class="dc-name">Publicar empleo</h3>
+                        </div>
+                        <p class="dc-desc">Empleadores publican formal, cachuelo o en línea. El trabajador verá la oferta en el mapa y podrá aplicar.</p>
+                        <div class="dc-empty"><strong>Modo empleador.</strong> Puedes crear un servicio con título, descripción, presupuesto y modalidad.</div>
+                        <button class="dc-btn" onclick="document.getElementById('modalCreateJob').classList.remove('hidden')">Publicar un trabajo</button>
+                    </div>
+
+                    <!-- 5. Detalle del trabajo -->
+                    <div class="dc-step" data-step="5">
+                        <div class="dc-head">
+                            <div class="dc-ico" style="background:linear-gradient(135deg,#0EA5E9,#0284C7)"><i data-lucide="file-text"></i></div>
+                            <h3 class="dc-name">Detalle del trabajo</h3>
+                        </div>
+                        <p class="dc-desc">Al tocar una oferta se abre su detalle real: imágenes, descripción, precio, ubicación y acciones.</p>
+                        <div class="dc-empty"><strong>Se abre desde el mapa o la lista.</strong> En este recorrido solo se muestra cuando eliges un trabajo real.</div>
+                        <button class="dc-btn ghost" onclick="navigate('search')">Elegir un trabajo</button>
+                    </div>
+
+                    <!-- 6. Acuerdo de trabajo -->
+                    <div class="dc-step" data-step="6">
+                        <div class="dc-head">
+                            <div class="dc-ico" style="background:linear-gradient(135deg,#F59E0B,#D97706)"><i data-lucide="handshake"></i></div>
+                            <h3 class="dc-name">Acuerdo de trabajo</h3>
+                        </div>
+                        <p class="dc-desc">Aplicas, se proponen términos y ambas partes aceptan. El pago acordado queda retenido en escrow.</p>
+                        <div class="dc-empty"><strong>Sin acuerdos activos.</strong> Al postular y negociar, tus acuerdos aparecerán en "Mis postulaciones".</div>
+                        <button class="dc-btn ghost" onclick="navigate('contracts')">Ver mis acuerdos</button>
+                    </div>
+
+                    <!-- 7. Trabajo en curso -->
+                    <div class="dc-step" data-step="7">
+                        <div class="dc-head">
+                            <div class="dc-ico" style="background:linear-gradient(135deg,#6366F1,#4F46E5)"><i data-lucide="clock"></i></div>
+                            <h3 class="dc-name">Trabajo en curso</h3>
+                        </div>
+                        <p class="dc-desc">Con GPS activado y temporizador real. El dinero retenido se libera cuando el empleador cierra el pago.</p>
+                        <div class="dc-empty"><strong>Solo aparece con un acuerdo iniciado.</strong> Se abre desde tus postulaciones al activar "Ir al lugar".</div>
+                        <button class="dc-btn ghost" onclick="navigate('contracts')">Ver trabajo activo</button>
+                    </div>
+
+                    <!-- 8. Trabajo completado -->
+                    <div class="dc-step" data-step="8">
+                        <div class="dc-head">
+                            <div class="dc-ico" style="background:linear-gradient(135deg,#22C55E,#16A34A)"><i data-lucide="check-circle-2"></i></div>
+                            <h3 class="dc-name">Trabajo completado</h3>
+                        </div>
+                        <p class="dc-desc">Finaliza el trabajo: verás el desglose real bruto, comisión 5% y neto. WorkNow cobra 5% a cada parte.</p>
+                        <div class="dc-empty"><strong>Sin finalizaciones.</strong> El resumen solo se muestra cuando liberas el pago de un trabajo terminado.</div>
+                        <button class="dc-btn ghost" onclick="navigate('contracts')">Ver historial</button>
+                    </div>
+
+                </div>
+
+                <div class="dc-desktop-hint">En pantallas grandes las secciones se organizan en columnas; cada botón abre el flujo real correspondiente.</div>
+            </div>
         </section>
 
         <!-- ================= VISTA BÚSQUEDA (NUEVA) ================= -->
@@ -1629,7 +1783,7 @@ textarea.pj-input {
                     <div class="cat active" onclick="filterCategory('all',this)"><span>Todos</span></div>
                     <div class="cat" onclick="filterCategory('formal',this)"><span>Formal</span></div>
                     <div class="cat" onclick="filterCategory('cachuelo',this)"><span>Cachuelos</span></div>
-                    <div class="cat" onclick="onlineCategory('online',this)"><span>En línea</span></div>
+                    <div class="cat" onclick="filterCategory('online',this)"><span>En línea</span></div>
                 </div>
             </div>
 
@@ -1643,9 +1797,9 @@ textarea.pj-input {
 
             <!-- E. Selector de orden (Visual) -->
             <div class="search-sort-selector">
-                <button class="sort-btn active">Más cercanos</button>
-                <button class="sort-btn">Mejor pago</button>
-                <button class="sort-btn">Más recientes</button>
+                <button class="sort-btn active" onclick="setSortBy('distance', this)">Más cercanos</button>
+                <button class="sort-btn" onclick="setSortBy('price', this)">Mejor pago</button>
+                <button class="sort-btn" onclick="setSortBy('recent', this)">Más recientes</button>
             </div>
 
             <!-- F. Tarjetas de ofertas laborales -->
@@ -1894,12 +2048,45 @@ textarea.pj-input {
 
         <!-- ================= VISTA 2: ACUERDOS / CONTRATOS ================= -->
         <section id="view-contracts" class="view-section section">
-            <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:16px">
-                <span>Mis Postulaciones</span>
+            <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:12px">
+                <span>Mis postulaciones</span>
             </div>
+            <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px">Candidaturas que enviaste a trabajos reales.</p>
+            <div id="applicationsContainer" style="display:flex;flex-direction:column;gap:0;margin-bottom:18px">
+                <!-- Candidaturas reales (tabla applications) -->
+            </div>
+            <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">
+                <span>Acuerdos y trabajos</span>
+            </div>
+            <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px">Negociaciones, trabajos en curso y pagos liberados.</p>
             <div id="contractsContainer" style="display:flex;flex-direction:column;gap:0">
                 <!-- Contratos renderizados por JS -->
             </div>
+        </section>
+
+        <!-- ================= VISTA CV: GESTIÓN DE CURRÍCULUM ================= -->
+        <section id="view-cv" class="view-section section">
+            <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px">
+                <span>Mi CV</span>
+            </div>
+            <p style="font-size:12px;color:var(--text-muted);margin:0 0 16px">Sube, guarda o reemplaza tu currículum. El análisis es real y se guarda en tu cuenta.</p>
+
+            <div id="cvDropzone" onclick="startCvUpload()" style="border:2px dashed var(--border);border-radius:20px;padding:28px 20px;text-align:center;cursor:pointer;background:#fff;margin-bottom:16px">
+                <div style="font-size:34px;margin-bottom:8px">📄</div>
+                <div style="font-weight:700;font-size:15px;color:var(--text)">Sube o reemplaza tu CV</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px">PDF, DOCX o TXT · se procesa el texto para detectar skills</div>
+            </div>
+
+            <div id="cvUploadStatus" style="font-size:13px;margin-bottom:12px"></div>
+
+            <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:16px">
+                <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:8px">Curriculum guardado</div>
+                <div id="cvSavedInfo" style="font-size:13px;color:var(--text-muted)">Aún no has guardado un CV desde este dispositivo.</div>
+                <div id="cvSavedSkills" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px"></div>
+            </div>
+
+            <button class="dc-btn" onclick="navigate('ai-search')">Usar mis agentes con este CV</button>
+            <button class="dc-btn ghost" style="margin-left:8px" onclick="navigate('dashboard')">Volver al inicio</button>
         </section>
 
         <!-- ================= VISTA 3: BILLETERA / WALLET ================= -->
@@ -2291,7 +2478,9 @@ textarea.pj-input {
             markers: [],
             workerMarker: null,
             userMarker: null,
-            watchId: null
+            watchId: null,
+            sortBy: 'distance',
+            favorites: (function(){ try { return new Set(JSON.parse(localStorage.getItem('wn_favorites') || '[]')); } catch(e){ return new Set(); } })()
         };
 
         // 4. SUPABASE REALTIME Y PERSISTENCIA
@@ -2649,10 +2838,123 @@ textarea.pj-input {
             await renderWallet();
             await renderJobs();
             await renderContracts();
+            await renderApplications();
+            await renderCV();
             if (state.currentRole === 'admin') {
                 await renderCRM();
             }
             updateUIForRole();
+            renderDiscovery();
+        }
+
+        // Utilidad para escapar texto dinámico (evita romper el DOM con títulos que contengan HTML)
+        function escStr(s) {
+            return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // Mis postulaciones: candidaturas reales (tabla applications), no acuerdos (contracts)
+        async function renderApplications() {
+            const container = document.getElementById('applicationsContainer');
+            if(!container) return;
+            container.innerHTML = '';
+            try {
+                const apps = await DB.get('applications');
+                const userId = state.currentUserId;
+                const mine = (apps || []).filter(a => a.user_id === userId).sort((a,b) => (b.created_at||0) - (a.created_at||0));
+                if(!mine.length) {
+                    container.innerHTML = '<div class="dc-empty"><strong>Aún no has postulado.</strong> Explora los trabajos y aplica para que tus candidaturas aparezcan aquí.</div>';
+                    return;
+                }
+                mine.forEach(a => {
+                    const job = (window.jobsById || {})[a.job_id];
+                    const stLabel = (a.status || 'active').replace(/_/g,' ');
+                    container.innerHTML += `
+                        <div class="dc-row">
+                            <div>
+                                <div class="dc-row-title">${job ? escStr(job.title) : 'Trabajo eliminado'}</div>
+                                <div class="dc-row-meta">Postulada: ${new Date(a.created_at||Date.now()).toLocaleDateString()} · Estado: ${escStr(stLabel)}</div>
+                            </div>
+                            <div class="dc-row-price">${job ? '$'+job.price : ''}</div>
+                        </div>`;
+                });
+            } catch(e) {
+                console.error('Error renderizando postulaciones', e);
+                container.innerHTML = '<div class="dc-empty">No se pudieron cargar tus postulaciones.</div>';
+            }
+        }
+
+        // Gestión de CV: recupera y muestra el último CV real guardado (candidate_cvs)
+        async function renderCV() {
+            const info = document.getElementById('cvSavedInfo');
+            const skills = document.getElementById('cvSavedSkills');
+            if(!info || !skills) return;
+            try {
+                const cvs = await DB.get('candidate_cvs');
+                const userId = state.currentUserId;
+                const mine = (cvs || []).filter(c => c.user_id === userId).sort((a,b) => (b.created_at||0) - (a.created_at||0));
+                if(!mine.length) {
+                    info.innerText = 'Aún no has guardado un CV desde este dispositivo.';
+                    skills.innerHTML = '';
+                    return;
+                }
+                const last = mine[0];
+                const sizeKb = last.file_size ? Math.round(last.file_size/1024) + ' KB' : '';
+                info.innerHTML = `<strong>${escStr(last.file_name || 'CV')}</strong>${sizeKb ? ' · ' + sizeKb : ''} · ${new Date(last.created_at||Date.now()).toLocaleDateString()}`;
+                skills.innerHTML = (last.skills || []).slice(0,12).map(s => `<span style="background:#EFF6FF;color:#2563EB;font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px">${escStr(s)}</span>`).join('');
+            } catch(e) {
+                console.error('Error renderizando CV', e);
+                info.innerText = 'No se pudo leer tu CV guardado.';
+            }
+        }
+
+        // Subir CV: reutiliza #cvInput + AG.handleFile() y refleja el resultado real de la persistencia
+        let cvUploadTimer = null;
+        function startCvUpload() {
+            const status = document.getElementById('cvUploadStatus');
+            const inp = document.getElementById('cvInput');
+            if(!inp) return;
+            if(status) { status.style.color = 'var(--text-muted)'; status.innerHTML = '⏳ Procesando y guardando tu CV...'; }
+            const before = Date.now();
+            inp.click();
+            if(cvUploadTimer) clearInterval(cvUploadTimer);
+            cvUploadTimer = setInterval(async () => {
+                try {
+                    const cvs = await DB.get('candidate_cvs');
+                    const userId = state.currentUserId;
+                    const newer = (cvs || []).find(c => c.user_id === userId && (c.created_at||0) > before);
+                    if(newer) {
+                        clearInterval(cvUploadTimer);
+                        cvUploadTimer = null;
+                        if(status) { status.style.color = '#16A34A'; status.innerHTML = '✅ CV guardado correctamente.'; }
+                        await renderCV();
+                    }
+                } catch(e) { /* se reintenta */ }
+            }, 1200);
+            setTimeout(() => {
+                if(cvUploadTimer) {
+                    clearInterval(cvUploadTimer);
+                    cvUploadTimer = null;
+                    if(status) { status.style.color = '#EF4444'; status.innerHTML = '❌ No se pudo confirmar el guardado. Intenta de nuevo.'; }
+                }
+            }, 15000);
+        }
+
+        // Capa de descubrimiento: vista previa con los mismos datos reales de renderJobs (sin duplicar DB)
+        function renderDiscovery() {
+            const prev = document.getElementById('dc-jobs-preview');
+            if(!prev) return;
+            const jobs = Object.values(window.jobsById || {});
+            const open = jobs.filter(j => j.status === 'open')
+                .sort((a,b) => (getDistance(state.userLat, state.userLng, a.lat||0, a.lng||0)) - (getDistance(state.userLat, state.userLng, b.lat||0, b.lng||0)))
+                .slice(0,3);
+            prev.innerHTML = open.map(j => `
+                <div class="dc-row" onclick="openJobDetail('${j.id}')">
+                    <div>
+                        <div class="dc-row-title">${escStr(j.title)}</div>
+                        <div class="dc-row-meta">${j.payment_type === 'hourly' ? 'Por hora' : 'Por trabajo'}</div>
+                    </div>
+                    <div class="dc-row-price">$${j.price}</div>
+                </div>`).join('');
         }
 
         function updateUIForRole() {
@@ -2690,6 +2992,10 @@ textarea.pj-input {
             document.querySelectorAll('.bottom-nav .nav-item').forEach(b => b.classList.remove('active'));
             const navBtn = document.querySelector(`.bottom-nav .nav-item[data-nav="${view}"]`);
             if(navBtn) navBtn.classList.add('active');
+            // Refrescar datos reales al abrir vistas de estado
+            if(view === 'cv') renderCV();
+            if(view === 'contracts') renderApplications();
+            if(view === 'dashboard') renderDiscovery();
             // Fix map resize
             if((view === 'dashboard' || view === 'search') && state.map) {
                 if (CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') {
@@ -2740,6 +3046,30 @@ textarea.pj-input {
             document.querySelectorAll('#homeCategories .cat').forEach(c => c.classList.remove('active'));
             if(el) el.classList.add('active');
             renderJobs();
+        }
+
+        // Ordenamiento: cambia el modo y repinta tarjetas y marcadores desde el MISMO dataset filtrado
+        function setSortBy(mode, btn) {
+            state.sortBy = mode;
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+            renderJobs();
+        }
+
+        // Favoritos: IDs estables (job.id), sin propagar el clic, persistidos en localStorage (no sincronizados con Supabase)
+        function toggleFavorite(jobId, btn) {
+            if(!jobId) return;
+            if(state.favorites.has(jobId)) {
+                state.favorites.delete(jobId);
+            } else {
+                state.favorites.add(jobId);
+            }
+            try {
+                localStorage.setItem('wn_favorites', JSON.stringify([...state.favorites]));
+            } catch(e) { console.warn('[Favoritos] No se pudo persistir', e); }
+            if(btn) {
+                btn.classList.toggle('fav-active', state.favorites.has(jobId));
+            }
         }
 
         // 8. LÓGICA DE NEGOCIO: TRABAJOS Y ALERTAS REALES
@@ -2834,6 +3164,24 @@ textarea.pj-input {
                     return true;
                 });
 
+                // Ordenamiento data-level: mismo dataset que alimenta tarjetas y marcadores.
+                // NO se reordenan elementos HTML; se ordena el array antes de renderizar.
+                const JobKm = (job) => {
+                    if(CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined' && google.maps.geometry) {
+                        const p1 = new google.maps.LatLng(state.userLat, state.userLng);
+                        const p2 = new google.maps.LatLng(job.lat || 0, job.lng || 0);
+                        return google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
+                    }
+                    return getDistance(state.userLat, state.userLng, job.lat || 0, job.lng || 0);
+                };
+                const sortMode = state.sortBy || 'distance';
+                filteredJobs.sort((a, b) => {
+                    if(sortMode === 'price') return (b.price || 0) - (a.price || 0);
+                    if(sortMode === 'recent') return (b.created_at || 0) - (a.created_at || 0);
+                    // 'distance' (default)
+                    return JobKm(a) - JobKm(b);
+                });
+
                 if(filteredJobs.length === 0) {
                     container.innerHTML = '<div class="empty-state"><i data-lucide="package"></i>No hay trabajos disponibles en esta categoría</div>';
                     return;
@@ -2841,12 +3189,8 @@ textarea.pj-input {
 
                 filteredJobs.forEach(job => {
                     let dist = "N/A";
-                    if(CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined' && google.maps.geometry) {
-                        const p1 = new google.maps.LatLng(state.userLat, state.userLng);
-                        const p2 = new google.maps.LatLng(job.lat, job.lng);
-                        dist = (google.maps.geometry.spherical.computeDistanceBetween(p1, p2) / 1000).toFixed(1);
-                    } else {
-                        dist = (getDistance(state.userLat, state.userLng, job.lat, job.lng) / 1000).toFixed(1);
+                    if(job.lat != null && job.lng != null) {
+                        dist = (JobKm(job) / 1000).toFixed(1);
                     }
                     
                     const isMine = job.employer_id === state.currentUserId;
@@ -2907,7 +3251,7 @@ textarea.pj-input {
                                     </div>
                                     <div class="job-card-price">$${job.price} <span>/ ${paymentLabel}</span></div>
                                 </div>
-                                <button class="job-card-fav" onclick="event.stopPropagation();"><i data-lucide="heart" style="width: 18px; height: 18px;"></i></button>
+                                <button class="job-card-fav${state.favorites.has(job.id) ? ' fav-active' : ''}" onclick="event.stopPropagation();toggleFavorite('${job.id}', this)"><i data-lucide="heart" style="width: 18px; height: 18px;"></i></button>
                             </div>
                             ${actionHtml ? `<div style="padding: 0 14px 14px 14px;">${actionHtml}</div>` : ''}
                         </div>
@@ -3831,16 +4175,9 @@ window.AG = (function(){
     const job=state.currentJob;
     if(!job){ chat('Supervisor','supervisor','Primero selecciona una oferta para generar la carta.',false); return; }
     const skills=state.skills.length?state.skills.slice(0,5).join(', '):'mi stack principal';
-    $('detailText').textContent='Estimado equipo de '+job.company+':
-
-Me entusiasma la posición de '+job.title+
+    $('detailText').textContent='Estimado equipo de '+job.company+':\n\nMe entusiasma la posición de '+job.title+
       '. Con experiencia sólida en '+skills+', estoy listo para aportar desde el día uno en '+job.location+
-      '.
-
-Quedo atento a una entrevista.
-
-Saludos cordiales,
-Candidato WorkNow';
+      '.\n\nQuedo atento a una entrevista.\n\nSaludos cordiales,\nCandidato WorkNow';
     log('[Negociador] Carta de presentación generada (template + skills del CV)','log-success');
   }
 
