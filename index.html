@@ -75,17 +75,50 @@
             padding-bottom: 96px;
             border-bottom: 12px solid #cbd5e1; /* Separador visual entre pantallas */
         }
+        /* CRM: oculto por defecto; solo se muestra cuando la autorización real lo valida.
+           El id específico (#v-crm) vence a la regla genérica .view (display:block !important). */
+        #v-crm { display: none !important; }
+        #v-crm.crm-active { display: block !important; }
         @media (min-width: 768px) {
             .view { min-height: 850px; }
         }
         
-        /* Ocultar vistas auxiliares que no son parte de la secuencia principal */
-        #v-map, #v-applications, #v-profile {
-            display: none !important;
-        }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* ===== Consola de trabajo del agente (integrada) ===== */
+        .ac-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #152347;
+            border: 1px solid #28365c;
+            color: #e2e8f0;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 7px 12px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: background .15s;
+        }
+        .ac-btn:hover { background: #1d2f5e; }
+        .ac-btn-danger { background: #3a1d1d; border-color: #5c2828; color: #fecaca; }
+        .ac-accent { color: #38BDF8; }
+        .ac-ok { color: #34d399; }
+        .ac-warn { color: #fbbf24; }
+        .ac-err { color: #f87171; }
+        .ac-job {
+            background: #152347;
+            border: 1px solid #28365c;
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-size: 11px;
+            color: #cbd5e1;
+            line-height: 1.5;
+        }
+        .ac-job b { color: #fff; }
+        .ac-empty { color: #64748b; font-size: 11px; text-align: center; padding: 14px 0; }
 
         /* ===== Barra de navegación inferior ===== */
         .bottom-nav {
@@ -177,6 +210,7 @@
         @keyframes pulse-soft { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
         .btn-pulse:active { animation: pulse-soft 0.2s; }
     </style>
+<base target="_blank">
 <base target="_blank">
 <base target="_blank">
 </head>
@@ -479,6 +513,38 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- ============ CONSOLA DE TRABAJO DEL AGENTE (integrada, sin saltos de vista) ============ -->
+                    <div class="px-5 md:px-10 mt-8 md:mt-10">
+                        <div class="bg-[#0B1426] border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+                            <div class="flex items-center justify-between gap-2 px-4 md:px-6 py-3 bg-slate-900/60 border-b border-slate-800">
+                                <div class="flex items-center gap-2 text-xs md:text-sm font-bold text-white">
+                                    <i data-lucide="terminal" class="w-4 h-4 md:w-5 md:h-5 text-brand"></i> Consola del Agente
+                                </div>
+                                <div class="flex flex-wrap gap-1.5 text-[9px] md:text-[10px] font-bold">
+                                    <span class="bg-blue-500/15 text-blue-300 px-2 py-1 rounded-full">Ofertas <span id="ac-total">0</span></span>
+                                    <span class="bg-purple-500/15 text-purple-300 px-2 py-1 rounded-full">Filtradas <span id="ac-filtered">0</span></span>
+                                    <span class="bg-green-500/15 text-green-300 px-2 py-1 rounded-full">Match <span id="ac-match">0%</span></span>
+                                    <span class="bg-amber-500/15 text-amber-300 px-2 py-1 rounded-full">Aplicadas <span id="ac-applied">0</span></span>
+                                </div>
+                            </div>
+                            <div class="px-4 md:px-6 py-3 flex flex-wrap gap-2 border-b border-slate-800">
+                                <button class="ac-btn" onclick="AG.runTask('formal')"><i data-lucide="briefcase" class="w-3 h-3"></i> Empleo formal</button>
+                                <button class="ac-btn" onclick="AG.runTask('cachuelo')"><i data-lucide="zap" class="w-3 h-3"></i> Cachuelos</button>
+                                <button class="ac-btn" onclick="AG.runTask('online')"><i data-lucide="globe" class="w-3 h-3"></i> Trabajo en línea</button>
+                                <button class="ac-btn" onclick="AG.runTask('cv')"><i data-lucide="file-text" class="w-3 h-3"></i> Analizar CV</button>
+                                <button class="ac-btn" onclick="AG.runTask('apply')"><i data-lucide="send" class="w-3 h-3"></i> Preparar postulaciones</button>
+                                <button class="ac-btn ac-btn-danger" onclick="AG.runTask('stop')"><i data-lucide="square" class="w-3 h-3"></i> Detener</button>
+                            </div>
+                            <div id="ac-results" class="px-4 md:px-6 py-3 max-h-64 overflow-y-auto flex flex-col gap-2 border-b border-slate-800"></div>
+                            <div id="ac-chat" class="px-4 md:px-6 py-3 max-h-56 overflow-y-auto flex flex-col gap-2 border-b border-slate-800"></div>
+                            <div id="ac-log" class="px-4 md:px-6 py-3 max-h-44 overflow-y-auto text-[10px] md:text-[11px] leading-relaxed border-b border-slate-800"></div>
+                            <div class="px-4 md:px-6 py-3 flex gap-2">
+                                <input type="text" id="ac-input" placeholder="Escribe a tu asistente de empleo..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white outline-none placeholder-slate-500" onkeydown="if(event.key==='Enter')AG.acChat()">
+                                <button class="bg-brand text-white text-xs font-bold px-4 py-2 rounded-xl btn-pulse flex items-center gap-1.5" onclick="AG.acChat()"><i data-lucide="send" class="w-3 h-3"></i> Enviar</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -606,7 +672,7 @@
                         <div class="flex-1">
                             <p class="text-[10px] md:text-xs text-slate-500 mb-0.5">Ofrece: <strong class="text-slate-800 text-xs md:text-sm" id="jd-emp-name">Juan Pérez</strong></p>
                             <div class="flex items-center gap-1 text-[10px] md:text-xs font-bold text-slate-800" id="jd-emp-rating">
-                                <i data-lucide="star" class="w-3 h-3 md:w-4 md:h-4 fill-crypto text-crypto"></i> <span id="jd-emp-rating-text">4.8 <span class="text-slate-400 font-medium">(12 reseñas)</span></span>
+                                <i data-lucide="star" class="w-3 h-3 md:w-4 md:h-4 fill-crypto text-crypto"></i> <span id="jd-emp-rating-text" class="font-medium text-slate-400">Sin reseñas todavía</span>
                             </div>
                         </div>
                         <button class="bg-blue-50 text-brand font-bold text-xs md:text-sm px-4 py-2 md:px-6 md:py-3 rounded-full btn-pulse" onclick="showToast('El chat directo aún no está disponible en esta versión.')">Contactar</button>
@@ -751,7 +817,7 @@
                             </button>
                             <div class="flex items-start gap-2 px-2 justify-center">
                                 <i data-lucide="info" class="w-3 h-3 md:w-4 md:h-4 text-slate-400 shrink-0 mt-0.5"></i>
-                                <p class="text-[9px] md:text-xs text-slate-500 leading-tight">Al finalizar, el pago se liberará automáticamente.</p>
+                                <p class="text-[9px] md:text-xs text-slate-500 leading-tight">Al finalizar, el empleador deberá liberar el pago desde sus postulaciones.</p>
                             </div>
                         </div>
                     </div>
@@ -773,7 +839,7 @@
                             <i data-lucide="check" class="w-10 h-10 md:w-16 md:h-16 text-white stroke-[3]"></i>
                         </div>
                         <h2 class="text-2xl md:text-4xl font-extrabold text-slate-800 mb-2 md:mb-4">¡Trabajo finalizado!</h2>
-                        <p class="text-xs md:text-base text-slate-500 mb-8 md:mb-12 px-4 md:px-10 leading-relaxed">El empleador ha confirmado la finalización del trabajo. El pago será liberado.</p>
+                        <p class="text-xs md:text-base text-slate-500 mb-8 md:mb-12 px-4 md:px-10 leading-relaxed">El trabajo ha finalizado. El empleador debe liberar el pago para completar la operación.</p>
 
                         <div class="w-full border-b border-slate-200 pb-6 md:pb-8 mb-6 md:mb-8">
                             <div class="flex justify-between items-end">
@@ -821,12 +887,7 @@
                 </div>
                 <div class="px-5 md:px-10 mt-4 max-w-6xl mx-auto">
                     <div class="w-full h-[420px] md:h-[600px] rounded-2xl overflow-hidden relative shadow-sm border border-slate-200">
-                        <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=800&q=80" alt="Mapa" class="w-full h-full object-cover opacity-80">
-                        <div class="absolute top-1/2 left-1/2 w-5 h-5 bg-brand rounded-full border-[3px] border-white shadow-md transform -translate-x-1/2 -translate-y-1/2"></div>
-                        <div class="absolute top-1/4 left-1/3 w-4 h-4 bg-escrow rounded-full border-2 border-white shadow-md flex items-center justify-center"><i data-lucide="briefcase" class="w-2 h-2 text-white"></i></div>
-                        <div class="absolute bottom-1/3 right-1/4 w-4 h-4 bg-escrow rounded-full border-2 border-white shadow-md flex items-center justify-center"><i data-lucide="briefcase" class="w-2 h-2 text-white"></i></div>
-                        <div class="absolute top-[15%] right-[20%] w-4 h-4 bg-escrow rounded-full border-2 border-white shadow-md flex items-center justify-center"><i data-lucide="briefcase" class="w-2 h-2 text-white"></i></div>
-                        <div class="absolute bottom-[20%] left-[22%] w-4 h-4 bg-escrow rounded-full border-2 border-white shadow-md flex items-center justify-center"><i data-lucide="briefcase" class="w-2 h-2 text-white"></i></div>
+                        <div id="map" style="position:absolute;inset:0;width:100%;height:100%;background:#e5e7eb;"></div>
                     </div>
                     <button class="w-full md:w-auto md:px-12 bg-brand text-white font-bold py-4 rounded-full mt-4 shadow-lg shadow-brand/30 btn-pulse mx-auto block" onclick="showView('search')">
                         Ver empleos cercanos
@@ -865,7 +926,7 @@
                             <h1 id="profileName" class="font-bold text-lg md:text-2xl leading-tight">Usuario WorkNow</h1>
                             <p id="profileRole" class="text-[10px] md:text-sm text-slate-400">Trabajador · Quito, Ecuador</p>
                             <div class="flex items-center gap-1 text-[10px] md:text-xs font-bold mt-1">
-                                <i data-lucide="star" class="w-3 h-3 md:w-4 md:h-4 fill-crypto text-crypto"></i> 4.8 <span class="text-slate-400 font-medium">(12 reseñas)</span>
+                                <i data-lucide="star" class="w-3 h-3 md:w-4 md:h-4 fill-crypto text-crypto"></i> <span class="text-slate-400 font-medium">Sin reseñas todavía</span>
                             </div>
                         </div>
                     </div>
@@ -880,9 +941,23 @@
                         <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300"></i>
                     </button>
                     <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                        <h3 class="font-bold text-sm text-slate-800 mb-1">CV guardado</h3>
+                        <h3 class="font-bold text-sm text-slate-800 mb-1">Curriculum</h3>
                         <div id="cvSavedInfo" class="text-[10px] text-slate-500">Aún no has guardado un CV desde este dispositivo.</div>
                         <div id="cvSavedSkills" class="flex flex-wrap gap-1.5 mt-2"></div>
+                        <div id="cvCard" class="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3" style="display:none">
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg">📄</span>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-xs font-bold text-slate-800 truncate" id="cvCardName">CV</div>
+                                    <div class="text-[10px] text-slate-500" id="cvCardMeta"></div>
+                                </div>
+                            </div>
+                            <div id="cvCardStatus" class="text-[10px] font-bold text-green-600 mt-1.5">✓ Currículum subido</div>
+                            <div class="flex gap-2 mt-2">
+                                <a id="cvOpenLink" href="#" target="_blank" rel="noopener" class="text-[10px] font-bold bg-brand text-white px-3 py-1.5 rounded-full no-underline" style="display:none">Ver currículum</a>
+                                <button class="text-[10px] font-bold bg-slate-200 text-slate-700 px-3 py-1.5 rounded-full" onclick="startCvUpload()">Reemplazar</button>
+                            </div>
+                        </div>
                     </div>
                     <button class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-3 text-left btn-pulse" onclick="openWallet()">
                         <div class="w-10 h-10 rounded-xl bg-green-100 text-escrow flex items-center justify-center shrink-0"><i data-lucide="wallet" class="w-5 h-5"></i></div>
@@ -900,6 +975,20 @@
                         </div>
                         <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300"></i>
                     </button>
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100" id="devRoleCard">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0"><i data-lucide="dices" class="w-5 h-5"></i></div>
+                            <div class="flex-1">
+                                <h3 class="font-bold text-sm text-slate-800">Modo desarrollo</h3>
+                                <p class="text-[10px] text-slate-500">Cambia tu rol local para probar funciones</p>
+                            </div>
+                        </div>
+                        <select id="roleSelect" onchange="changeRole(this.value)" class="mt-3 w-full bg-surface border border-slate-200 rounded-xl p-2.5 text-sm text-slate-800 outline-none">
+                            <option value="employer">👁️ Modo: Empleador</option>
+                            <option value="worker">🛠️ Modo: Trabajador</option>
+                            <option value="admin">👑 Modo: Administrador</option>
+                        </select>
+                    </div>
                     <button class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-3 text-left btn-pulse" onclick="handleLogout()">
                         <div class="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center shrink-0"><i data-lucide="log-out" class="w-5 h-5"></i></div>
                         <div class="flex-1">
@@ -907,6 +996,61 @@
                             <p class="text-[10px] text-slate-500">Salir de tu cuenta WorkNow</p>
                         </div>
                     </button>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 VISTA AUXILIAR: CRM ADMINISTRATIVO (solo rol admin)
+                 ========================================== -->
+            <section class="view no-scrollbar bg-surface" id="v-crm">
+                <div class="bg-dark pt-12 pb-6 px-5 md:px-10 rounded-b-3xl text-white">
+                    <div class="max-w-6xl mx-auto flex items-center gap-3">
+                        <i data-lucide="bar-chart" class="w-6 h-6 md:w-8 md:h-8 text-brand"></i>
+                        <div class="flex-1">
+                            <h1 class="font-bold text-lg md:text-2xl leading-tight">CRM Administrativo</h1>
+                            <p class="text-[10px] md:text-sm text-slate-400">Indicadores reales de usuarios, trabajos, contratos y finanzas</p>
+                        </div>
+                        <button onclick="renderCRM()" class="bg-brand text-white text-[11px] md:text-xs font-bold px-3 py-2 rounded-xl shrink-0">↻ Actualizar</button>
+                    </div>
+                </div>
+                <div class="px-5 md:px-10 mt-4 max-w-6xl mx-auto w-full">
+                    <div class="flex flex-col md:grid md:grid-cols-2 gap-3 md:gap-5">
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                            <div class="text-[11px] font-semibold text-slate-400 mb-1">Usuarios</div>
+                            <div class="text-3xl font-extrabold text-slate-800" id="crm-users-total">0</div>
+                            <div class="text-[10px] text-slate-500">👷 <span id="crm-users-workers">0</span> · 🏢 <span id="crm-users-employers">0</span></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                            <div class="text-[11px] font-semibold text-slate-400 mb-1">Trabajos</div>
+                            <div class="text-3xl font-extrabold text-slate-800" id="crm-jobs-total">0</div>
+                            <div class="text-[10px] text-slate-500">▶ <span id="crm-jobs-active">0</span> · ✓ <span id="crm-jobs-completed">0</span></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                            <div class="text-[11px] font-semibold text-slate-400 mb-1">Postulaciones</div>
+                            <div class="text-3xl font-extrabold text-slate-800" id="crm-apps-total">0</div>
+                            <div class="text-[10px] text-slate-500">📄 <span id="crm-apps-active">0</span> · CVs: <span id="crm-cvs-total">0</span></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                            <div class="text-[11px] font-semibold text-slate-400 mb-1">Volumen</div>
+                            <div class="text-3xl font-extrabold text-escrow" id="crm-tx-volume">$0.00</div>
+                            <div class="text-[10px] text-slate-500">⬆ <span id="crm-tx-deposits">$0.00</span> · ⬇ <span id="crm-tx-withdrawals">$0.00</span></div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col md:grid md:grid-cols-2 gap-3 md:gap-5 mt-3 md:mt-5">
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                            <div class="text-sm font-bold text-slate-800 mb-2">Contratos</div>
+                            <div class="flex justify-between text-xs text-slate-500 py-0.5">
+                                <span>Total: <b id="crm-contracts-total">0</b></span>
+                                <span class="text-amber-600">Neg: <b id="crm-contracts-negotiating">0</b></span>
+                                <span class="text-brand">Act: <b id="crm-contracts-active">0</b></span>
+                                <span class="text-escrow">Compl: <b id="crm-contracts-completed">0</b></span>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                            <div class="text-sm font-bold text-slate-800 mb-2">Actividad</div>
+                            <div id="crm-recent-activity" class="text-[11px] text-slate-500 max-h-32 overflow-y-auto"></div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -925,6 +1069,7 @@
                 <button class="nav-item" data-view="map"><i data-lucide="map"></i><span>Mapa</span></button>
                 <button class="nav-item" data-view="applications"><i data-lucide="file-text"></i><span>Postulaciones</span></button>
                 <button class="nav-item" data-view="profile"><i data-lucide="user"></i><span>Perfil</span></button>
+                <button class="nav-item" id="nav-crm-btn" data-view="crm" style="display:none"><i data-lucide="bar-chart"></i><span>CRM</span></button>
             </div>
         </nav>
 
@@ -942,15 +1087,65 @@
         var DARK_VIEWS = ['agents', 'publish', 'agreement', 'working', 'completed'];
         var NAV_ACTIVE = {
             'home': 'home', 'search': 'search', 'map': 'map',
-            'applications': 'applications', 'profile': 'profile',
+            'applications': 'applications', 'profile': 'profile', 'crm': 'crm',
             'detail': 'search', 'agents': null, 'publish': null,
             'agreement': 'applications', 'working': 'applications', 'completed': 'applications'
         };
 
+        /* ---------- AUTORIZACIÓN CRM (control de acceso real) ---------- */
+        function isProductionConfigured() {
+            return !!(window.supabase && CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY && supabaseClient);
+        }
+        function canAccessCRM() {
+            if (state.currentRole !== 'admin') return Promise.resolve(false);
+            if (isProductionConfigured() && state.sessionActive && state.currentUserId) {
+                // Producción: el permiso real proviene de la sesión y del rol del backend
+                return supabaseClient.from('profiles').select('role').eq('id', state.currentUserId).single()
+                    .then(function(res) {
+                        if (res.error) { console.error('[CRM AUTH]', res.error); return false; }
+                        return !!(res.data && res.data.role === 'admin');
+                    })
+                    .catch(function(e) { console.error('[CRM AUTH]', e); return false; });
+            }
+            // Modo desarrollo local (sin Supabase configurado): se permite el rol dev
+            return Promise.resolve(!isProductionConfigured());
+        }
+        function showCRM(authorized) {
+            state.crmAuthorized = !!authorized;
+            var cv = document.getElementById('v-crm');
+            if (cv) cv.classList.toggle('crm-active', !!authorized);
+            var btn = document.getElementById('nav-crm-btn');
+            if (btn) btn.style.display = authorized ? '' : 'none';
+        }
+        async function openCRM() {
+            const ok = await canAccessCRM();
+            if (!ok) {
+                showCRM(false);
+                updateUIForRole();
+                showToast('Acceso restringido: solo administradores', 'error');
+                return;
+            }
+            showCRM(true);
+            showViewRaw('crm');
+            renderCRM();
+            updateUIForRole();
+        }
+
         function showView(name) {
+            if (name === 'crm') { openCRM(); return; }
+            showViewRaw(name);
+        }
+        function showViewRaw(name) {
             var target = document.getElementById('v-' + name);
             if (!target) return;
             target.scrollIntoView({ behavior: 'smooth' });
+            if (name === 'map' && state.map) {
+                setTimeout(function() {
+                    if (CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') { google.maps.event.trigger(state.map, 'resize'); }
+                    else if (typeof L !== 'undefined') { state.map.invalidateSize(); }
+                }, 200);
+            }
+            if (name === 'profile') renderCV();
             var activeNav = NAV_ACTIVE[name];
             document.querySelectorAll('#bottomNav .nav-item').forEach(function(b) {
                 b.classList.toggle('active', b.getAttribute('data-view') === activeNav);
@@ -1014,10 +1209,14 @@
             sessionActive: false,
             currentRole: null,
             currentUserId: null,
+            crmAuthorized: false,
             userLat: -2.1894,
             userLng: -79.8891,
             sortBy: 'distance',
             watchId: null,
+            map: null,
+            markers: [],
+            userMarker: null,
             favorites: (function(){ try { return new Set(JSON.parse(localStorage.getItem('wn_favorites') || '[]')); } catch(e){ return new Set(); } })()
         };
 
@@ -1026,6 +1225,7 @@
 
         if (window.supabase && CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY) {
             supabaseClient = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+            window.supabaseClient = supabaseClient;
 
             realtimeChannel = supabaseClient.channel('worknow_ops');
 
@@ -1109,6 +1309,26 @@
                 }
             }
         };
+
+        /* ---------- REALTIME BROADCAST (recuperado de index1.html) ---------- */
+        function broadcastLocation(contractId, employerId, lat, lng) {
+            if (realtimeChannel) {
+                realtimeChannel.send({ type: 'broadcast', event: 'location_update',
+                    payload: { contractId: contractId, employerId: employerId, lat: lat, lng: lng, timestamp: Date.now() } });
+            }
+            if (supabaseClient && state.sessionActive) {
+                supabaseClient.from('worker_locations').insert({
+                    contract_id: contractId, worker_id: state.currentUserId,
+                    lat: lat, lng: lng, timestamp: Date.now()
+                }).catch(function(e){ console.error(e); });
+            }
+        }
+        function broadcastStatus(contractId, status) {
+            if (realtimeChannel) {
+                realtimeChannel.send({ type: 'broadcast', event: 'status_update',
+                    payload: { contractId: contractId, status: status, timestamp: Date.now() } });
+            }
+        }
 
         function requireAuth() {
             if (CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY && !state.sessionActive) {
@@ -1209,6 +1429,114 @@
             } catch(e) { console.error('updateProfileUI', e); }
         }
 
+        /* ---------- CRM ADMINISTRATIVO (recuperado de index1.html) ---------- */
+        async function renderCRM() {
+            const ok = await canAccessCRM();
+            if (!ok) { showCRM(false); return; }
+            showCRM(true);
+            try {
+                const profiles = await DB.get('profiles');
+                const jobs = await DB.get('jobs');
+                const applications = await DB.get('applications');
+                const contracts = await DB.get('contracts');
+                const cvs = await DB.get('candidate_cvs');
+                const txs = await DB.get('txs');
+
+                const profilesArr = Array.isArray(profiles) ? profiles : Object.values(profiles);
+                const jobsArr = Array.isArray(jobs) ? jobs : Object.values(jobs);
+                const appsArr = Array.isArray(applications) ? applications : Object.values(applications);
+                const contractsArr = Array.isArray(contracts) ? contracts : Object.values(contracts);
+                const cvsArr = Array.isArray(cvs) ? cvs : Object.values(cvs);
+                const txsArr = Array.isArray(txs) ? txs : Object.values(txs);
+
+                const el = function(id) { return document.getElementById(id); };
+
+                const workers = profilesArr.filter(function(p){ return p.role === 'worker'; }).length;
+                const employers = profilesArr.filter(function(p){ return p.role === 'employer'; }).length;
+                if (el('crm-users-total')) el('crm-users-total').innerText = profilesArr.length;
+                if (el('crm-users-workers')) el('crm-users-workers').innerText = workers;
+                if (el('crm-users-employers')) el('crm-users-employers').innerText = employers;
+
+                const activeJobs = jobsArr.filter(function(j){ return j.status === 'open' || j.status === 'negotiating'; }).length;
+                const completedJobs = jobsArr.filter(function(j){ return j.status === 'closed'; }).length;
+                if (el('crm-jobs-total')) el('crm-jobs-total').innerText = jobsArr.length;
+                if (el('crm-jobs-active')) el('crm-jobs-active').innerText = activeJobs;
+                if (el('crm-jobs-completed')) el('crm-jobs-completed').innerText = completedJobs;
+
+                const activeApps = appsArr.filter(function(a){ return a.status === 'active'; }).length;
+                if (el('crm-apps-total')) el('crm-apps-total').innerText = appsArr.length;
+                if (el('crm-apps-active')) el('crm-apps-active').innerText = activeApps;
+                if (el('crm-cvs-total')) el('crm-cvs-total').innerText = cvsArr.length;
+
+                let deposits = 0, withdrawals = 0, volume = 0;
+                txsArr.forEach(function(tx) {
+                    if (tx.amount > 0 && (tx.desc || '').includes('Depósito')) deposits += tx.amount;
+                    if (tx.amount < 0 && (tx.desc || '').includes('Retiro')) withdrawals += Math.abs(tx.amount);
+                    volume += Math.abs(tx.amount || 0);
+                });
+                if (el('crm-tx-volume')) el('crm-tx-volume').innerText = '$' + volume.toFixed(2);
+                if (el('crm-tx-deposits')) el('crm-tx-deposits').innerText = '$' + deposits.toFixed(2);
+                if (el('crm-tx-withdrawals')) el('crm-tx-withdrawals').innerText = '$' + withdrawals.toFixed(2);
+
+                const negotiating = contractsArr.filter(function(c){ return c.status === 'negotiating' || c.status === 'pending_acceptance'; }).length;
+                const activeContracts = contractsArr.filter(function(c){ return ['agreed','en_route','on_site','working'].indexOf(c.status) !== -1; }).length;
+                const completedContracts = contractsArr.filter(function(c){ return c.status === 'completed' || c.status === 'closed'; }).length;
+                if (el('crm-contracts-total')) el('crm-contracts-total').innerText = contractsArr.length;
+                if (el('crm-contracts-negotiating')) el('crm-contracts-negotiating').innerText = negotiating;
+                if (el('crm-contracts-active')) el('crm-contracts-active').innerText = activeContracts;
+                if (el('crm-contracts-completed')) el('crm-contracts-completed').innerText = completedContracts;
+
+                const activityContainer = el('crm-recent-activity');
+                if (activityContainer) {
+                    activityContainer.innerHTML = '';
+                    let activities = [];
+                    profilesArr.forEach(function(p){ activities.push({ type: 'user', text: 'Nuevo usuario: ' + p.name + ' (' + p.role + ')', date: p.created_at || 0 }); });
+                    jobsArr.forEach(function(j){ activities.push({ type: 'job', text: 'Nuevo trabajo: ' + j.title, date: j.created_at || 0 }); });
+                    appsArr.forEach(function(a){ activities.push({ type: 'app', text: 'Nueva postulación al trabajo ' + a.job_id, date: a.created_at || 0 }); });
+                    txsArr.forEach(function(t){ activities.push({ type: 'tx', text: 'Transacción: ' + t.desc + ' ($' + Math.abs(t.amount || 0) + ')', date: t.date || 0 }); });
+                    activities.sort(function(a,b){ return b.date - a.date; });
+                    activities.slice(0, 10).forEach(function(act) {
+                        const icons = { user: 'user', job: 'briefcase', app: 'file-text', tx: 'dollar-sign' };
+                        activityContainer.innerHTML += '<div class="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">'
+                            + '<div class="p-2 bg-slate-50 rounded-lg text-slate-500"><i data-lucide="' + icons[act.type] + '" class="w-4 h-4"></i></div>'
+                            + '<div><p class="text-xs font-medium text-slate-700">' + escStr(act.text) + '</p>'
+                            + '<p class="text-[10px] text-slate-400">' + new Date(act.date).toLocaleString() + '</p></div></div>';
+                    });
+                }
+                if (window.lucide && lucide.createIcons) { try { lucide.createIcons(); } catch(e) { console.warn('lucide', e); } }
+            } catch (e) {
+                console.error('Error renderizando CRM', e);
+            }
+        }
+
+        function updateUIForRole() {
+            const crmBtn = document.getElementById('nav-crm-btn');
+            if (crmBtn) {
+                crmBtn.style.display = (state.crmAuthorized && state.currentRole === 'admin') ? '' : 'none';
+            }
+            if (!state.crmAuthorized || state.currentRole !== 'admin') showCRM(false);
+            const devCard = document.getElementById('devRoleCard');
+            const roleSel = document.getElementById('roleSelect');
+            const showDev = !state.sessionActive && !isProductionConfigured();
+            if (devCard) devCard.style.display = showDev ? '' : 'none';
+            if (roleSel) {
+                roleSel.style.display = showDev ? '' : 'none';
+                if (roleSel.value !== state.currentRole) roleSel.value = state.currentRole || 'employer';
+            }
+        }
+
+        function changeRole(role) {
+            if (state.sessionActive || isProductionConfigured()) {
+                showToast('El rol está bloqueado por tu perfil real en producción.', 'error');
+                return;
+            }
+            if (role === 'admin') showCRM(true);
+            state.currentRole = role;
+            state.currentUserId = role === 'employer' ? 'emp_dev' : role === 'admin' ? 'admin_dev' : 'wrk_dev';
+            showToast('Modo Dev: ' + role.toUpperCase(), 'info');
+            renderApp();
+        }
+
         /* ---------- UTILIDADES ---------- */
         function escStr(s) {
             return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1226,13 +1554,44 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
+        /* ---------- MOTOR DE MAPAS (recuperado de index1.html: Google Maps o Leaflet) ---------- */
+        function loadGoogleMaps() {
+            if (CONFIG.GOOGLE_MAPS_API_KEY) {
+                var script = document.createElement('script');
+                script.src = 'https://maps.googleapis.com/maps/api/js?key=' + CONFIG.GOOGLE_MAPS_API_KEY + '&libraries=geometry,places';
+                script.async = true;
+                script.defer = true;
+                script.onload = initMap;
+                document.head.appendChild(script);
+            } else {
+                initLeafletMap();
+            }
+        }
+        function initMap() {
+            if(state.map || typeof google === 'undefined') return;
+            var el = document.getElementById('map');
+            if(!el) return;
+            state.map = new google.maps.Map(el, { center: { lat: state.userLat, lng: state.userLng }, zoom: 13, disableDefaultUI: true });
+            state.userMarker = new google.maps.Marker({ position: { lat: state.userLat, lng: state.userLng }, map: state.map, title: 'Tu Ubicación' });
+        }
+        function initLeafletMap() {
+            if(state.map || typeof L === 'undefined') return;
+            var el = document.getElementById('map');
+            if(!el) return;
+            state.map = L.map('map', { zoomControl: false }).setView([state.userLat, state.userLng], 13);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap contributors &copy; CARTO' }).addTo(state.map);
+            state.userMarker = L.circleMarker([state.userLat, state.userLng], { radius: 8, fillColor: '#0066FF', color: '#0066FF', weight: 2, opacity: 0.5, fillOpacity: 0.5 }).addTo(state.map).bindPopup('Tu Ubicación');
+        }
+
         /* ---------- NAVEGACIÓN FUNCIONAL (adaptador hacia las vistas del diseño) ---------- */
         function navigate(view) {
             var map = { dashboard:'home', search:'search', 'ai-search':'agents', contracts:'applications',
-                        wallet:'profile', cv:'profile', post:'publish', crm:null,
+                        wallet:'profile', cv:'profile', post:'publish', crm:'crm',
                         'job-detail':'detail', agreement:'agreement', 'work-in-progress':'working', 'work-completed':'completed' };
             var v = map.hasOwnProperty(view) ? map[view] : view;
+            if (view === 'crm') { openCRM(); return; }
             if (v) showView(v);
+            if (view === 'cv' || view === 'profile' || view === 'wallet') renderCV();
             if (view === 'contracts' || view === 'applications') { renderApplications(); renderContracts(); }
             if (view === 'ai-search' && window.AG && AG.loadInternalJobs) { AG.loadInternalJobs().then(function(){ AG.render(); }); }
         }
@@ -1245,6 +1604,10 @@
             await renderApplications();
             await renderCV();
             await updateProfileUI();
+            if (state.currentRole === 'admin') {
+                await renderCRM();
+            }
+            updateUIForRole();
         }
 
         /* ---------- BÚSQUEDA, FILTROS Y ORDEN ---------- */
@@ -1435,6 +1798,26 @@
                         +   '</div>'
                         + '</div>';
                 });
+                if (state.map) {
+                    state.markers.forEach(function(m) {
+                        if (CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') { m.setMap(null); }
+                        else { state.map.removeLayer(m); }
+                    });
+                    state.markers = [];
+                    filteredJobs.forEach(function(job) {
+                        if(job.lat == null || job.lng == null) return;
+                        var mk = null;
+                        if (CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') {
+                            mk = new google.maps.Marker({ position: { lat: job.lat, lng: job.lng }, map: state.map, title: job.title });
+                            mk.addListener('click', function() { openJobDetail(job.id); });
+                        } else if (typeof L !== 'undefined') {
+                            mk = L.circleMarker([job.lat, job.lng], { radius: 8, fillColor: '#F59E0B', color: '#ffffff', weight: 2, opacity: 1, fillOpacity: 0.9 }).addTo(state.map);
+                            mk.bindPopup('<b>' + escStr(job.title) + '</b><br/>$' + job.price);
+                            mk.on('click', function() { openJobDetail(job.id); });
+                        }
+                        if (mk) state.markers.push(mk);
+                    });
+                }
                 lucide.createIcons();
             } catch (e) { console.error('Error renderizando jobs', e); }
         }
@@ -1540,8 +1923,7 @@
             const cid = window.currentActiveContractId;
             if(ok && cid) {
                 await DB.update('contracts', cid, { status: 'pending_acceptance' });
-                await acceptTerms(cid); // acuerdo confirmado
-                openAgreement(cid);
+                openAgreement(cid); // el trabajador confirma explícitamente en la pantalla de acuerdo
             }
         }
 
@@ -1553,6 +1935,7 @@
                 const price = parseFloat(prompt('Propón un precio final para este servicio:', contract.agreed_price));
                 if(price && price > 0) {
                     await DB.update('contracts', contractId, { agreed_price: price, status: 'pending_acceptance' });
+                    broadcastStatus(contractId, 'pending_acceptance');
                     showToast('Términos propuestos. Esperando aceptación del trabajador.', 'success');
                     await renderApp();
                 }
@@ -1562,6 +1945,7 @@
         async function acceptTerms(contractId) {
             try {
                 await DB.update('contracts', contractId, { status: 'agreed' });
+                broadcastStatus(contractId, 'agreed');
                 await renderApp();
             } catch (e) { console.error('acceptTerms', e); }
         }
@@ -1570,10 +1954,16 @@
             if (!navigator.geolocation) return showToast('Geolocalización no soportada en este dispositivo', 'error');
             try {
                 await DB.update('contracts', contractId, { status: 'en_route' });
+                broadcastStatus(contractId, 'en_route');
                 await renderApp();
                 state.watchId = navigator.geolocation.watchPosition(function(pos) {
                     const lat = pos.coords.latitude, lng = pos.coords.longitude;
                     state.userLat = lat; state.userLng = lng;
+                    broadcastLocation(contractId, employerId, lat, lng);
+                    if (state.userMarker) {
+                        if (CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') state.userMarker.setPosition({ lat: lat, lng: lng });
+                        else if (typeof L !== 'undefined') state.userMarker.setLatLng([lat, lng]);
+                    }
                     checkGeofence(lat, lng, jobLat, jobLng, contractId);
                 }, function(err) {
                     showToast('Necesitamos tu ubicación para activar el seguimiento de este servicio.', 'error');
@@ -1592,6 +1982,7 @@
                     const contract = contracts.find(function(c){ return c.id === contractId; });
                     if(contract && contract.status === 'en_route') {
                         await DB.update('contracts', contractId, { status: 'on_site' });
+                        broadcastStatus(contractId, 'on_site');
                         await renderApp();
                         showToast('Has llegado al sitio del trabajo (Geocerca 50m)', 'success');
                     }
@@ -1602,6 +1993,7 @@
         async function startWork(contractId) {
             try {
                 await DB.update('contracts', contractId, { status: 'working', work_started_at: Date.now() });
+                broadcastStatus(contractId, 'working');
                 await renderApp();
             } catch (e) { console.error('startWork', e); }
         }
@@ -1609,6 +2001,7 @@
         async function finishWork(contractId) {
             try {
                 await DB.update('contracts', contractId, { status: 'completed', work_ended_at: Date.now() });
+                broadcastStatus(contractId, 'completed');
                 if(state.watchId !== null) { navigator.geolocation.clearWatch(state.watchId); state.watchId = null; }
                 var gpsEl = document.getElementById('gpsStatusText');
                 if (gpsEl) gpsEl.innerText = 'Tu ubicación actual';
@@ -1622,6 +2015,7 @@
                 const contracts = await DB.get('contracts');
                 const contract = contracts.find(function(c){ return c.id === contractId; });
                 if(!contract) return;
+                if(contract.status !== 'completed') return showToast('Solo los trabajos finalizados pueden liberar pago.', 'error');
 
                 const profilesArr = await DB.get('profiles');
                 const employer = profilesArr.find(function(p){ return p.id === contract.employer_id; });
@@ -1925,7 +2319,6 @@
             document.getElementById('wc-commission').innerText = '$' + fees.wrkFee.toFixed(2);
             document.getElementById('wc-net').innerText = '$' + fees.wrkNet.toFixed(2);
             document.getElementById('wc-net-status').innerText = c.status === 'closed' ? '(Ya en tu cuenta)' : '(Pendiente de liberación por el empleador)';
-            showView('work-completed');
             showView('completed');
         }
 
@@ -2010,6 +2403,13 @@
         async function renderCV() {
             const info = document.getElementById('cvSavedInfo');
             const skills = document.getElementById('cvSavedSkills');
+            const card = document.getElementById('cvCard');
+            const cardName = document.getElementById('cvCardName');
+            const cardMeta = document.getElementById('cvCardMeta');
+            const cardStatus = document.getElementById('cvCardStatus');
+            const openLink = document.getElementById('cvOpenLink');
+            const setCard = function(show){ if(card) card.style.display = show ? '' : 'none'; };
+            setCard(false);
             if(!info || !skills) return;
             try {
                 const cvs = await DB.get('candidate_cvs');
@@ -2017,19 +2417,47 @@
                 const mine = (cvs || []).filter(function(c){ return c.user_id === userId; })
                     .sort(function(a,b){ return (b.created_at||0) - (a.created_at||0); });
                 if(!mine.length) {
-                    info.innerText = 'Aún no has guardado un CV desde este dispositivo.';
+                    info.innerHTML = '<span class="text-slate-500">Aún no has guardado un CV desde este dispositivo.</span>';
                     skills.innerHTML = '';
                     return;
                 }
                 const last = mine[0];
                 const sizeKb = last.file_size ? Math.round(last.file_size/1024) + ' KB' : '';
-                info.innerHTML = '<strong>' + escStr(last.file_name || 'CV') + '</strong>' + (sizeKb ? ' · ' + sizeKb : '') + ' · ' + new Date(last.created_at||Date.now()).toLocaleDateString();
+                const savedInCloud = !!(last.saved_in_cloud === true && last.file_path && last.file_path !== 'local');
+                let metaParts = [];
+                if(sizeKb) metaParts.push(sizeKb);
+                metaParts.push(new Date(last.created_at||Date.now()).toLocaleDateString());
+                if(cardName) cardName.innerText = last.file_name || 'CV';
+                if(cardMeta) cardMeta.innerText = metaParts.join(' · ');
+                if(card){
+                    card.style.display = '';
+                    if(cardStatus) cardStatus.className = 'text-[10px] font-bold text-green-600 mt-1.5';
+                    if(cardStatus) cardStatus.innerText = savedInCloud ? '✓ Currículum subido' : '✓ Registrado correctamente';
+                }
+                // Enlace real al documento: solo cuando hay storage, sesión y referencia con archivo subido.
+                if(openLink){
+                    openLink.style.display = 'none';
+                    openLink.href = '#';
+                    if (window.supabaseClient && state.sessionActive && savedInCloud && last.file_path && last.file_path !== 'local') {
+                        try {
+                            const res = await supabaseClient.storage.from('cvs').createSignedUrl(last.file_path, 3600);
+                            if(!res.error && res.data && res.data.signedUrl){
+                                openLink.href = res.data.signedUrl;
+                                openLink.style.display = '';
+                            }
+                        } catch(e) {
+                            console.warn('[CV] No se pudo generar enlace firmado al documento', e);
+                        }
+                    }
+                }
+                info.innerHTML = '<strong>' + escStr(last.file_name || 'CV') + '</strong>' + (sizeKb ? ' · ' + sizeKb : '')
+                    + ' · ' + new Date(last.created_at||Date.now()).toLocaleDateString();
                 skills.innerHTML = (last.skills || []).slice(0,12).map(function(s) {
                     return '<span class="bg-blue-50 text-brand text-[10px] font-bold px-2 py-1 rounded-full">' + escStr(s) + '</span>';
                 }).join('');
             } catch(e) {
                 console.error('Error renderizando CV', e);
-                info.innerText = 'No se pudo leer tu CV guardado.';
+                info.innerHTML = '<span class="text-slate-500">No se pudo leer tu CV guardado.</span>';
             }
         }
 
@@ -2044,25 +2472,22 @@
         /* ---------- AGENTES IA (tarjetas del diseño) ---------- */
         function agentAction(a) {
             if(a === 'scout') {
-                if(window.AG) { AG.selectAgent('scout', null); AG.startSearch(); }
+                if(window.AG) AG.runTask && AG.runTask('formal');
                 var n = document.getElementById('m-filtered');
-                showView('search');
                 showToast('Agente de Búsqueda activo: ' + (n ? n.textContent : '0') + ' coincidencias', 'info');
             } else if(a === 'applier') {
-                showView('applications');
-                showToast('Revisa tus postulaciones y acuerdos', 'info');
+                if(window.AG) AG.runTask && AG.runTask('apply');
+                showToast('Preparando postulaciones en la consola del agente', 'info');
             } else if(a === 'cv') {
                 var i = document.getElementById('cvInput');
                 if(i) { showToast('Selecciona tu CV (PDF, DOCX o TXT)', 'info'); i.click(); }
             } else if(a === 'cachuelos') {
-                var cats = document.querySelectorAll('#homeCategories .cat');
-                filterCategory('cachuelo', cats.length > 2 ? cats[2] : null);
-                showView('search');
-                showToast('Agente de Cachuelos: filtrando trabajos informales', 'info');
+                if(window.AG) AG.runTask && AG.runTask('cachuelo');
+                showToast('Agente de Cachuelos: buscando trabajo informal', 'info');
             } else if(a === 'support') {
-                var c = document.getElementById('chatInput');
-                if(c && window.AG) { AG.selectAgent('negotiator', null); c.focus(); }
-                showToast('Agente de Soporte: cuéntanos tu duda', 'info');
+                var c = document.getElementById('ac-input');
+                if(c) { if(window.AG) AG.selectAgent && AG.selectAgent('negotiator', null); c.focus(); }
+                showToast('Agente de Soporte: escríbele en la consola', 'info');
             }
         }
 
@@ -2082,10 +2507,20 @@
 
         /* ---------- ARRANQUE ---------- */
         window.onload = async function() {
+            loadGoogleMaps();
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(pos) {
                     state.userLat = pos.coords.latitude;
                     state.userLng = pos.coords.longitude;
+                    if (state.map) {
+                        if (CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') {
+                            state.map.setCenter({ lat: state.userLat, lng: state.userLng });
+                            if (state.userMarker) state.userMarker.setPosition({ lat: state.userLat, lng: state.userLng });
+                        } else if (typeof L !== 'undefined') {
+                            state.map.setView([state.userLat, state.userLng], 13);
+                            if (state.userMarker) state.userMarker.setLatLng([state.userLat, state.userLng]);
+                        }
+                    }
                 }, function(err) { console.warn('Geolocation error:', err); }, { enableHighAccuracy: true });
             }
 
@@ -2250,6 +2685,9 @@ window.AG = (function(){
   const state = { skills:[], keyword:'', geo:'', source:'', agent:'scout', currentJob:null, applied:new Set(), lastFiltered:[], currentCvId: null };
 
   let internalJobs = [];
+  function isProductionConfiguredGlobal(){
+    return !!(window.supabaseClient && window.WN && WN.state && WN.state.sessionActive);
+  }
   function allJobs(){ return REAL_JOBS.concat(internalJobs); }
   async function loadInternalJobs(){
     try {
@@ -2284,6 +2722,12 @@ window.AG = (function(){
     div.className='log-entry';
     div.innerHTML='<span class="log-time">['+now()+']</span> <span class="'+(cls||'log-agent')+'">'+msg+'</span>';
     t.prepend(div);
+    const ac=$('ac-log');
+    if(ac && ac !== t){
+      const d=document.createElement('div');
+      d.innerHTML='<span class="ac-accent">['+now()+']</span> '+msg;
+      ac.prepend(d);
+    }
   }
   function chat(name,avatar,msg,isUser){
     const box=$('chatBox'); if(!box) return;
@@ -2291,6 +2735,13 @@ window.AG = (function(){
     div.className='message'+(isUser?' user':'');
     div.innerHTML='<div class="message-avatar '+avatar+'">'+(isUser?'🧑':'🤖')+'</div><div class="message-content"><div class="message-name">'+esc(name)+'</div>'+esc(msg)+'</div>';
     box.appendChild(div); box.scrollTop=box.scrollHeight;
+    const acBox=$('ac-chat');
+    if(acBox && acBox !== box){
+      const d=document.createElement('div');
+      d.className='ac-job';
+      d.innerHTML='<div class="font-bold text-white text-[10px] flex items-center gap-1.5 mb-1">'+(isUser?'🧑 '+esc(name):'🤖 '+esc(name))+'</div><div>'+esc(msg)+'</div>';
+      acBox.appendChild(d); acBox.scrollTop=acBox.scrollHeight;
+    }
   }
   function setStatus(id,cls){ const el=$('st-'+id); if(el) el.className='agent-status '+cls; }
 
@@ -2321,6 +2772,11 @@ window.AG = (function(){
     const container=$('jobsList'); if(!container) return;
     container.innerHTML='';
     if(!list.length) container.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px">Sin coincidencias. Ajusta los filtros.</div>';
+    const acRes=$('ac-results');
+    if(acRes && acRes !== container){
+      acRes.innerHTML='';
+      if(!list.length) acRes.innerHTML='<div class="ac-empty">Sin resultados. Ajusta los filtros o pulsa un botón de búsqueda.</div>';
+    }
     list.forEach(job=>{
       const sc=score(job);
       const isNew=(Date.now()-new Date(job.date).getTime())<35*864e5;
@@ -2335,6 +2791,23 @@ window.AG = (function(){
         +'<div class="match-bar"><div class="progress-bar"><div class="progress-fill" style="width:'+sc+'%;background:'+(sc>=75?'var(--success)':sc>=50?'var(--primary)':'var(--warning)')+'"></div></div><span class="match-score" style="color:'+(sc>=75?'var(--success)':'var(--text-muted)')+'">'+sc+'%</span></div>';
       div.onclick=()=>openDetail(job.id);
       container.appendChild(div);
+      if(acRes && acRes !== container){
+        const card=document.createElement('div');
+        card.className='ac-job '+(state.applied.has(job.id)?'': '');
+        card.innerHTML='<div class="flex justify-between gap-2"><b>'+esc(job.title)+'</b><span class="ac-ok font-bold shrink-0">'+sc+'% match</span></div>'
+          +'<div class="mt-0.5">🏢 '+esc(job.company)+' · 📍 '+esc(job.location)+' · 💰 '+fmtSalary(job)+'</div>'
+          +'<div class="mt-0.5">🗓 '+esc(job.date)+' · Fuente: '+esc(job.source)+'</div>'
+          +(job.url && job.url !== '#' ? '<a class="ac-accent underline mt-0.5 inline-block" href="'+esc(job.url)+'" target="_blank" rel="noopener">Ver oferta original ↗</a>' : '')
+          +(state.applied.has(job.id)?'<div class="ac-ok font-bold mt-0.5">✓ Postulada</div>':'')
+          +'<button class="ac-btn mt-1.5">'+(state.applied.has(job.id)?'Ver contrato':'Aplicar')+'</button>';
+        card.querySelector('button.ac-btn').onclick = function() {
+          AG.apply(job.id);
+          if(job._internal && window.WN){
+            setTimeout(function(){ if(typeof renderApplications==='function') renderApplications(); },300);
+          }
+        };
+        acRes.appendChild(card);
+      }
     });
     const avg=list.length?Math.round(list.reduce((a,j)=>a+score(j),0)/list.length):0;
     $('m-total').textContent=allJobs().length;
@@ -2342,6 +2815,11 @@ window.AG = (function(){
     $('m-filtered').textContent=list.length;
     $('m-applied').textContent=state.applied.size;
     $('m-match').textContent=avg+'%';
+    const t=$('ac-total'); if(t) t.textContent=allJobs().length;
+    const f=$('ac-filtered'); if(f) f.textContent=list.length;
+    const m=$('ac-match'); if(m) m.textContent=avg+'%';
+    const a=$('ac-applied'); if(a) a.textContent=state.applied.size;
+    if(window.lucide) try{ lucide.createIcons(); }catch(e){}
   }
 
   function openDetail(id){
@@ -2356,37 +2834,63 @@ window.AG = (function(){
 
   async function apply(id){
     const job=allJobs().find(j=>j.id===id); if(!job) return;
-    
-    // --- PERSISTENCIA SUPABASE ---
-    if (window.WN) {
-        try {
-            const appId = 'app_' + Date.now();
-            const appRecord = {
-                id: appId,
-                user_id: WN.state.currentUserId || 'local_user',
-                job_id: job.id,
-                cv_id: state.currentCvId || null,
-                status: 'active',
-                created_at: Date.now()
-            };
-            await WN.DB.insert('applications', appRecord);
-        } catch (err) {
-            console.error('[App Insert Error]', err);
-        }
-    }
-    
-    if(job._internal){
-      state.applied.add(id); render();
-      if(window.WN){ WN.applyJob(job.id); WN.navigate('contracts'); }
-      log('[Aplicador] Postulación interna WorkNow registrada → <b>'+esc(job.title)+'</b>','log-success');
-      chat('Aplicador','applier','Apliqué a "'+job.title+'" dentro de WorkNow. El empleador fue notificado vía el Core.',false);
+    const realUserId = (window.WN && WN.state) ? WN.state.currentUserId : (state.currentUserId || null);
+    const authed = !!(window.WN && WN.state && (WN.state.sessionActive || !isProductionConfiguredGlobal()));
+    if(!realUserId){
+      chat('Aplicador','applier','Inicia sesión para poder postular. Tu candidatura no puede guardarse sin usuario autenticado.',false);
+      log('[Aplicador] Postulación bloqueada: sin usuario autenticado.','log-err');
       return;
     }
-    state.applied.add(id);
-    render();
-    log('[Aplicador] Postulación registrada → <b>'+esc(job.company)+'</b>','log-success');
-    chat('Aplicador','applier','Apliqué a "'+job.title+'" en '+job.company+'. Carta personalizada adjunta.',false);
-    if(window.WN) WN.toast('Aplicación enviada: '+job.company,'success');
+    // Evita duplicados: comprueba en el backend/local antes de insertar.
+    try {
+      const existing = await WN.DB.get('applications');
+      const dup = (existing || []).some(function(a){ return a.user_id === realUserId && a.job_id === job.id; });
+      if(dup){
+        state.applied.add(job.id); render();
+        chat('Aplicador','applier','Ya postulaste a "'+job.title+'". No se creó una candidatura duplicada.',false);
+        log('[Aplicador] Postulación ya existente, se omitió duplicado.','log-warning');
+        if(job._internal && window.WN) WN.navigate('contracts');
+        return;
+      }
+    } catch(e){ console.error('[App dup check]', e); }
+
+    // Ofertas internas de WorkNow: flujo completo (contrato + postulación) en WN.applyJob()
+    if(job._internal){
+      const ok = window.WN ? await WN.applyJob(job.id) : false;
+      if(ok){
+        state.applied.add(id); render();
+        log('[Aplicador] Postulación interna WorkNow registrada → <b>'+esc(job.title)+'</b>','log-success');
+        chat('Aplicador','applier','Apliqué a "'+job.title+'" dentro de WorkNow. El empleador fue notificado vía el Core.',false);
+        if(window.WN) WN.navigate('contracts');
+      } else {
+        chat('Aplicador','applier','No se pudo postular a "'+job.title+'". Revisa el mensaje y reintenta.',false);
+        log('[Aplicador] Falló la postulación interna. No se marcó como aplicada.','log-err');
+      }
+      return;
+    }
+
+    // Ofertas externas: solo se registra el interés del usuario (no se envía al empleador real).
+    try {
+      const appId = 'app_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+      const appRecord = {
+        id: appId,
+        user_id: realUserId,
+        job_id: job.id,
+        cv_id: state.currentCvId || null,
+        status: 'active',
+        created_at: Date.now()
+      };
+      await WN.DB.insert('applications', appRecord);
+      state.applied.add(id);
+      render();
+      log('[Aplicador] Interés registrado en base de datos → <b>'+esc(job.company)+'</b> (postulación externa, no enviada al portal)','log-success');
+      chat('Aplicador','applier','Registré tu interés en "'+job.title+'" ('+job.company+'). No se envió al empleador externo; prepárate para aplicar directamente.',false);
+      if(window.WN) WN.toast('Interés registrado: '+job.company,'success');
+    } catch (err) {
+      console.error('[App Insert Error]', err);
+      chat('Aplicador','applier','Error al guardar tu interés en "'+job.title+'". No se marcó como aplicada.',false);
+      log('[Aplicador] Error de persistencia al registrar el interés.','log-err');
+    }
   }
   function applyCurrent(){ if(state.currentJob) apply(state.currentJob.id); }
 
@@ -2402,72 +2906,98 @@ window.AG = (function(){
 
   function handleFile(input){
     const f=input.files&&input.files[0]; if(!f) return;
+    const realUserId = (window.WN && WN.state) ? WN.state.currentUserId : null;
+    if(!realUserId){
+      log('[Scout] CV no guardado: no hay usuario autenticado.','log-err');
+      chat('Supervisor','supervisor','Inicia sesión para guardar tu currículum.',false);
+      if(window.WN && WN.toast) WN.toast('Inicia sesión para subir tu CV','error');
+      if(input) input.value='';
+      return;
+    }
+    // Análisis de texto: solo es fiable para archivos de texto plano (.txt).
+    // PDF y DOCX no pueden leerse con readAsText; se reporta el estado real.
+    let detected=[];
+    const canParseText = /\.(txt|text)$/i.test(f.name);
     const reader=new FileReader();
     reader.onload=async e=>{
-      const text=String(e.target.result).toLowerCase();
-      state.skills=SKILL_DB.filter(k=>text.includes(k));
+      if(canParseText){
+        const text=String(e.target.result||'').toLowerCase();
+        detected=SKILL_DB.filter(k=>text.includes(k));
+      }
+      state.skills=detected;
+      state.currentCvId = state.currentCvId || null;
       $('uploadZone').classList.add('active');
       $('fileInfo').classList.add('show');
       $('fileName').textContent=f.name;
-      $('detectedSkills').textContent=state.skills.length?state.skills.join(', '):'ninguna detectada';
-      log('[Scout] CV analizado: '+state.skills.length+' skills detectadas','log-success');
-      chat('Supervisor','supervisor','CV "'+f.name+'" procesado. Detecté '+state.skills.length+' skills. Actualizando scores de matching...',false);
+      $('detectedSkills').textContent=canParseText
+        ? (detected.length?detected.join(', '):'ninguna detectada')
+        : 'No analizado (formato '+((f.type||f.name.split('.').pop()||'desconocido').toUpperCase())+')';
+      log('[Scout] '+(canParseText?('CV analizado: '+detected.length+' skills detectadas'):'Archivo "'+f.name+'" recibido (no se extrajo texto de '+f.name.split('.').pop()+')'),'log-success');
+      chat('Supervisor','supervisor','Recibí "'+f.name+'". '+(canParseText?('Detecté '+detected.length+' skills.'):'No pude analizar el contenido de este formato, pero guardaré el documento.')+'',false);
       render();
-      
-      // --- PERSISTENCIA SUPABASE ---
+
+      // --- PERSISTENCIA ---
       if (window.WN) {
-          try {
-              const userId = WN.state.currentUserId || 'local_user';
-              const timestamp = Date.now();
-              const filePath = `${userId}/${timestamp}_${f.name}`;
-              
-              if (WN.state.sessionActive && window.supabaseClient) {
-                  const { data: uploadData, error: uploadError } = await supabaseClient.storage
-                      .from('cvs')
-                      .upload(filePath, f);
-                  if (uploadError) throw uploadError;
-              }
-              
-              const cvRecord = {
-                  id: 'cv_' + timestamp,
-                  user_id: userId,
-                  file_name: f.name,
-                  file_path: filePath,
-                  mime_type: f.type || 'application/octet-stream',
-                  file_size: f.size,
-                  skills: state.skills,
-                  created_at: timestamp
-              };
-              await WN.DB.insert('candidate_cvs', cvRecord);
-              state.currentCvId = cvRecord.id;
-              
-              const profiles = await WN.DB.get('profiles');
-              const userProfile = profiles.find(p => p.id === userId);
-              if (userProfile) {
-                  const updatedSkills = Array.from(new Set([...(userProfile.skills || []), ...state.skills]));
-                  await WN.DB.update('profiles', userId, { skills: updatedSkills });
-              }
-              log('[Scout] CV guardado en Supabase Storage y perfil actualizado','log-success');
-          } catch (err) {
-              console.error('[CV Upload Error]', err);
-              log('[Scout] Error al guardar CV en Supabase (Fallback local activo)','log-warning');
-              
-              const cvRecord = {
-                  id: 'cv_' + Date.now(),
-                  user_id: WN.state.currentUserId || 'local_user',
-                  file_name: f.name,
-                  file_path: 'local',
-                  mime_type: f.type || 'application/octet-stream',
-                  file_size: f.size,
-                  skills: state.skills,
-                  created_at: Date.now()
-              };
-              await WN.DB.insert('candidate_cvs', cvRecord);
-              state.currentCvId = cvRecord.id;
+        let savedInCloud=false;
+        let uploadedPath=null;
+        try {
+          const timestamp = Date.now();
+          const safeName = String(f.name).replace(/[^\w.\- ]+/g,'_').replace(/\s+/g,'_');
+          const filePath = `${realUserId}/${timestamp}_${safeName}`;
+          uploadedPath = filePath;
+
+          if (WN.state.sessionActive && window.supabaseClient) {
+            const { error: uploadError } = await window.supabaseClient.storage
+              .from('cvs')
+              .upload(filePath, f, { upsert: true });
+            if (uploadError) {
+              console.warn('[CV Storage]', uploadError);
+              uploadedPath = null; // no afirmar guardado en nube
+            } else {
+              savedInCloud = true;
+            }
           }
+
+          const cvRecord = {
+            id: 'cv_' + timestamp,
+            user_id: realUserId,
+            file_name: f.name,
+            file_path: savedInCloud ? filePath : 'local',
+            mime_type: f.type || 'application/octet-stream',
+            file_size: f.size,
+            skills: detected,
+            created_at: timestamp,
+            saved_in_cloud: !!savedInCloud
+          };
+          await WN.DB.insert('candidate_cvs', cvRecord);
+          state.currentCvId = cvRecord.id;
+          log('[Scout] Currículum registrado correctamente'+(savedInCloud?' y guardado en la nube':', sin nube disponible para este archivo')+'.','log-success');
+          if(typeof renderCV==='function') renderCV();
+          if(window.WN && WN.toast) WN.toast('Currículum subido','success');
+
+          // Actualiza skills del perfil únicamente si hubo análisis real de texto
+          if(detected.length){
+            try {
+              const profiles = await WN.DB.get('profiles');
+              const userProfile = profiles.find(p => p.id === realUserId);
+              if (userProfile) {
+                const updatedSkills = Array.from(new Set([...(userProfile.skills || []), ...detected]));
+                await WN.DB.update('profiles', realUserId, { skills: updatedSkills });
+              }
+            } catch(e){ console.warn('[CV update profile]', e); }
+          }
+        } catch (err) {
+          console.error('[CV Upload Error]', err);
+          state.currentCvId = state.currentCvId || null;
+          log('[Scout] No se pudo subir el currículum. No se registró un estado de éxito.','log-err');
+          chat('Supervisor','supervisor','No se pudo subir el currículum. Revisa tu conexión o los permisos y reintenta.',false);
+          if(window.WN && WN.toast) WN.toast('No se pudo subir el currículum','error');
+          if(typeof renderCV==='function') renderCV();
+        }
       }
     };
-    reader.readAsText(f);
+    // Solo se lee como texto cuando el formato es analizable; el almacenamiento usa el File original.
+    if(canParseText) reader.readAsText(f); else reader.onload({ target: { result: '' } });
   }
 
   function filterJobs(){
@@ -2536,9 +3066,102 @@ window.AG = (function(){
     setTimeout(()=>{ if(window.WN) WN.navigate('dashboard'); },800);
   }
 
+  /* ============ TAREAS DE LA CONSOLA INTEGRADA (sin salto de vista) ============ */
+  let taskTimer = [];
+  function cancelTimers(){ taskTimer.forEach(t=>clearTimeout(t)); taskTimer=[]; }
+  let taskBusy=false;
+
+  function runTask(task){
+    if(task==='stop'){ cancelTimers(); setStatus('scout',''); setStatus('applier',''); taskBusy=false;
+      log('[Scout] Búsqueda detenida por el usuario.','log-warning');
+      chat('Scout','scout','Detuve la operación. Los resultados parciales siguen visibles.',false); return; }
+    if(taskBusy){ chat('Scout','scout','Ya hay una tarea en curso. Pulsa "Detener" para cancelarla.',false); return; }
+    taskBusy=true; const started=Date.now();
+
+    if(task==='cv'){
+      taskBusy=false;
+      const i=$('cvInput'); if(i){ chat('Scout','scout','Preparado el selector de CV. Sube un PDF, DOCX o TXT para analizar tus skills.',false); i.click(); }
+      return;
+    }
+
+    if(task==='apply'){
+      taskBusy=false;
+      const ready = state.lastFiltered.filter(j => !state.applied.has(j.id));
+      if(!ready.length){ chat('Aplicador','applier','No hay ofertas pendientes por preparar. Pulsa una búsqueda primero, o ya aplicaste a todas.',false); log('[Aplicador] Sin ofertas pendientes.','log-warning'); return; }
+      const top = ready.slice().sort(function(a,b){ return score(b)-score(a); }).slice(0,5);
+      chat('Aplicador','applier','Preparé '+top.length+' postulaciones, ordenadas por compatibilidad ('+top.map(function(j){return score(j)+'%';}).join(', ')+'). Usa el botón "Aplicar" en cada tarjeta para confirmar y enviar.',false);
+      log('[Aplicador] <b>'+top.length+'</b> postulaciones preparadas (pendientes de confirmación).','log-agent');
+      return;
+    }
+
+    setStatus('scout','busy');
+    log('[Scout] Consultando fuentes indexadas...','log-agent');
+    taskTimer.push(setTimeout(()=>{
+      state.keyword=''; state.geo=''; state.source='';
+      if($('keywordFilter')) $('keywordFilter').value='';
+      if($('geoFilter')) $('geoFilter').value='';
+      if($('sourceFilter')) $('sourceFilter').value='';
+      const pool = allJobs();
+      let filtered;
+      if(task==='cachuelo'){
+        filtered = pool.filter(j => j._internal && (j.title+' '+(j.industry||' ')).toLowerCase().match(/cachuelo|informal|limpieza|reparto|carpinter|plomer|electricista|manuales/));
+        log('[Scout] Buscando cachuelos (trabajo informal local) dentro de WorkNow...','log-agent');
+      } else if(task==='online'){
+        filtered = pool.filter(j => j._internal ? (j.title+' '+(j.industry||' ')).toLowerCase().match(/online|remoto|remote|web|virtual|en línea|digital/) : /remote|online|usa|canada|europe|uk|ukraine|germany|spain|france/.test((j.location||'').toLowerCase()));
+        log('[Scout] Buscando trabajo en línea / remoto...','log-agent');
+      } else {
+        filtered = pool.filter(j => j._internal ? (j.title+' '+(j.industry||' ')).toLowerCase().match(/formal|oficina|administrac|contabilidad|legal|salud|educaci/) || !/(cachuelo|informal)/.test((j.title+' '+j.desc+'').toLowerCase()) : true);
+        log('[Scout] Buscando empleo formal...','log-agent');
+      }
+      const results = filtered.length ? filtered : pool.slice(0,20);
+      state.lastFiltered = results;
+      const stats = {
+        found: filtered.length, cards: results.length,
+        range: results.length, skills: state.skills.length
+      };
+      log('[Scout] Ofertas encontradas: <b>'+stats.found+'</b> · Ofertas analizadas: <b>'+stats.range+'</b> · Compatibles con tu CV: <b>'+stats.skills+' skills</b>','log-success');
+      state.lastFilteredAcc = stats;
+      if(!filtered.length){
+        log('[Scout] Sin resultados para la categoría solicitada con los datos actuales.','log-warning');
+        chat('Scout','scout','No encontré ofertas para esta categoría con los datos indexados. Publica una en WorkNow o ajusta la búsqueda.',false);
+      } else {
+        chat('Scout','scout','Encontré '+stats.found+' ofertas. Mostrando <b>'+stats.cards+'</b>'+(results.length?' de '+results.length+' analizadas':'')+'. Puedes "Aplicar" desde cada tarjeta.',false);
+      }
+      render();
+      if(window.AG) AG.render && AG.render();
+      setStatus('scout',''); taskBusy=false;
+    },450));
+  }
+
+  function acChat(){
+    const inp=$('ac-input'); if(!inp) return;
+    const msg=inp.value.trim(); if(!msg) return;
+    inp.value='';
+    chat('Tú','user',msg,true);
+    log('[Supervisor] Consulta del usuario recibida.','log-agent');
+    setTimeout(()=>{
+      let reply; const m=msg.toLowerCase();
+      if(m.includes('aplic')||m.includes('postul')) reply='Postulaciones registradas: '+state.applied.size+'. Usa los botones "Aplicar" de cada tarjeta.';
+      else if(m.includes('salario')||m.includes('sueldo')) reply='Revisa cada tarjeta: uso el rango salarial publicado por la fuente.';
+      else if(m.includes('cv')||m.includes('curr')) reply=state.skills.length?'Tu CV tiene '+state.skills.length+' skills indexadas: '+state.skills.slice(0,6).join(', ')+'.':'Aún no has subido CV. Pulsa "Analizar CV" para subirlo.';
+      else if(m.includes('cachuelo')) reply='Pulsa el botón "Cachuelos" para buscar trabajo informal local en WorkNow.';
+      else if(m.includes('online')||m.includes('remoto')) reply='Pulsa "Trabajo en línea" para buscar ofertas remotas indexadas.';
+      else reply='Puedo buscar empleo formal, cachuelos o trabajo en línea, y analizar tu CV. Dime qué necesitas.';
+      chat('Supervisor','supervisor',reply,false);
+    },450);
+  }
+
+  function acOpenUrl(url){
+    if(url && url !== '#'){
+      const a=document.createElement('a');
+      a.href=url; a.target='_blank'; a.rel='noopener noreferrer';
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+  }
+
   function init(){ render(); log('[Scout] Motor de agentes listo — '+allJobs().length+' ofertas indexadas','log-success'); }
 
-  return { init, render, handleFile, filterJobs, selectAgent, startSearch, resetAll, sendChat, applyCurrent, generateLetter, pushToMarketplace, loadInternalJobs };
+  return { init, render, handleFile, filterJobs, selectAgent, startSearch, resetAll, sendChat, applyCurrent, generateLetter, pushToMarketplace, loadInternalJobs, runTask, acChat, acOpenUrl, apply, state };
 })();
     </script>
 
@@ -2550,10 +3173,19 @@ window.AG = (function(){
             const _navigate = window.navigate;
             window.navigate = function(view) {
                 _navigate(view);
-                if (view === 'ai-search' && window.AG && AG.loadInternalJobs) {
+                if ((view === 'ai-search' || view === 'agents') && window.AG && AG.loadInternalJobs) {
                     AG.loadInternalJobs().then(() => AG.render());
                 }
             };
+            const _showView = window.showView;
+            if (typeof _showView === 'function') {
+                window.showView = function(name) {
+                    _showView(name);
+                    if (name === 'agents' && window.AG && AG.loadInternalJobs) {
+                        AG.loadInternalJobs().then(() => AG.render());
+                    }
+                };
+            }
         });
     </script>
 
