@@ -251,16 +251,17 @@
                 </div>
 
                 <div class="px-5 md:px-10 -mt-6 relative z-10 mb-6 max-w-3xl mx-auto">
-                    <div class="bg-white rounded-full p-2 md:p-3 pl-4 md:pl-6 flex items-center shadow-lg border border-slate-100 cursor-text" onclick="showView('search')">
+                    <div class="bg-white rounded-full p-2 md:p-3 pl-4 md:pl-6 flex items-center shadow-lg border border-slate-100">
                         <i data-lucide="search" class="w-4 h-4 md:w-5 md:h-5 text-slate-400 mr-2 md:mr-4"></i>
                         <div class="flex-1">
-                            <div class="text-sm md:text-base font-semibold text-slate-700">¿Qué trabajo buscas?</div>
-                            <div class="text-[10px] md:text-xs text-slate-400">Ej: Albañilería, Limpieza, Diseño, Ventas...</div>
+                            <input type="text" id="bubbleSearch" placeholder="¿Qué trabajo buscas? Ej: Albañilería, Limpieza, Diseño..." class="w-full bg-transparent text-sm md:text-base font-semibold text-slate-700 outline-none" onkeydown="if(event.key==='Enter')performBubbleSearch()">
                         </div>
-                        <button class="w-10 h-10 md:w-12 md:h-12 bg-brand rounded-full flex items-center justify-center text-white shadow-md btn-pulse" onclick="event.stopPropagation(); showView('search')">
+                        <button class="w-10 h-10 md:w-12 md:h-12 bg-brand rounded-full flex items-center justify-center text-white shadow-md btn-pulse" onclick="event.stopPropagation(); performBubbleSearch()">
                             <i data-lucide="arrow-right" class="w-5 h-5 md:w-6 md:h-6"></i>
                         </button>
                     </div>
+                    <div id="bubbleSearchFeedback" class="text-[10px] md:text-xs text-slate-400 mt-1 hidden"></div>
+                    <div id="bubbleResultsContainer" class="hidden flex flex-col gap-2 mt-2"></div>
                 </div>
 
                 <div class="px-5 md:px-10 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 max-w-6xl mx-auto">
@@ -1139,7 +1140,11 @@
             var target = document.getElementById('v-' + name);
             if (!target) return;
             target.scrollIntoView({ behavior: 'smooth' });
-            if (name === 'map' && state.map) {
+            if (name === 'map') {
+                if (!state.map) {
+                    if (CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') initMap();
+                    else if (typeof L !== 'undefined') initLeafletMap();
+                }
                 setTimeout(function() {
                     if (CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') { google.maps.event.trigger(state.map, 'resize'); }
                     else if (typeof L !== 'undefined') { state.map.invalidateSize(); }
@@ -1628,6 +1633,67 @@
             if (kw && main) kw.value = main.value.trim();
             navigate('ai-search');
             if (window.AG && typeof AG.filterJobs === 'function') AG.filterJobs();
+        }
+
+        async function performBubbleSearch() {
+            const input = document.getElementById('bubbleSearch');
+            const feedback = document.getElementById('bubbleSearchFeedback');
+            const resultsContainer = document.getElementById('bubbleResultsContainer');
+            const query = input ? input.value.trim() : '';
+            if (!query) { showToast('Escribe qué trabajo buscas', 'info'); return; }
+            if (feedback) { feedback.innerText = 'Buscando...'; feedback.classList.remove('hidden', 'text-red-500', 'text-escrow', 'text-orange-500'); feedback.classList.add('text-slate-400'); }
+            if (resultsContainer) { resultsContainer.classList.add('hidden'); resultsContainer.innerHTML = ''; }
+            const hs = document.getElementById('homeSearch');
+            if (hs) hs.value = query;
+            try {
+                await renderJobs();
+                handleHomeSearch(query);
+                const container = document.getElementById('jobsListContainer');
+                if (!container) { if (feedback) { feedback.innerText = 'No fue posible realizar la búsqueda'; feedback.classList.remove('hidden'); } return; }
+                const cards = Array.from(container.querySelectorAll('[data-search]'));
+                const visibleCards = cards.filter(function(c) { return c.style.display !== 'none'; });
+                if (visibleCards.length) {
+                    if (feedback) {
+                        feedback.innerText = visibleCards.length + ' empleo' + (visibleCards.length === 1 ? '' : 's') + ' encontrado' + (visibleCards.length === 1 ? '' : 's');
+                        feedback.classList.remove('hidden', 'text-red-500', 'text-orange-500'); feedback.classList.add('text-escrow');
+                    }
+                    if (resultsContainer) {
+                        resultsContainer.classList.remove('hidden');
+                        visibleCards.slice(0, 5).forEach(function(card) {
+                            const onclickAttr = card.getAttribute('onclick') || '';
+                            const jobId = onclickAttr ? onclickAttr.match(/'([^']+)'/) : null;
+                            const id = jobId ? jobId[1] : '';
+                            const img = card.querySelector('img');
+                            const titleEl = card.querySelector('h3');
+                            const priceEl = card.querySelector('.text-brand');
+                            const distEl = card.querySelector('[class*="text-slate-500"]');
+                            const catSpan = card.querySelector('[class*="bg-blue-50"], [class*="bg-orange-50"], [class*="bg-purple-50"]');
+                            const title = titleEl ? titleEl.textContent : 'Empleo';
+                            const price = priceEl ? priceEl.textContent : '';
+                            const dist = distEl ? distEl.textContent : '';
+                            const imgSrc = img ? img.getAttribute('src') : '';
+                            const catText = catSpan ? catSpan.textContent : '';
+                            resultsContainer.innerHTML += ''
+                                + '<div class="bg-white rounded-xl shadow-sm border border-slate-100 p-2 md:p-3 flex items-center gap-2 cursor-pointer btn-pulse" onclick="openJobDetail(\'' + id + '\')">'
+                                +   (imgSrc ? '<img src="' + imgSrc + '" class="w-8 h-8 md:w-10 md:h-10 rounded-lg object-cover shrink-0">' : '')
+                                +   '<div class="flex-1 min-w-0 text-[10px] md:text-xs leading-tight">'
+                                +     '<div class="font-semibold text-slate-800 truncate">' + title + '</div>'
+                                +     '<div class="text-slate-400">' + dist + (catText ? ' · ' + catText : '') + '</div>'
+                                +   '</div>'
+                                +   '<div class="text-[10px] md:text-xs font-bold text-brand shrink-0">' + price + '</div>'
+                                + '</div>';
+                        });
+                        if (visibleCards.length > 5) {
+                            resultsContainer.innerHTML += '<div class="text-[10px] md:text-xs text-slate-400 text-center py-1">+' + (visibleCards.length - 5) + ' más empleos — abre la sección Buscar para ver todos</div>';
+                        }
+                    }
+                } else {
+                    if (feedback) { feedback.innerText = 'No se encontraron empleos para esta búsqueda'; feedback.classList.remove('hidden', 'text-escrow', 'text-orange-500'); feedback.classList.add('text-red-500'); }
+                }
+            } catch (e) {
+                console.error('[BubbleSearch]', e);
+                if (feedback) { feedback.innerText = 'No fue posible realizar la búsqueda. Verifica tu conexión.'; feedback.classList.remove('hidden', 'text-escrow'); feedback.classList.add('text-red-500'); }
+            }
         }
 
         let currentCategory = 'all';
@@ -2407,7 +2473,6 @@
             const cardName = document.getElementById('cvCardName');
             const cardMeta = document.getElementById('cvCardMeta');
             const cardStatus = document.getElementById('cvCardStatus');
-            const openLink = document.getElementById('cvOpenLink');
             const setCard = function(show){ if(card) card.style.display = show ? '' : 'none'; };
             setCard(false);
             if(!info || !skills) return;
@@ -2423,7 +2488,21 @@
                 }
                 const last = mine[0];
                 const sizeKb = last.file_size ? Math.round(last.file_size/1024) + ' KB' : '';
-                const savedInCloud = !!(last.saved_in_cloud === true && last.file_path && last.file_path !== 'local');
+                // Verificar almacenamiento real del archivo
+                let storageVerified = false;
+                if (last.file_content) {
+                    storageVerified = true; // contenido guardado localmente en el registro
+                } else if (last.file_path && last.file_path !== 'local' && window.supabaseClient) {
+                    try {
+                        const parts = last.file_path.split('/');
+                        const dir = parts.length > 1 ? parts.slice(0,-1).join('/') + '/' : '';
+                        const { data: listData, error: listError } = await supabaseClient.storage.from('cvs').list(dir);
+                        if (!listError && listData) {
+                            const fileName = parts[parts.length - 1];
+                            storageVerified = listData.some(function(f) { return f.name === fileName; });
+                        }
+                    } catch(e) {}
+                }
                 let metaParts = [];
                 if(sizeKb) metaParts.push(sizeKb);
                 metaParts.push(new Date(last.created_at||Date.now()).toLocaleDateString());
@@ -2431,23 +2510,25 @@
                 if(cardMeta) cardMeta.innerText = metaParts.join(' · ');
                 if(card){
                     card.style.display = '';
-                    if(cardStatus) cardStatus.className = 'text-[10px] font-bold text-green-600 mt-1.5';
-                    if(cardStatus) cardStatus.innerText = savedInCloud ? '✓ Currículum subido' : '✓ Registrado correctamente';
-                }
-                // Enlace real al documento: solo cuando hay storage, sesión y referencia con archivo subido.
-                if(openLink){
-                    openLink.style.display = 'none';
-                    openLink.href = '#';
-                    if (window.supabaseClient && state.sessionActive && savedInCloud && last.file_path && last.file_path !== 'local') {
-                        try {
-                            const res = await supabaseClient.storage.from('cvs').createSignedUrl(last.file_path, 3600);
-                            if(!res.error && res.data && res.data.signedUrl){
-                                openLink.href = res.data.signedUrl;
-                                openLink.style.display = '';
-                            }
-                        } catch(e) {
-                            console.warn('[CV] No se pudo generar enlace firmado al documento', e);
+                    if(cardStatus) {
+                        if (storageVerified) {
+                            cardStatus.className = 'text-[10px] font-bold text-escrow mt-1.5';
+                            cardStatus.innerText = '✓ Documento disponible';
+                        } else {
+                            cardStatus.className = 'text-[10px] font-bold text-orange-500 mt-1.5';
+                            cardStatus.innerText = '⚠ Archivo no disponible en storage';
                         }
+                    }
+                }
+                // Botón "Ver currículum" — reemplaza el comportamiento del enlace por viewSavedCV()
+                const viewBtn = document.getElementById('cvOpenLink');
+                if (viewBtn) {
+                    if (storageVerified) {
+                        viewBtn.style.display = '';
+                        viewBtn.onclick = function(e) { e.preventDefault(); viewSavedCV(); };
+                    } else {
+                        viewBtn.style.display = 'none';
+                        viewBtn.onclick = null;
                     }
                 }
                 info.innerHTML = '<strong>' + escStr(last.file_name || 'CV') + '</strong>' + (sizeKb ? ' · ' + sizeKb : '')
@@ -2455,9 +2536,47 @@
                 skills.innerHTML = (last.skills || []).slice(0,12).map(function(s) {
                     return '<span class="bg-blue-50 text-brand text-[10px] font-bold px-2 py-1 rounded-full">' + escStr(s) + '</span>';
                 }).join('');
+                if (typeof AG !== 'undefined' && AG.state) {
+                    AG.state.currentCvId = last.id;
+                }
             } catch(e) {
                 console.error('Error renderizando CV', e);
                 info.innerHTML = '<span class="text-slate-500">No se pudo leer tu CV guardado.</span>';
+            }
+        }
+
+        function viewSavedCV() {
+            try {
+                const cvs = JSON.parse(localStorage.getItem('wn_candidate_cvs')) || [];
+                const userId = state.currentUserId;
+                const mine = cvs.filter(function(c){ return c.user_id === userId; })
+                    .sort(function(a,b){ return (b.created_at||0) - (a.created_at||0); });
+                if (!mine.length) { showToast('No hay CV guardado', 'error'); return; }
+                const last = mine[0];
+                if (last.file_content) {
+                    const blob = new Blob([last.file_content], { type: last.mime_type || 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    window.open(url, '_blank');
+                    setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
+                } else if (last.file_path && last.file_path !== 'local' && window.supabaseClient) {
+                    showToast('Descargando CV...', 'info');
+                    supabaseClient.storage.from('cvs').download(last.file_path)
+                        .then(function(resp) {
+                            if (resp.error) { showToast('Error al descargar el CV: ' + resp.error.message, 'error'); return; }
+                            if (resp.data) {
+                                const blob = new Blob([resp.data], { type: last.mime_type || 'application/octet-stream' });
+                                const url = URL.createObjectURL(blob);
+                                window.open(url, '_blank');
+                                setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
+                            }
+                        })
+                        .catch(function() { showToast('No se pudo abrir el CV almacenado en el servidor', 'error'); });
+                } else {
+                    showToast('El archivo CV no está disponible. Vuelve a subirlo.', 'error');
+                }
+            } catch(e) {
+                console.error('[viewSavedCV]', e);
+                showToast('Error al abrir el CV', 'error');
             }
         }
 
@@ -2465,7 +2584,12 @@
             if (!requireAuth()) return;
             const inp = document.getElementById('cvInput');
             if(!inp) return;
-            showToast('Procesando y guardando tu CV...', 'info');
+            const existing = (JSON.parse(localStorage.getItem('wn_candidate_cvs') || '[]')).filter(function(c){ return c.user_id === state.currentUserId; });
+            if (existing.length) {
+                showToast('Selecciona el nuevo CV para actualizar el actual', 'info');
+            } else {
+                showToast('Selecciona tu CV (PDF, DOCX o TXT)', 'info');
+            }
             inp.click();
         }
 
@@ -2508,10 +2632,13 @@
         /* ---------- ARRANQUE ---------- */
         window.onload = async function() {
             loadGoogleMaps();
+            var gpsEl = document.getElementById('gpsStatusText');
             if (navigator.geolocation) {
+                if (gpsEl) { gpsEl.innerText = 'Solicitando permiso de ubicación...'; gpsEl.className = 'text-xs font-semibold text-escrow bg-white/10 w-max px-3 py-1.5 rounded-full'; }
                 navigator.geolocation.getCurrentPosition(function(pos) {
                     state.userLat = pos.coords.latitude;
                     state.userLng = pos.coords.longitude;
+                    if (gpsEl) gpsEl.innerText = 'Ubicación GPS activa';
                     if (state.map) {
                         if (CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') {
                             state.map.setCenter({ lat: state.userLat, lng: state.userLng });
@@ -2521,7 +2648,12 @@
                             if (state.userMarker) state.userMarker.setLatLng([state.userLat, state.userLng]);
                         }
                     }
-                }, function(err) { console.warn('Geolocation error:', err); }, { enableHighAccuracy: true });
+                }, function(err) {
+                    console.warn('Geolocation error:', err);
+                    if (gpsEl) { gpsEl.innerText = 'GPS no disponible · usa filtros manualmente'; gpsEl.className = 'text-xs font-semibold text-orange-500 bg-white/10 w-max px-3 py-1.5 rounded-full'; }
+                }, { enableHighAccuracy: true });
+            } else {
+                if (gpsEl) { gpsEl.innerText = 'Ubicación aproximada (Guayaquil, EC)'; gpsEl.className = 'text-xs font-semibold text-slate-400 bg-white/10 w-max px-3 py-1.5 rounded-full'; }
             }
 
             if (window.supabase && CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY) {
@@ -2965,6 +3097,7 @@ window.AG = (function(){
             file_path: savedInCloud ? filePath : 'local',
             mime_type: f.type || 'application/octet-stream',
             file_size: f.size,
+            file_content: String(e.target.result || ''),
             skills: detected,
             created_at: timestamp,
             saved_in_cloud: !!savedInCloud
