@@ -87,6 +87,23 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+        /* ===== Estilos para mapas Leaflet ===== */
+        .leaflet-map {
+            height: 100%;
+            width: 100%;
+            z-index: 1;
+        }
+        .leaflet-container {
+            background-color: transparent;
+        }
+        .leaflet-control-zoom {
+            position: absolute;
+            top: auto;
+            bottom: 10px;
+            right: 10px;
+            z-index: 10;
+        }
+
         /* ===== Consola de trabajo del agente (integrada) ===== */
         .ac-btn {
             display: inline-flex;
@@ -424,17 +441,105 @@
                         <button class="filter-pill cat bg-white border border-slate-200 text-slate-500 px-4 py-1.5 rounded-full text-xs font-semibold shrink-0" onclick="filterCategory('online',this)">En línea</button>
                     </div>
 
-                    <div class="px-5 md:px-10 mt-4">
-                        <div class="w-full h-40 md:h-80 rounded-2xl overflow-hidden relative shadow-sm border border-slate-200">
-                            <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=800&q=80" alt="Mapa" class="w-full h-full object-cover opacity-80">
-                            <div class="absolute top-1/2 left-1/2 w-4 h-4 bg-brand rounded-full border-2 border-white shadow-md transform -translate-x-1/2 -translate-y-1/2"></div>
-                            <div class="absolute top-1/4 left-1/3 w-3 h-3 bg-escrow rounded-full border-2 border-white shadow-md"></div>
-                            <div class="absolute bottom-1/3 right-1/4 w-3 h-3 bg-escrow rounded-full border-2 border-white shadow-md"></div>
-                            <button class="absolute bottom-2 right-2 w-8 h-8 md:w-10 md:h-10 bg-white rounded-lg shadow-md flex items-center justify-center text-brand" onclick="showView('map')">
-                                <i data-lucide="map" class="w-4 h-4 md:w-5 md:h-5"></i>
-                            </button>
-                        </div>
+                <div class="px-5 md:px-10 mt-4">
+                    <div class="w-full h-40 md:h-80 rounded-2xl overflow-hidden relative shadow-sm border border-slate-200">
+                        <div id="map-small" class="w-full h-full leaflet-map"></div>
+                        <button class="absolute bottom-2 right-2 w-8 h-8 md:w-10 md:h-10 bg-white rounded-lg shadow-md flex items-center justify-center text-brand" onclick="showView('map')" style="z-index: 10;">
+                            <i data-lucide="map" class="w-4 h-4 md:w-5 md:h-5"></i>
+                        </button>
                     </div>
+                </div>
+                
+                <script>
+document.addEventListener('DOMContentLoaded', function() {
+                    (function() {
+                        if (typeof L === 'undefined' || !document.getElementById('map-small')) return;
+                        
+                        let initialUserLat = (state && state.userLat) !== undefined ? state.userLat : null;
+                        let initialUserLng = (state && state.userLng) !== undefined ? state.userLng : null;
+                        
+                        if (initialUserLat !== null && initialUserLng !== null && !isNaN(initialUserLat) && !isNaN(initialUserLng)) {
+                            smallMap = L.map('map-small', { 
+                                zoomControl: false,
+                                attributionControl: true,
+                                zoom: 12,
+                                center: [initialUserLat, initialUserLng]
+                            });
+                        } else {
+                            smallMap = L.map('map-small', { 
+                                zoomControl: false,
+                                attributionControl: false,
+                                zoom: 12,
+                                center: [-0.0, -0.0]
+                            });
+                        }
+                        
+                        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_5668_1_52cb71ce365273447af6f3f2', {
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+    maxZoom: 18
+}).addTo(smallMap);
+                        
+                        L.control.zoom({ position: 'bottomright' }).addTo(smallMap);
+                        
+                        let gpsMarker = null;
+                        let manualMarker = null;
+                        
+                        smallMap.on('click', function(e) {
+                            // Allow manual marker only when no GPS marker exists
+                            if (!gpsMarker) {
+                                // Remove existing manual marker before creating new one
+                                if (manualMarker) {
+                                    smallMap.removeLayer(manualMarker);
+                                }
+                                manualMarker = L.circleMarker([e.latlng.lat, e.latlng.lng], {
+                                    radius: 6,
+                                    fillColor: '#10B981',
+                                    color: '#10B981',
+                                    weight: 2,
+                                    opacity: 0.7,
+                                    fillOpacity: 0.7
+                                }).addTo(smallMap).bindPopup('Tu ubicación marcada');
+                            }
+                        });
+                        
+// Actualizar coordenadas iniciales cuando llega el evento GPS
+                        window.addEventListener('wnGpsPosition', function(e) {
+                            // Validate event object exists
+                            if (!e || !e.detail) return;
+                            
+                            const gpsLat = e.detail.lat;
+                            const gpsLng = e.detail.lng;
+                            
+                            // Validate: must be finite numbers within geographic bounds
+                            if (typeof gpsLat === 'number' && typeof gpsLng === 'number' && 
+                                Number.isFinite(gpsLat) && Number.isFinite(gpsLng) &&
+                                gpsLat >= -90 && gpsLat <= 90 &&
+                                gpsLng >= -180 && gpsLng <= 180) {
+                                
+                                // Update stored coordinates
+                                initialUserLat = gpsLat;
+                                initialUserLng = gpsLng;
+                                
+                                // Update map view
+                                smallMap.setView([gpsLat, gpsLng], 12);
+                                
+                                // Remove existing GPS marker if present
+                                if (gpsMarker) gpsMarker.remove();
+                                
+                                // Create new GPS marker
+                                gpsMarker = L.circleMarker([gpsLat, gpsLng], {
+                                    radius: 10,
+                                    fillColor: '#10B981',
+                                    color: '#10B981',
+                                    weight: 3,
+                                    opacity: 0.9,
+                                    fillOpacity: 0.9
+                                }).addTo(smallMap).bindPopup('Tu ubicación actual (GPS)');
+                            }
+                        });
+                    })();
+                });
+                </script>
 
                     <div class="flex justify-between md:justify-start md:gap-8 px-6 md:px-10 mt-5 border-b border-slate-200 pb-2" id="sortTabs">
                         <button class="sort-tab text-xs md:text-sm font-bold text-brand border-b-2 border-brand pb-2 -mb-[9px]" onclick="setSortBy('distance',this)">Más cercanos</button>
@@ -1804,7 +1909,7 @@
             } catch (e) { console.error('Error notificando workers', e); }
         }
 
-        async function renderJobs() {
+ async function renderJobs() {
             try {
                 const jobs = await DB.get('jobs');
                 const container = document.getElementById('jobsListContainer');
@@ -1821,7 +1926,28 @@
                     return (j.category || 'formal') === currentCategory;
                 });
 
-                const JobKm = function(job) { return getDistance(state.userLat, state.userLng, job.lat || 0, job.lng || 0); };
+                 const JobKm = function(job) {
+                     const validateCoord = (value, min, max) => {
+                         if (value == null || value === '') {
+                             return { valid: false, value: null };
+                         }
+                         const num = Number(value);
+                         return Number.isFinite(num) && num >= min && num <= max
+                             ? { valid: true, value: num }
+                             : { valid: false, value: null };
+                     };
+
+                     const userLatCheck = validateCoord(state.userLat, -90, 90);
+                     const userLngCheck = validateCoord(state.userLng, -180, 180);
+                     const jobLatCheck = validateCoord(job.lat, -90, 90);
+                     const jobLngCheck = validateCoord(job.lng, -180, 180);
+                     
+                     if (!userLatCheck.valid || !userLngCheck.valid || !jobLatCheck.valid || !jobLngCheck.valid) {
+                         return Infinity;
+                     }
+                     
+                     return getDistance(userLatCheck.value, userLngCheck.value, jobLatCheck.value, jobLngCheck.value);
+                 }
                 const sortMode = state.sortBy || 'distance';
                 filteredJobs.sort(function(a, b) {
                     if(sortMode === 'price') return (b.price || 0) - (a.price || 0);
@@ -1835,7 +1961,8 @@
                 }
 
                 filteredJobs.forEach(function(job) {
-                    const dist = (job.lat != null && job.lng != null) ? (JobKm(job) / 1000).toFixed(1) : 'N/A';
+                    const km = JobKm(job);
+                    const dist = Number.isFinite(km) ? (km / 1000).toFixed(1) : 'N/A';
                     const cat = job.category || 'formal';
                     const catLabel = cat === 'formal' ? 'Formal' : cat === 'cachuelo' ? 'Cachuelo (sin contrato)' : 'En línea';
                     const isNew = Date.now() - (job.created_at || 0) < 86400000;
@@ -2639,6 +2766,10 @@
                     state.userLat = pos.coords.latitude;
                     state.userLng = pos.coords.longitude;
                     if (gpsEl) gpsEl.innerText = 'Ubicación GPS activa';
+                    // Emit event to update map-small GPS marker
+                    window.dispatchEvent(new CustomEvent('wnGpsPosition', {
+                        detail: { lat: state.userLat, lng: state.userLng }
+                    }));
                     if (state.map) {
                         if (CONFIG.GOOGLE_MAPS_API_KEY && typeof google !== 'undefined') {
                             state.map.setCenter({ lat: state.userLat, lng: state.userLng });
@@ -2815,6 +2946,7 @@ window.AG = (function(){
 
   const $ = id => document.getElementById(id);
   const state = { skills:[], keyword:'', geo:'', source:'', agent:'scout', currentJob:null, applied:new Set(), lastFiltered:[], currentCvId: null };
+  let nemotronHistory = [];
 
   let internalJobs = [];
   function isProductionConfiguredGlobal(){
@@ -3266,22 +3398,76 @@ window.AG = (function(){
     },450));
   }
 
+  let acChatProcessing = false;
   function acChat(){
+    if (acChatProcessing) {
+      log('[Error] Ya hay una petición de Nemotron en curso.', 'log-err');
+      return;
+    }
+    
     const inp=$('ac-input'); if(!inp) return;
     const msg=inp.value.trim(); if(!msg) return;
     inp.value='';
     chat('Tú','user',msg,true);
     log('[Supervisor] Consulta del usuario recibida.','log-agent');
-    setTimeout(()=>{
-      let reply; const m=msg.toLowerCase();
-      if(m.includes('aplic')||m.includes('postul')) reply='Postulaciones registradas: '+state.applied.size+'. Usa los botones "Aplicar" de cada tarjeta.';
-      else if(m.includes('salario')||m.includes('sueldo')) reply='Revisa cada tarjeta: uso el rango salarial publicado por la fuente.';
-      else if(m.includes('cv')||m.includes('curr')) reply=state.skills.length?'Tu CV tiene '+state.skills.length+' skills indexadas: '+state.skills.slice(0,6).join(', ')+'.':'Aún no has subido CV. Pulsa "Analizar CV" para subirlo.';
-      else if(m.includes('cachuelo')) reply='Pulsa el botón "Cachuelos" para buscar trabajo informal local en WorkNow.';
-      else if(m.includes('online')||m.includes('remoto')) reply='Pulsa "Trabajo en línea" para buscar ofertas remotas indexadas.';
-      else reply='Puedo buscar empleo formal, cachuelos o trabajo en línea, y analizar tu CV. Dime qué necesitas.';
-      chat('Supervisor','supervisor',reply,false);
-    },450);
+    
+    // Generate unique ID for Nemotron history
+    const msgId = Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+    
+    // Call OpenRouter API via proxy server — enviar historial previo + mensaje actual sin duplicar
+    (async () => {
+      acChatProcessing = true;
+      try {
+        const response = await fetch('http://127.0.0.1:3001/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messages: [
+              ... nemotronHistory.map(h => ({ role: h.role, content: h.content })),
+              { role: 'user', content: msg }
+            ],
+            model: 'nvidia/nemotron-3.5-super-vl:free'
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        const assistantResponse = result.choices[0].message.content;
+        
+        if (!assistantResponse || typeof assistantResponse !== 'string' || assistantResponse.trim() === '') {
+          throw new Error('Respuesta vacía o inválida recibida de Nemotron');
+        }
+        
+        // Add to Nemotron history (separate from AG.state) — solo guardar si respuesta es válida
+        nemotronHistory.push({
+          role: 'user',
+          content: msg,
+          timestamp: new Date(),
+          id: msgId
+        });
+        nemotronHistory.push({
+          role: 'assistant',
+          content: assistantResponse,
+          timestamp: new Date(),
+          id: Date.now().toString(36) + Math.random().toString(36).substr(2, 9)
+        });
+        
+        // Display the response only once
+        chat('Supervisor','supervisor',assistantResponse,false);
+        log('[Supervisor] Respuesta recibida desde Nemotron:', 'log-success');
+        
+      } catch (error) {
+        log(`[Error] Fallo al contactar OpenRouter: ${error.message}`, 'log-err');
+        chat('Supervisor','supervisor','Lo siento, experimenté un error al procesar tu solicitud. Por favor, inténtalo de nuevo.',false);
+      } finally {
+        acChatProcessing = false;
+      }
+    })();
   }
 
   function acOpenUrl(url){
