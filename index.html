@@ -14,6 +14,13 @@
     <!-- Leaflet (fallback de mapas, preservado de index1.html) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- PDF.js para extracción de texto de PDFs -->
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    </script>
+    <!-- Mammoth.js para extracción de texto de DOCX -->
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.13.0/mammoth.browser.min.js"></script>
     <!-- Configuración de Entorno (conservada exactamente de index1.html) -->
     <script>
         window.ENV = {
@@ -1385,15 +1392,62 @@ document.addEventListener('DOMContentLoaded', function() {
 
         /* ---------- DB ADAPTER (Supabase-first, localStorage como caché) ---------- */
         const DB = {
-            get: async function(table) {
-                if (supabaseClient && state.sessionActive) {
-                    var res = await supabaseClient.from(table).select('*');
-                    if (res.error) { console.error('[DB GET ' + table + ']', res.error); throw res.error; }
-                    localStorage.setItem('wn_' + table, JSON.stringify(res.data));
-                    return res.data;
+get: async function(table) {
+    if (supabaseClient && state.sessionActive) {
+        var res = await supabaseClient.from(table).select('*');
+        if (res.error) { console.error('[DB GET ' + table + ']', res.error); throw res.error; }
+        if (table === 'candidate_cvs') {
+            var localRows = [];
+            try {
+                var parsedLocal = JSON.parse(localStorage.getItem('wn_' + table) || '[]');
+                if (Array.isArray(parsedLocal)) localRows = parsedLocal;
+            } catch (e) {
+                localRows = [];
+            }
+            var remoteRows = Array.isArray(res.data) ? res.data : [];
+            var mergedRows = remoteRows.map(function(row) {
+                if (!row || !row.user_id || !row.id) return row;
+                var hasRemoteContent = typeof row.file_content === 'string' && row.file_content.trim() !== '';
+                if (hasRemoteContent) return row;
+                var localMatch = localRows.find(function(localItem) {
+                    return localItem &&
+                        localItem.user_id === row.user_id &&
+                        localItem.id === row.id &&
+                        typeof localItem.file_content === 'string' &&
+                        localItem.file_content.trim() !== '';
+                });
+                if (localMatch) {
+                    return Object.assign({}, row, { file_content: localMatch.file_content });
                 }
-                return JSON.parse(localStorage.getItem('wn_' + table)) || [];
-            },
+                return row;
+            });
+            var currentUserId = state.currentUserId || null;
+            var activeCvId = (typeof window !== 'undefined' && window.AG && window.AG.state && window.AG.state.currentCvId)
+                ? window.AG.state.currentCvId
+                : null;
+            if (currentUserId && activeCvId) {
+                var alreadyPresent = mergedRows.some(function(r) {
+                    return r && r.user_id === currentUserId && r.id === activeCvId;
+                });
+                if (!alreadyPresent) {
+                    var localActiveCv = localRows.find(function(localItem) {
+                        return localItem &&
+                            localItem.user_id === currentUserId &&
+                            localItem.id === activeCvId;
+                    });
+                    if (localActiveCv) {
+                        mergedRows.push(localActiveCv);
+                    }
+                }
+            }
+            localStorage.setItem('wn_' + table, JSON.stringify(mergedRows));
+            return mergedRows;
+        }
+        localStorage.setItem('wn_' + table, JSON.stringify(res.data));
+        return res.data;
+    }
+    return JSON.parse(localStorage.getItem('wn_' + table)) || [];
+},
             insert: async function(table, item) {
                 if (supabaseClient && state.sessionActive) {
                     var res = await supabaseClient.from(table).insert(item);
@@ -2622,20 +2676,25 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 const cvs = await DB.get('candidate_cvs');
                 const userId = state.currentUserId;
-                const mine = (cvs || []).filter(function(c){ return c.user_id === userId; })
+                const mine = (cvs || []).filter(function(c){ return c && c.user_id === userId; })
                     .sort(function(a,b){ return (b.created_at||0) - (a.created_at||0); });
                 if(!mine.length) {
                     info.innerHTML = '<span class="text-slate-500">Aún no has guardado un CV desde este dispositivo.</span>';
                     skills.innerHTML = '';
                     return;
                 }
-                const last = mine[0];
+                const activeCvId = (typeof AG !== 'undefined' && AG.state && AG.state.currentCvId)
+                    ? AG.state.currentCvId
+                    : null;
+                const activeCv = activeCvId
+                    ? mine.find(function(c){ return c.id === activeCvId; })
+                    : null;
+                const last = activeCv || mine[0];
                 const sizeKb = last.file_size ? Math.round(last.file_size/1024) + ' KB' : '';
-                // Verificar almacenamiento real del archivo
+                const hasExtractedText = typeof last.file_content === 'string' && last.file_content.trim() !== '';
+                // Verificar almacenamiento real del archivo original en Supabase Storage
                 let storageVerified = false;
-                if (last.file_content) {
-                    storageVerified = true; // contenido guardado localmente en el registro
-                } else if (last.file_path && last.file_path !== 'local' && window.supabaseClient) {
+                if (last.file_path && last.file_path !== 'local' && typeof supabaseClient !== 'undefined' && supabaseClient) {
                     try {
                         const parts = last.file_path.split('/');
                         const dir = parts.length > 1 ? parts.slice(0,-1).join('/') + '/' : '';
@@ -2654,24 +2713,43 @@ document.addEventListener('DOMContentLoaded', function() {
                 if(card){
                     card.style.display = '';
                     if(cardStatus) {
-                        if (storageVerified) {
+                        if (storageVerified && hasExtractedText) {
                             cardStatus.className = 'text-[10px] font-bold text-escrow mt-1.5';
-                            cardStatus.innerText = '✓ Documento disponible';
+                            cardStatus.innerText = '✓ Documento disponible · Texto listo para Supervisor';
+                        } else if (storageVerified && !hasExtractedText) {
+                            cardStatus.className = 'text-[10px] font-bold text-escrow mt-1.5';
+                            cardStatus.innerText = '✓ Documento disponible · Sin texto para Supervisor';
+                        } else if (!storageVerified && hasExtractedText) {
+                            cardStatus.className = 'text-[10px] font-bold text-orange-500 mt-1.5';
+                            cardStatus.innerText = '✓ Texto disponible para Supervisor · ⚠ Archivo original no disponible en storage';
                         } else {
                             cardStatus.className = 'text-[10px] font-bold text-orange-500 mt-1.5';
-                            cardStatus.innerText = '⚠ Archivo no disponible en storage';
+                            cardStatus.innerText = '⚠ Archivo no disponible en storage · Sin texto para Supervisor';
                         }
                     }
                 }
-                // Botón "Ver currículum" — reemplaza el comportamiento del enlace por viewSavedCV()
+                // Botón "Ver currículum" — conserva el mecanismo de apertura sin sobrescribir ni eliminar manejadores existentes
                 const viewBtn = document.getElementById('cvOpenLink');
                 if (viewBtn) {
+                    if (!viewBtn.dataset.wnOpenBound) {
+                        viewBtn.dataset.wnOpenBound = '1';
+                        viewBtn.addEventListener('click', function(e) {
+                            if (viewBtn.dataset.cvVerified !== 'true') {
+                                e.preventDefault();
+                                return;
+                            }
+                            e.preventDefault();
+                            viewSavedCV();
+                        });
+                    }
                     if (storageVerified) {
+                        viewBtn.dataset.cvVerified = 'true';
                         viewBtn.style.display = '';
-                        viewBtn.onclick = function(e) { e.preventDefault(); viewSavedCV(); };
+                        viewBtn.removeAttribute('aria-disabled');
                     } else {
+                        viewBtn.dataset.cvVerified = 'false';
                         viewBtn.style.display = 'none';
-                        viewBtn.onclick = null;
+                        viewBtn.setAttribute('aria-disabled', 'true');
                     }
                 }
                 info.innerHTML = '<strong>' + escStr(last.file_name || 'CV') + '</strong>' + (sizeKb ? ' · ' + sizeKb : '')
@@ -2679,7 +2757,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 skills.innerHTML = (last.skills || []).slice(0,12).map(function(s) {
                     return '<span class="bg-blue-50 text-brand text-[10px] font-bold px-2 py-1 rounded-full">' + escStr(s) + '</span>';
                 }).join('');
-                if (typeof AG !== 'undefined' && AG.state) {
+                if (typeof AG !== 'undefined' && AG.state && !activeCv) {
                     AG.state.currentCvId = last.id;
                 }
             } catch(e) {
@@ -2970,8 +3048,13 @@ window.AG = (function(){
   }
 
   async function construirContextoProfesional(){
-    if(!window.WN || !window.WN.state || !window.WN.state.sessionActive || !window.WN.state.currentUserId) return null;
-    if(!window.supabaseClient) return null;
+    if(!window.WN || !window.WN.state || !window.WN.state.currentUserId) return null;
+
+    const userId = window.WN.state.currentUserId;
+    const canQuerySupabase = !!(window.supabaseClient && window.WN.state.sessionActive);
+    const activeCvId = (window.AG && window.AG.state && window.AG.state.currentCvId)
+      ? window.AG.state.currentCvId
+      : null;
 
     const MAX_LEN = 200;
     const truncar = (valor) => {
@@ -2981,68 +3064,120 @@ window.AG = (function(){
 
     const partes = [];
 
-    // Consulta 1: profiles (try/catch independiente)
-    try {
-      const { data: perfilData, error: perfilError } = await window.supabaseClient
-        .from('profiles')
-        .select('name, role, skills')
-        .eq('id', window.WN.state.currentUserId)
-        .single();
+    // Consulta 1: profiles (try/catch independiente + fallback local compatible con Array u Object)
+    let perfilData = null;
+    if(canQuerySupabase){
+      try {
+        const { data, error: perfilError } = await window.supabaseClient
+          .from('profiles')
+          .select('name, role, skills')
+          .eq('id', userId)
+          .single();
 
-      if(!perfilError && perfilData){
-        if(perfilData.name) partes.push(`Nombre: ${truncar(perfilData.name)}`);
-        if(perfilData.role) partes.push(`Rol: ${truncar(perfilData.role)}`);
-        if(Array.isArray(perfilData.skills) && perfilData.skills.length){
-          const skillsStr = perfilData.skills
+        if(!perfilError && data){
+          perfilData = data;
+        } else if(perfilError){
+          console.error('[Contexto IA] Error consultando profiles:', perfilError);
+        }
+      } catch(error){
+        console.error('[Contexto IA] Excepción consultando profiles:', error);
+      }
+    }
+
+    if(!perfilData){
+      try {
+        const rawProfiles = JSON.parse(localStorage.getItem('wn_profiles') || 'null');
+        if(Array.isArray(rawProfiles)){
+          perfilData = rawProfiles.find(p => p && p.id === userId) || null;
+        } else if(rawProfiles && typeof rawProfiles === 'object'){
+          perfilData = rawProfiles[userId] || null;
+        }
+      } catch(e){
+        console.warn('[Contexto IA] Error leyendo wn_profiles de localStorage:', e);
+      }
+    }
+
+    if(perfilData){
+      if(perfilData.name) partes.push(`Nombre: ${truncar(perfilData.name)}`);
+      if(perfilData.role) partes.push(`Rol: ${truncar(perfilData.role)}`);
+      if(Array.isArray(perfilData.skills) && perfilData.skills.length){
+        const skillsStr = perfilData.skills
+          .filter(s => typeof s === 'string')
+          .slice(0, 10)
+          .map(s => truncar(s))
+          .join(', ');
+        if(skillsStr) partes.push(`Habilidades del perfil: ${skillsStr}`);
+      }
+    }
+
+    // Consulta 2: candidate_cvs (solo el CV activo exacto: user_id + activeCvId)
+    if(activeCvId){
+      let cvData = null;
+
+      if(canQuerySupabase){
+        try {
+          const { data, error: cvError } = await window.supabaseClient
+            .from('candidate_cvs')
+            .select('id, file_name, skills, file_content')
+            .eq('user_id', userId)
+            .eq('id', activeCvId)
+            .maybeSingle();
+
+          if(!cvError && data){
+            cvData = data;
+          } else if(cvError){
+            console.error('[Contexto IA] Error consultando candidate_cvs:', cvError);
+          }
+        } catch(error){
+          console.error('[Contexto IA] Excepción consultando candidate_cvs:', error);
+        }
+      }
+
+      // Fallback local: únicamente mismo user_id e id exacto si Supabase no devolvió registro o devolvió file_content vacío
+      if(!cvData || typeof cvData.file_content !== 'string' || !cvData.file_content.trim()){
+        try {
+          const localCvs = JSON.parse(localStorage.getItem('wn_candidate_cvs') || '[]');
+          if(Array.isArray(localCvs)){
+            const localCv = localCvs.find(c => c && c.user_id === userId && c.id === activeCvId) || null;
+            if(localCv){
+              cvData = {
+                id: (cvData && cvData.id) || localCv.id,
+                file_name: (cvData && cvData.file_name) || localCv.file_name,
+                skills: (cvData && Array.isArray(cvData.skills) && cvData.skills.length) ? cvData.skills : localCv.skills,
+                file_content: (cvData && typeof cvData.file_content === 'string' && cvData.file_content.trim())
+                  ? cvData.file_content
+                  : localCv.file_content
+              };
+            }
+          }
+        } catch(e){
+          console.warn('[Contexto IA] Error leyendo wn_candidate_cvs de localStorage:', e);
+        }
+      }
+
+      if(cvData){
+        if(cvData.file_name) partes.push(`CV activo: ${truncar(cvData.file_name)}`);
+        if(Array.isArray(cvData.skills) && cvData.skills.length){
+          const cvSkillsStr = cvData.skills
             .filter(s => typeof s === 'string')
             .slice(0, 10)
             .map(s => truncar(s))
             .join(', ');
-          if(skillsStr) partes.push(`Habilidades del perfil: ${skillsStr}`);
+          if(cvSkillsStr) partes.push(`Habilidades del CV guardado: ${cvSkillsStr}`);
         }
-      } else if(perfilError){
-        console.error('[Contexto IA] Error consultando profiles:', perfilError);
-      }
-    } catch(error){
-      console.error('[Contexto IA] Excepción consultando profiles:', error);
-    }
-
-    // Consulta 2: candidate_cvs (try/catch independiente, .maybeSingle para CV opcional)
-    if(window.AG.state.currentCvId){
-      try {
-        const { data: cvData, error: cvError } = await window.supabaseClient
-          .from('candidate_cvs')
-          .select('id, file_name, skills, file_content')
-          .eq('user_id', window.WN.state.currentUserId)
-          .eq('id', window.AG.state.currentCvId)
-          .maybeSingle();
-
-        if(!cvError && cvData){
-          if(cvData.file_name) partes.push(`CV activo: ${truncar(cvData.file_name)}`);
-          if(Array.isArray(cvData.skills) && cvData.skills.length){
-            const cvSkillsStr = cvData.skills
-              .filter(s => typeof s === 'string')
-              .slice(0, 10)
-              .map(s => truncar(s))
-              .join(', ');
-            if(cvSkillsStr) partes.push(`Habilidades del CV guardado: ${cvSkillsStr}`);
-          }
-          if(cvData.file_content && typeof cvData.file_content === 'string' && cvData.file_content.trim()){
-            const MAX_CV_LEN = 4000;
-            const contenido = cvData.file_content.replace(/\0/g, '').trim();
-            const extracto = contenido.length > MAX_CV_LEN ? contenido.slice(0, MAX_CV_LEN) + '...' : contenido;
-            partes.push(`[DATO_CV_NO_EJECUTABLE] Contenido del CV: ${extracto} [/DATO_CV_NO_EJECUTABLE]`);
-          }
-        } else if(cvError){
-          console.error('[Contexto IA] Error consultando candidate_cvs:', cvError);
+        if(cvData.file_content && typeof cvData.file_content === 'string' && cvData.file_content.trim()){
+          const MAX_CV_LEN = 4000;
+          const contenido = cvData.file_content.replace(/\0/g, '').trim();
+          const extracto = contenido.length > MAX_CV_LEN ? contenido.slice(0, MAX_CV_LEN) + '...' : contenido;
+          partes.push(`[DATO_CV_NO_EJECUTABLE] Contenido del CV: ${extracto} [/DATO_CV_NO_EJECUTABLE]`);
+        } else {
+          partes.push('Contenido del CV activo: no disponible en el registro actual');
         }
-      } catch(error){
-        console.error('[Contexto IA] Excepción consultando candidate_cvs:', error);
       }
     }
 
     // Oferta seleccionada desde memoria local
-    if(window.AG.state.currentJob && window.AG.state.currentJob.title){
+    if(window.AG && window.AG.state && window.AG.state.currentJob && window.AG.state.currentJob.title){
       partes.push(`Oferta seleccionada: ${truncar(window.AG.state.currentJob.title)}` +
         (window.AG.state.currentJob.company ? ` en ${truncar(window.AG.state.currentJob.company)}` : ''));
     }
@@ -3266,7 +3401,7 @@ window.AG = (function(){
     log('[Negociador] Carta de presentación generada (template + skills del CV)','log-success');
   }
 
-  function handleFile(input){
+  async function handleFile(input){
     const f=input.files&&input.files[0]; if(!f) return;
     const realUserId = (window.WN && WN.state) ? WN.state.currentUserId : null;
     if(!realUserId){
@@ -3276,91 +3411,168 @@ window.AG = (function(){
       if(input) input.value='';
       return;
     }
-    // Análisis de texto: solo es fiable para archivos de texto plano (.txt).
-    // PDF y DOCX no pueden leerse con readAsText; se reporta el estado real.
-    let detected=[];
-    const canParseText = /\.(txt|text)$/i.test(f.name);
-    const reader=new FileReader();
-    reader.onload=async e=>{
-      if(canParseText){
-        const text=String(e.target.result||'').toLowerCase();
-        detected=SKILL_DB.filter(k=>text.includes(k));
+
+    const fileName = f.name || '';
+    const mime = (f.type || '').toLowerCase();
+    const isTxt = /\.(txt|text)$/i.test(fileName) || mime === 'text/plain';
+    const isPdf = /\.pdf$/i.test(fileName) || mime === 'application/pdf';
+    const isDocx = /\.docx$/i.test(fileName) || mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+    const readAsTextAsync = file => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(String(e.target.result || ''));
+      reader.onerror = () => reject(reader.error || new Error('No se pudo leer el archivo TXT.'));
+      reader.readAsText(file);
+    });
+
+    const readAsArrayBufferAsync = file => {
+      if (typeof file.arrayBuffer === 'function') {
+        return file.arrayBuffer();
       }
-      state.skills=detected;
-      state.currentCvId = state.currentCvId || null;
-      $('uploadZone').classList.add('active');
-      $('fileInfo').classList.add('show');
-      $('fileName').textContent=f.name;
-      $('detectedSkills').textContent=canParseText
-        ? (detected.length?detected.join(', '):'ninguna detectada')
-        : 'No analizado (formato '+((f.type||f.name.split('.').pop()||'desconocido').toUpperCase())+')';
-      log('[Scout] '+(canParseText?('CV analizado: '+detected.length+' skills detectadas'):'Archivo "'+f.name+'" recibido (no se extrajo texto de '+f.name.split('.').pop()+')'),'log-success');
-      chat('Supervisor','supervisor','Recibí "'+f.name+'". '+(canParseText?('Detecté '+detected.length+' skills.'):'No pude analizar el contenido de este formato, pero guardaré el documento.')+'',false);
-      render();
-
-      // --- PERSISTENCIA ---
-      if (window.WN) {
-        let savedInCloud=false;
-        let uploadedPath=null;
-        try {
-          const timestamp = Date.now();
-          const safeName = String(f.name).replace(/[^\w.\- ]+/g,'_').replace(/\s+/g,'_');
-          const filePath = `${realUserId}/${timestamp}_${safeName}`;
-          uploadedPath = filePath;
-
-          if (WN.state.sessionActive && window.supabaseClient) {
-            const { error: uploadError } = await window.supabaseClient.storage
-              .from('cvs')
-              .upload(filePath, f, { upsert: true });
-            if (uploadError) {
-              console.warn('[CV Storage]', uploadError);
-              uploadedPath = null; // no afirmar guardado en nube
-            } else {
-              savedInCloud = true;
-            }
-          }
-
-          const cvRecord = {
-            id: 'cv_' + timestamp,
-            user_id: realUserId,
-            file_name: f.name,
-            file_path: savedInCloud ? filePath : 'local',
-            mime_type: f.type || 'application/octet-stream',
-            file_size: f.size,
-            file_content: String(e.target.result || ''),
-            skills: detected,
-            created_at: timestamp,
-            saved_in_cloud: !!savedInCloud
-          };
-          await WN.DB.insert('candidate_cvs', cvRecord);
-          state.currentCvId = cvRecord.id;
-          log('[Scout] Currículum registrado correctamente'+(savedInCloud?' y guardado en la nube':', sin nube disponible para este archivo')+'.','log-success');
-          if(typeof renderCV==='function') renderCV();
-          if(window.WN && WN.toast) WN.toast('Currículum subido','success');
-
-          // Actualiza skills del perfil únicamente si hubo análisis real de texto
-          if(detected.length){
-            try {
-              const profiles = await WN.DB.get('profiles');
-              const userProfile = profiles.find(p => p.id === realUserId);
-              if (userProfile) {
-                const updatedSkills = Array.from(new Set([...(userProfile.skills || []), ...detected]));
-                await WN.DB.update('profiles', realUserId, { skills: updatedSkills });
-              }
-            } catch(e){ console.warn('[CV update profile]', e); }
-          }
-        } catch (err) {
-          console.error('[CV Upload Error]', err);
-          state.currentCvId = state.currentCvId || null;
-          log('[Scout] No se pudo subir el currículum. No se registró un estado de éxito.','log-err');
-          chat('Supervisor','supervisor','No se pudo subir el currículum. Revisa tu conexión o los permisos y reintenta.',false);
-          if(window.WN && WN.toast) WN.toast('No se pudo subir el currículum','error');
-          if(typeof renderCV==='function') renderCV();
-        }
-      }
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = () => reject(reader.error || new Error('No se pudo leer el archivo binario.'));
+        reader.readAsArrayBuffer(file);
+      });
     };
-    // Solo se lee como texto cuando el formato es analizable; el almacenamiento usa el File original.
-    if(canParseText) reader.readAsText(f); else reader.onload({ target: { result: '' } });
+
+    let rawText = '';
+    try {
+      if (isTxt) {
+        rawText = await readAsTextAsync(f);
+      } else if (isPdf) {
+        const pdfjs = typeof pdfjsLib !== 'undefined' ? pdfjsLib : window['pdfjs-dist/build/pdf'];
+        if (!pdfjs || typeof pdfjs.getDocument !== 'function') {
+          throw new Error('PDF.js 3.11.0 no está cargado.');
+        }
+        const arrayBuffer = await readAsArrayBufferAsync(f);
+        const pdfDocument = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+        const pageTexts = [];
+        for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber++) {
+          const page = await pdfDocument.getPage(pageNumber);
+          const textContent = await page.getTextContent();
+          const items = textContent && Array.isArray(textContent.items) ? textContent.items : [];
+          const pageText = items
+            .map(item => (item && typeof item.str === 'string' ? item.str : ''))
+            .join(' ');
+          if (pageText.trim()) pageTexts.push(pageText);
+        }
+        rawText = pageTexts.join('\n');
+      } else if (isDocx) {
+        const mammothLib = typeof mammoth !== 'undefined' ? mammoth : window.mammoth;
+        if (!mammothLib || typeof mammothLib.extractRawText !== 'function') {
+          throw new Error('Mammoth.js 0.8.0 no está cargado.');
+        }
+        const arrayBuffer = await readAsArrayBufferAsync(f);
+        const result = await mammothLib.extractRawText({ arrayBuffer });
+        rawText = result && typeof result.value === 'string' ? result.value : '';
+      } else {
+        throw new Error('Formato no compatible. Sube un archivo PDF, DOCX o TXT.');
+      }
+    } catch (extractErr) {
+      console.error('[CV Extract Error]', extractErr);
+      const errMsg = extractErr && extractErr.message ? extractErr.message : 'No se pudo extraer texto del archivo.';
+      log('[Scout] Error al leer el CV: ' + errMsg, 'log-err');
+      chat('Supervisor', 'supervisor', 'No pude leer "' + f.name + '": ' + errMsg, false);
+      if (window.WN && WN.toast) WN.toast(errMsg, 'error');
+      if (input) input.value = '';
+      return;
+    }
+
+    const cleanedFullText = String(rawText || '')
+      .replace(/\0/g, '')
+      .replace(/\r\n?/g, '\n')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/ *\n */g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+
+    if (!cleanedFullText) {
+      const noTextMsg = isPdf
+        ? 'El documento PDF no contiene texto extraíble (no se implementa OCR).'
+        : 'El documento no contiene texto extraíble.';
+      log('[Scout] ' + noTextMsg, 'log-err');
+      chat('Supervisor', 'supervisor', noTextMsg, false);
+      if (window.WN && WN.toast) WN.toast(noTextMsg, 'error');
+      if (input) input.value = '';
+      return;
+    }
+
+    const MAX_CV_LEN = 4000;
+    const fileContent = cleanedFullText.slice(0, MAX_CV_LEN);
+    const lowerText = cleanedFullText.toLowerCase();
+    const detected = SKILL_DB.filter(k => lowerText.includes(k));
+    const formatLabel = isPdf ? 'PDF' : isDocx ? 'DOCX' : 'TXT';
+
+    state.skills = detected;
+    state.currentCvId = state.currentCvId || null;
+    $('uploadZone').classList.add('active');
+    $('fileInfo').classList.add('show');
+    $('fileName').textContent = f.name;
+    $('detectedSkills').textContent = detected.length ? detected.join(', ') : 'ninguna detectada';
+    log('[Scout] CV procesado (' + formatLabel + '): ' + detected.length + ' skills detectadas', 'log-success');
+    chat('Supervisor', 'supervisor', 'Recibí "' + f.name + '". Detecté ' + detected.length + ' skills.', false);
+    render();
+
+    if (window.WN) {
+      let savedInCloud = false;
+      let uploadedPath = null;
+      try {
+        const timestamp = Date.now();
+        const safeName = String(f.name).replace(/[^\w.\- ]+/g,'_').replace(/\s+/g,'_');
+        const filePath = `${realUserId}/${timestamp}_${safeName}`;
+        uploadedPath = filePath;
+
+        if (WN.state.sessionActive && window.supabaseClient) {
+          const { error: uploadError } = await window.supabaseClient.storage
+            .from('cvs')
+            .upload(filePath, f, { upsert: true });
+          if (uploadError) {
+            console.warn('[CV Storage]', uploadError);
+            uploadedPath = null;
+          } else {
+            savedInCloud = true;
+          }
+        }
+
+        const cvRecord = {
+          id: 'cv_' + timestamp,
+          user_id: realUserId,
+          file_name: f.name,
+          file_path: savedInCloud ? filePath : 'local',
+          mime_type: f.type || 'application/octet-stream',
+          file_size: f.size,
+          file_content: fileContent,
+          skills: detected,
+          created_at: timestamp,
+          saved_in_cloud: !!savedInCloud
+        };
+        await WN.DB.insert('candidate_cvs', cvRecord);
+        state.currentCvId = cvRecord.id;
+        log('[Scout] Currículum registrado correctamente'+(savedInCloud?' y guardado en la nube':', sin nube disponible para este archivo')+'.','log-success');
+        if(typeof renderCV==='function') renderCV();
+        if(window.WN && WN.toast) WN.toast(savedInCloud ? 'Currículum guardado en la nube' : 'Registro del currículum guardado; archivo no disponible en la nube','success');
+
+        if(detected.length){
+          try {
+            const profiles = await WN.DB.get('profiles');
+            const userProfile = profiles.find(p => p.id === realUserId);
+            if (userProfile) {
+              const updatedSkills = Array.from(new Set([...(userProfile.skills || []), ...detected]));
+              await WN.DB.update('profiles', realUserId, { skills: updatedSkills });
+            }
+          } catch(e){ console.warn('[CV update profile]', e); }
+        }
+      } catch (err) {
+        console.error('[CV Upload Error]', err);
+        state.currentCvId = state.currentCvId || null;
+        log('[Scout] No se pudo subir el currículum. No se registró un estado de éxito.','log-err');
+        chat('Supervisor','supervisor','No se pudo subir el currículum. Revisa tu conexión o los permisos y reintenta.',false);
+        if(window.WN && WN.toast) WN.toast('No se pudo subir el currículum','error');
+        if(typeof renderCV==='function') renderCV();
+      }
+    }
   }
 
   function filterJobs(){
